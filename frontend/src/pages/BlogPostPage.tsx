@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import blog from "@/data/MOCKED_BLOG.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const blogImages = [
   "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=500&fit=crop",
@@ -12,11 +13,30 @@ const blogImages = [
   "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&h=500&fit=crop",
 ];
 
+const BlogPostPageSkeleton = () => (
+  <div className="py-10">
+    <div className="container mx-auto px-4 max-w-3xl">
+      <Skeleton className="h-4 w-28 mb-8" />
+      <Skeleton className="w-full h-64 sm:h-80 rounded-xl mb-8" />
+      <div className="flex gap-4 mb-6">
+        <Skeleton className="h-5 w-20 rounded" />
+        <Skeleton className="h-5 w-28" />
+      </div>
+      <Skeleton className="h-10 w-full mb-3" />
+      <Skeleton className="h-10 w-3/4 mb-8" />
+      <div className="space-y-3">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className={`h-4 ${i % 3 === 2 ? "w-2/3" : "w-full"}`} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const BlogPostPage = () => {
   const { id } = useParams<{ id: string }>();
   const { lang } = useLang();
   const isPt = lang === "pt-BR";
-
   const postIndex = blog.findIndex((p) => p.id === id);
   const post = blog[postIndex];
 

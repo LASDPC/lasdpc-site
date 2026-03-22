@@ -5,6 +5,7 @@ import { ArrowRight, Cpu, Users, BookOpen, Server } from "lucide-react";
 import projects from "@/data/MOCKED_PROJECTS.json";
 import publications from "@/data/MOCKED_PUBLICATIONS.json";
 import blog from "@/data/MOCKED_BLOG.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -19,10 +20,122 @@ const blogImages = [
   "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&h=340&fit=crop",
 ];
 
+const HomePageSkeleton = () => (
+  <div>
+    {/* Hero skeleton */}
+    <section className="min-h-[75vh] flex items-center bg-card border-b border-border">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl space-y-5">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-14 w-full max-w-xl" />
+          <Skeleton className="h-14 w-3/4 max-w-lg" />
+          <Skeleton className="h-6 w-full max-w-2xl" />
+          <Skeleton className="h-6 w-2/3 max-w-lg" />
+          <div className="flex gap-4 pt-2">
+            <Skeleton className="h-12 w-40 rounded-lg" />
+            <Skeleton className="h-12 w-36 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Stats skeleton */}
+    <section className="py-16 bg-card border-b border-border">
+      <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-3">
+            <Skeleton className="w-14 h-14 rounded-xl" />
+            <Skeleton className="h-9 w-16" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* Timeline skeleton */}
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <Skeleton className="h-9 w-48 mb-4" />
+        <Skeleton className="h-5 w-full max-w-2xl mb-16" />
+        <div className="space-y-12">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
+              <Skeleton className="h-20 w-full md:w-1/2 rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Research skeleton */}
+    <section className="py-20 bg-card border-y border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-10">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-[220px] flex flex-col bg-background rounded-xl p-6 border border-border gap-3">
+              <div className="flex gap-2">
+                <Skeleton className="h-5 w-16 rounded" />
+                <Skeleton className="h-5 w-20 rounded" />
+              </div>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Publications skeleton */}
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <Skeleton className="h-9 w-56 mb-10" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-lg p-5 border border-border space-y-2">
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Blog skeleton */}
+    <section className="py-20 bg-card border-t border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-10">
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex flex-col bg-background rounded-xl border border-border overflow-hidden">
+              <Skeleton className="w-full h-44 rounded-none" />
+              <div className="p-6 flex flex-col gap-3">
+                <Skeleton className="h-5 w-16 rounded" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-3 w-20 mt-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  </div>
+);
+
 const HomePage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
-
   return (
     <div>
       {/* Hero */}

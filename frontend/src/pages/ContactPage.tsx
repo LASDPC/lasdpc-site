@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import { MapPin, Mail, Phone, Github, Linkedin, Send } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -12,6 +13,7 @@ const ContactPage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
   const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   return (
     <div className="py-10">
@@ -41,13 +43,17 @@ const ContactPage = () => {
           </motion.div>
 
           <motion.div initial="hidden" animate="visible" className="space-y-8">
-            <div>
+            <div className="relative w-full h-64 rounded-xl overflow-hidden border border-border">
+              {!mapLoaded && (
+                <Skeleton className="absolute inset-0 w-full h-full rounded-xl" />
+              )}
               <iframe
                 title="ICMC-USP"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3699.0!2d-47.897!3d-22.007!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94b877b0f96e0001%3A0x1234567890!2sICMC-USP!5e0!3m2!1spt-BR!2sbr!4v1700000000000"
-                className="w-full h-64 rounded-xl border border-border"
+                className={`w-full h-full transition-opacity duration-500 ${mapLoaded ? "opacity-100" : "opacity-0"}`}
                 loading="lazy"
                 allowFullScreen
+                onLoad={() => setMapLoaded(true)}
               />
             </div>
             <div className="space-y-4">

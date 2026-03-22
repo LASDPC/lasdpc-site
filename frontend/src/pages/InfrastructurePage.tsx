@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import { Cpu, HardDrive, MemoryStick, Activity } from "lucide-react";
 import infra from "@/data/MOCKED_INFRASTRUCTURE.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -21,11 +22,54 @@ const UsageBar = ({ label, value }: { label: string; value: number }) => (
   </div>
 );
 
+const InfrastructurePageSkeleton = () => (
+  <div className="py-10">
+    <div className="container mx-auto px-4">
+      <Skeleton className="h-10 w-56 mb-4" />
+      <Skeleton className="h-4 w-56 mb-12" />
+      <div className="grid md:grid-cols-3 gap-6 mb-20">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-xl p-6 border border-border space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-5 w-14 rounded" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <div className="space-y-3 pt-1">
+              {Array.from({ length: 4 }).map((_, j) => (
+                <div key={j} className="space-y-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-8" />
+                    <Skeleton className="h-3 w-8" />
+                  </div>
+                  <Skeleton className="h-2 w-full rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-8 w-48 mb-6" />
+      <div className="max-w-lg space-y-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
+        <Skeleton className="h-10 w-36 rounded-lg" />
+      </div>
+    </div>
+  </div>
+);
+
 const InfrastructurePage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
   const [form, setForm] = useState({ resource: infra.resources[0], date: "" });
-
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">

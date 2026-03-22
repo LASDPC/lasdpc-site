@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import docs from "@/data/MOCKED_DOCS.json";
 import { FileText, BookOpen, Shield, GraduationCap, Plus, LogIn, LogOut, Save, X } from "lucide-react";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   guides: <BookOpen size={16} />,
@@ -18,6 +19,36 @@ const categoryLabels: Record<string, { pt: string; en: string }> = {
   policies: { pt: "Políticas", en: "Policies" },
   tutorials: { pt: "Tutoriais", en: "Tutorials" },
 };
+
+const DocsPageSkeleton = () => (
+  <div className="min-h-[calc(100vh-4rem)] flex">
+    <aside className="w-64 shrink-0 border-r border-border bg-card hidden md:block p-4 space-y-6">
+      <Skeleton className="h-7 w-20 mb-4" />
+      {Array.from({ length: 3 }).map((_, g) => (
+        <div key={g} className="space-y-2">
+          <Skeleton className="h-3 w-24" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full rounded-md" />
+          ))}
+        </div>
+      ))}
+    </aside>
+    <div className="flex-1 p-6 sm:p-10 max-w-3xl space-y-4">
+      <div className="flex items-center justify-between mb-6">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+      <Skeleton className="h-9 w-3/4" />
+      <div className="space-y-3 pt-4">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Skeleton key={i} className={`h-4 ${i % 5 === 4 ? "w-1/2" : i % 3 === 2 ? "w-5/6" : "w-full"}`} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const DocsPage = () => {
   const { lang } = useLang();

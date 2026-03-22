@@ -5,12 +5,38 @@ import { ArrowLeft, BookOpen, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import projects from "@/data/MOCKED_PROJECTS.json";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ProjectPageSkeleton = () => (
+  <div className="py-10">
+    <div className="container mx-auto px-4 max-w-3xl">
+      <Skeleton className="h-4 w-36 mb-8" />
+      <div className="flex gap-2 mb-6">
+        <Skeleton className="h-6 w-16 rounded" />
+        <Skeleton className="h-6 w-20 rounded" />
+        <Skeleton className="h-6 w-14 rounded" />
+      </div>
+      <Skeleton className="h-11 w-full mb-3" />
+      <Skeleton className="h-11 w-3/4 mb-4" />
+      <Skeleton className="h-6 w-full mb-2" />
+      <Skeleton className="h-6 w-5/6 mb-8" />
+      <div className="flex gap-6 border-y border-border py-4 mb-10">
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <Skeleton key={i} className={`h-4 ${i % 4 === 3 ? "w-2/3" : "w-full"}`} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const ProjectPage = () => {
   const { id } = useParams<{ id: string }>();
   const { lang } = useLang();
   const isPt = lang === "pt-BR";
-
   const project = projects.find((p) => p.id === id);
 
   if (!project) {

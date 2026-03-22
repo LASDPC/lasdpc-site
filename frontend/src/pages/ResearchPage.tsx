@@ -3,16 +3,55 @@ import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import projects from "@/data/MOCKED_PROJECTS.json";
 import publications from "@/data/MOCKED_PUBLICATIONS.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
 };
 
+const ResearchPageSkeleton = () => (
+  <div className="py-10">
+    <div className="container mx-auto px-4">
+      <Skeleton className="h-10 w-48 mb-12" />
+      <Skeleton className="h-7 w-32 mb-6" />
+      <Skeleton className="h-4 w-48 mb-8" />
+      <div className="grid md:grid-cols-2 gap-6 mb-20">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-xl p-6 border border-border space-y-3">
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16 rounded" />
+              <Skeleton className="h-5 w-20 rounded" />
+              <Skeleton className="h-5 w-14 rounded ml-auto" />
+            </div>
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/5" />
+            <div className="flex gap-4">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-7 w-44 mb-6" />
+      <Skeleton className="h-4 w-52 mb-8" />
+      <div className="space-y-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-lg p-5 border border-border space-y-2">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const ResearchPage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
-
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import blog from "@/data/MOCKED_BLOG.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -14,10 +15,35 @@ const blogImages = [
   "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&h=340&fit=crop",
 ];
 
+const BlogPageSkeleton = () => (
+  <div className="py-10">
+    <div className="container mx-auto px-4">
+      <Skeleton className="h-10 w-32 mb-4" />
+      <Skeleton className="h-4 w-48 mb-2" />
+      <Skeleton className="h-4 w-96 mb-12" />
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex flex-col bg-card rounded-xl border border-border overflow-hidden">
+            <Skeleton className="w-full h-44 rounded-none" />
+            <div className="p-6 flex flex-col gap-3">
+              <Skeleton className="h-5 w-16 rounded" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-24 mt-2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const BlogPage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
-
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">

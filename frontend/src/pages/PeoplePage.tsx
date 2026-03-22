@@ -3,16 +3,56 @@ import { useLang } from "@/contexts/LanguageContext";
 import { ExternalLink, Mail } from "lucide-react";
 import docentes from "@/data/MOCKED_DOCENTES.json";
 import students from "@/data/MOCKED_STUDENTS.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
 };
 
+const PeoplePageSkeleton = () => (
+  <div className="py-10">
+    <div className="container mx-auto px-4">
+      <Skeleton className="h-10 w-48 mb-4" />
+      <Skeleton className="h-4 w-52 mb-12" />
+      <div className="grid md:grid-cols-2 gap-6 mb-20">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-xl p-6 border border-border">
+            <div className="flex items-start gap-4">
+              <Skeleton className="w-16 h-16 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-44" />
+                <div className="flex gap-3 mt-3">
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-3 w-14" />
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-9 w-36 mb-4" />
+      <Skeleton className="h-4 w-48 mb-8" />
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-lg p-4 border border-border space-y-2">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-36" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const PeoplePage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
-
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">
