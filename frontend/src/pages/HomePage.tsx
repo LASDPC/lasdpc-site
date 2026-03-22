@@ -120,13 +120,13 @@ const HomePage = () => {
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {projects.slice(0, 2).map((p, i) => (
-              <Link to={`/research/${p.id}`} key={p.id}>
-                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-background rounded-xl p-6 border border-border hover:border-primary/40 transition-colors cursor-pointer">
-                  <div className="flex flex-wrap gap-2 mb-3">
+              <Link to={`/research/${p.id}`} key={p.id} className="h-full">
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="h-[220px] flex flex-col bg-background rounded-xl p-6 border border-border hover:border-primary/40 transition-colors cursor-pointer overflow-hidden">
+                  <div className="flex flex-wrap gap-2 mb-3 shrink-0 overflow-hidden max-h-[28px]">
                     {p.tags.map(tag => <span key={tag} className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">{tag}</span>)}
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">{isPt ? p.titlePt : p.title}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-3">{isPt ? p.descriptionPt : p.description}</p>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-2 line-clamp-2 shrink-0">{isPt ? p.titlePt : p.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-3 flex-1 overflow-hidden">{isPt ? p.descriptionPt : p.description}</p>
                 </motion.div>
               </Link>
             ))}
@@ -160,19 +160,19 @@ const HomePage = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {blog.map((post, i) => (
-              <Link to={`/blog/${post.id}`} key={post.id}>
-                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-background rounded-xl border border-border overflow-hidden hover:border-primary/30 transition-colors cursor-pointer">
+              <Link to={`/blog/${post.id}`} key={post.id} className="h-full">
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-background rounded-xl border border-border overflow-hidden hover:border-primary/30 transition-colors cursor-pointer">
                   <img
                     src={blogImages[i % blogImages.length]}
                     alt={isPt ? post.titlePt : post.title}
-                    className="w-full h-44 object-cover"
+                    className="w-full h-44 object-cover shrink-0"
                     loading="lazy"
                   />
-                  <div className="p-6">
-                    <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded">{post.tag}</span>
-                    <h3 className="font-display text-lg font-semibold text-foreground mt-3 mb-2">{isPt ? post.titlePt : post.title}</h3>
-                    <p className="text-sm text-muted-foreground">{isPt ? post.excerptPt : post.excerpt}</p>
-                    <p className="text-xs text-muted-foreground mt-3">{post.date}</p>
+                  <div className="p-6 flex flex-col flex-1">
+                    <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded self-start shrink-0">{post.tag}</span>
+                    <h3 className="font-display text-lg font-semibold text-foreground mt-3 mb-2 line-clamp-2 shrink-0">{isPt ? post.titlePt : post.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-3 flex-1 overflow-hidden">{isPt ? post.excerptPt : post.excerpt}</p>
+                    <p className="text-xs text-muted-foreground mt-3 shrink-0">{post.date}</p>
                   </div>
                 </motion.div>
               </Link>
