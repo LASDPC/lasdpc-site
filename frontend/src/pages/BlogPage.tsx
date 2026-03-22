@@ -29,19 +29,19 @@ const BlogPage = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blog.map((post, i) => (
-            <Link to={`/blog/${post.id}`} key={post.id}>
-              <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
+            <Link to={`/blog/${post.id}`} key={post.id} className="h-full">
+              <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
                 <img
                   src={blogImages[i % blogImages.length]}
                   alt={isPt ? post.titlePt : post.title}
-                  className="w-full h-44 object-cover"
+                  className="w-full h-44 object-cover shrink-0"
                   loading="lazy"
                 />
-                <div className="p-6">
-                  <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded">{post.tag}</span>
-                  <h2 className="font-display text-xl font-semibold text-foreground mt-4 mb-3">{isPt ? post.titlePt : post.title}</h2>
-                  <p className="text-sm text-muted-foreground mb-4">{isPt ? post.excerptPt : post.excerpt}</p>
-                  <time className="text-xs text-muted-foreground">{post.date}</time>
+                <div className="p-6 flex flex-col flex-1">
+                  <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded self-start shrink-0">{post.tag}</span>
+                  <h2 className="font-display text-xl font-semibold text-foreground mt-4 mb-3 line-clamp-2 shrink-0">{isPt ? post.titlePt : post.title}</h2>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1 overflow-hidden">{isPt ? post.excerptPt : post.excerpt}</p>
+                  <time className="text-xs text-muted-foreground shrink-0">{post.date}</time>
                 </div>
               </motion.article>
             </Link>

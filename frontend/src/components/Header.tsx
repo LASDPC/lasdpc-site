@@ -45,13 +45,13 @@ const Header = () => {
       </AnimatePresence>
 
       <header className="fixed top-0 left-0 right-0 z-50 glass-surface border-b border-border">
-        <div className="container mx-auto grid grid-cols-3 items-center h-16 px-4">
+        <div className="container mx-auto relative flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-3 shrink-0">
             <img src={logo} alt="LASDPC Logo" className="h-9 w-9" />
             <span className="font-display font-bold text-lg text-foreground hidden sm:block">LASDPC</span>
           </Link>
 
-          <nav className="hidden lg:flex items-center justify-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             {navKeys.map(({ key, path }) => (
               <Link
                 key={key}
@@ -67,7 +67,7 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex items-center gap-2 ml-auto">
             <AnimatePresence>
               {searchOpen && (
                 <motion.input
