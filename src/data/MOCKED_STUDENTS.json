@@ -1,0 +1,8 @@
+[
+  { "id": "stu-1", "name": "Lucas Almeida", "level": "PhD", "levelPt": "Doutorado", "area": "HPC Scheduling", "areaPt": "Escalonamento HPC" },
+  { "id": "stu-2", "name": "Mariana Costa", "level": "MSc", "levelPt": "Mestrado", "area": "Cloud Resource Management", "areaPt": "Gerenciamento de Recursos em Nuvem" },
+  { "id": "stu-3", "name": "Felipe Oliveira", "level": "PhD", "levelPt": "Doutorado", "area": "AI-driven Systems", "areaPt": "Sistemas com IA" },
+  { "id": "stu-4", "name": "Ana Beatriz Lima", "level": "MSc", "levelPt": "Mestrado", "area": "Concurrent Testing", "areaPt": "Teste Concorrente" },
+  { "id": "stu-5", "name": "Rafael Mendes", "level": "Undergrad", "levelPt": "Graduação", "area": "Distributed Databases", "areaPt": "Bancos de Dados Distribuídos" },
+  { "id": "stu-6", "name": "Carla Ferreira", "level": "Alumni", "levelPt": "Egresso", "area": "Machine Learning", "areaPt": "Aprendizado de Máquina" }
+]

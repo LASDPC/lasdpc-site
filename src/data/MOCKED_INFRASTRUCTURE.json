@@ -1,0 +1,38 @@
+{
+  "clusters": [
+    {
+      "id": "cluster-1",
+      "name": "Atlas A100",
+      "description": "GPU cluster with 8x NVIDIA A100 80GB for deep learning and LLM training.",
+      "descriptionPt": "Cluster GPU com 8x NVIDIA A100 80GB para deep learning e treinamento de LLMs.",
+      "cpuUsage": 72,
+      "gpuUsage": 89,
+      "memoryUsage": 65,
+      "storageUsage": 45,
+      "status": "online"
+    },
+    {
+      "id": "cluster-2",
+      "name": "Pegasus CPU",
+      "description": "128-core AMD EPYC cluster for general HPC workloads and simulations.",
+      "descriptionPt": "Cluster AMD EPYC com 128 núcleos para workloads HPC gerais e simulações.",
+      "cpuUsage": 58,
+      "gpuUsage": 0,
+      "memoryUsage": 42,
+      "storageUsage": 67,
+      "status": "online"
+    },
+    {
+      "id": "cluster-3",
+      "name": "Orion Dev",
+      "description": "Development and testing cluster for prototyping distributed applications.",
+      "descriptionPt": "Cluster de desenvolvimento e teste para prototipagem de aplicações distribuídas.",
+      "cpuUsage": 23,
+      "gpuUsage": 15,
+      "memoryUsage": 30,
+      "storageUsage": 20,
+      "status": "maintenance"
+    }
+  ],
+  "resources": ["Atlas A100", "Pegasus CPU", "Orion Dev"]
+}

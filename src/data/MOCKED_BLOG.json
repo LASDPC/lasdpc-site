@@ -1,0 +1,38 @@
+[
+  {
+    "id": "post-1",
+    "title": "LASDPC Team Presents at SC24",
+    "titlePt": "Equipe do LASDPC Apresenta no SC24",
+    "excerpt": "Our researchers presented three papers at the Supercomputing 2024 conference in Atlanta.",
+    "excerptPt": "Nossos pesquisadores apresentaram três artigos na conferência Supercomputing 2024 em Atlanta.",
+    "content": "The LASDPC team had a remarkable presence at **Supercomputing 2024 (SC24)** in Atlanta, Georgia. Three papers were accepted and presented across different tracks:\n\n## Papers Presented\n\n1. **Scalable LLM Training with Heterogeneous GPU Clusters** - This paper introduced a novel scheduling algorithm that improves training throughput by 34% on mixed GPU architectures.\n\n2. **Edge-Cloud Continuum for Real-Time IoT Analytics** - Demonstrated a framework for seamless workload migration between edge and cloud nodes.\n\n3. **Automated Concurrency Testing via State-Space Reduction** - Presented new techniques for reducing the state space in concurrent program verification.\n\n## Impact\n\nThe conference provided excellent networking opportunities with researchers from MIT, Stanford, ETH Zurich, and industry leaders like NVIDIA and Google DeepMind. Several collaboration proposals are now under discussion.\n\n> \"SC24 was a milestone for our lab. The quality of feedback we received will shape our research direction for the next two years.\" - Prof. Marcos José Santana",
+    "contentPt": "A equipe do LASDPC teve uma presença notável na **Supercomputing 2024 (SC24)** em Atlanta, Geórgia. Três artigos foram aceitos e apresentados em diferentes trilhas:\n\n## Artigos Apresentados\n\n1. **Treinamento Escalável de LLMs com Clusters GPU Heterogêneos** - Este artigo introduziu um novo algoritmo de escalonamento que melhora o throughput de treinamento em 34% em arquiteturas GPU mistas.\n\n2. **Continuum Borda-Nuvem para Análise IoT em Tempo Real** - Demonstrou um framework para migração contínua de cargas de trabalho entre nós de borda e nuvem.\n\n3. **Teste Automatizado de Concorrência via Redução de Espaço de Estados** - Apresentou novas técnicas para reduzir o espaço de estados na verificação de programas concorrentes.\n\n## Impacto\n\nA conferência proporcionou excelentes oportunidades de networking com pesquisadores do MIT, Stanford, ETH Zurich e líderes da indústria como NVIDIA e Google DeepMind. Diversas propostas de colaboração estão em discussão.\n\n> \"A SC24 foi um marco para nosso laboratório. A qualidade do feedback que recebemos moldará nossa direção de pesquisa nos próximos dois anos.\" - Prof. Marcos José Santana",
+    "date": "2024-11-20",
+    "tag": "Conference",
+    "author": "Prof. Marcos José Santana"
+  },
+  {
+    "id": "post-2",
+    "title": "New GPU Cluster Online",
+    "titlePt": "Novo Cluster GPU Online",
+    "excerpt": "The lab's new NVIDIA A100 cluster is now fully operational, enabling large-scale LLM training.",
+    "excerptPt": "O novo cluster NVIDIA A100 do laboratório está totalmente operacional, permitindo treinamento de LLMs em larga escala.",
+    "content": "We are excited to announce that our new **NVIDIA A100 GPU cluster** is now fully operational!\n\n## Specifications\n\n| Component | Details |\n|---|---|\n| GPUs | 8x NVIDIA A100 80GB |\n| CPU | 2x AMD EPYC 7763 (128 cores) |\n| RAM | 1TB DDR4 ECC |\n| Storage | 50TB NVMe SSD |\n| Network | 200Gbps InfiniBand HDR |\n\n## Capabilities\n\nThe cluster enables:\n- Training of LLMs with up to **70B parameters**\n- Multi-node distributed training with NCCL\n- Real-time inference serving for research demos\n- Large-scale molecular dynamics simulations\n\n## Access\n\nLab members can request access through the infrastructure page. External collaborators should contact the lab coordination.",
+    "contentPt": "Temos o prazer de anunciar que nosso novo **cluster GPU NVIDIA A100** está totalmente operacional!\n\n## Especificações\n\n| Componente | Detalhes |\n|---|---|\n| GPUs | 8x NVIDIA A100 80GB |\n| CPU | 2x AMD EPYC 7763 (128 cores) |\n| RAM | 1TB DDR4 ECC |\n| Armazenamento | 50TB NVMe SSD |\n| Rede | 200Gbps InfiniBand HDR |\n\n## Capacidades\n\nO cluster possibilita:\n- Treinamento de LLMs com até **70B parâmetros**\n- Treinamento distribuído multi-nó com NCCL\n- Inferência em tempo real para demos de pesquisa\n- Simulações de dinâmica molecular em larga escala\n\n## Acesso\n\nMembros do laboratório podem solicitar acesso pela página de infraestrutura. Colaboradores externos devem contatar a coordenação do laboratório.",
+    "date": "2024-09-15",
+    "tag": "Infrastructure",
+    "author": "Dr. Regina Helena Carlucci Santana"
+  },
+  {
+    "id": "post-3",
+    "title": "Open Call: Summer Research Internships",
+    "titlePt": "Chamada Aberta: Estágios de Pesquisa de Verão",
+    "excerpt": "We are looking for talented undergrad students to join our HPC and AI research projects.",
+    "excerptPt": "Estamos buscando estudantes de graduação talentosos para integrar nossos projetos de pesquisa em HPC e IA.",
+    "content": "## Summer 2025 Research Internships\n\nLASDPC is opening **5 research internship positions** for the summer of 2025. This is a unique opportunity for undergraduate students to work alongside experienced researchers on cutting-edge projects.\n\n### Available Projects\n\n- **LLM Fine-tuning for Scientific Text** - Work with our NLP team on domain-specific language model adaptation.\n- **Edge Computing Benchmarking** - Help develop benchmarking tools for edge-cloud systems.\n- **Concurrent Testing Framework** - Contribute to our open-source testing tool.\n\n### Requirements\n\n- Currently enrolled in Computer Science, Engineering, or related field\n- Strong programming skills (Python, C/C++)\n- Interest in HPC, distributed systems, or AI\n- Available for 20h/week minimum\n\n### Benefits\n\n- Monthly stipend (FAPESP IC scholarship)\n- Access to state-of-the-art computing infrastructure\n- Mentorship from senior researchers\n- Potential for publication co-authorship\n\n**Deadline: March 15, 2025**\n\nApply through the contact page or email lasdpc@icmc.usp.br.",
+    "contentPt": "## Estágios de Pesquisa Verão 2025\n\nO LASDPC está abrindo **5 vagas de estágio de pesquisa** para o verão de 2025. Esta é uma oportunidade única para estudantes de graduação trabalharem ao lado de pesquisadores experientes em projetos de ponta.\n\n### Projetos Disponíveis\n\n- **Fine-tuning de LLMs para Texto Científico** - Trabalhe com nossa equipe de NLP na adaptação de modelos de linguagem para domínios específicos.\n- **Benchmarking de Edge Computing** - Ajude a desenvolver ferramentas de benchmarking para sistemas edge-cloud.\n- **Framework de Teste Concorrente** - Contribua para nossa ferramenta de teste open-source.\n\n### Requisitos\n\n- Matriculado em Ciência da Computação, Engenharia ou área correlata\n- Fortes habilidades de programação (Python, C/C++)\n- Interesse em HPC, sistemas distribuídos ou IA\n- Disponibilidade mínima de 20h/semana\n\n### Benefícios\n\n- Bolsa mensal (FAPESP IC)\n- Acesso a infraestrutura computacional de última geração\n- Mentoria de pesquisadores seniores\n- Potencial para coautoria em publicações\n\n**Prazo: 15 de março de 2025**\n\nInscreva-se pela página de contato ou email lasdpc@icmc.usp.br.",
+    "date": "2024-08-01",
+    "tag": "Opportunity",
+    "author": "Prof. Paulo Sérgio Lopes de Souza"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "pub-1",
+    "title": "Efficient Scheduling for Distributed LLM Training",
+    "titlePt": "Escalonamento Eficiente para Treinamento Distribuído de LLMs",
+    "authors": "M. J. Santana, L. Almeida, F. Oliveira",
+    "venue": "IEEE International Conference on Distributed Computing Systems (ICDCS)",
+    "year": 2024,
+    "doi": "https://doi.org/10.1109/mock1"
+  },
+  {
+    "id": "pub-2",
+    "title": "Cloud-Edge Resource Orchestration for Real-Time IoT Analytics",
+    "titlePt": "Orquestração de Recursos Nuvem-Borda para Análise IoT em Tempo Real",
+    "authors": "J. C. Estrella, M. Costa",
+    "venue": "ACM Computing Surveys",
+    "year": 2024,
+    "doi": "https://doi.org/10.1145/mock2"
+  },
+  {
+    "id": "pub-3",
+    "title": "A Framework for Testing Concurrent Programs Using Coverage Criteria",
+    "titlePt": "Um Framework para Teste de Programas Concorrentes Usando Critérios de Cobertura",
+    "authors": "P. S. L. Souza, A. B. Lima",
+    "venue": "Software Testing, Verification and Reliability (STVR)",
+    "year": 2023,
+    "doi": "https://doi.org/10.1002/mock3"
+  },
+  {
+    "id": "pub-4",
+    "title": "ML-Driven Performance Prediction for Web Services",
+    "titlePt": "Predição de Desempenho para Serviços Web Baseada em ML",
+    "authors": "R. H. C. Santana, C. Ferreira",
+    "venue": "Journal of Systems and Software (JSS)",
+    "year": 2023,
+    "doi": "https://doi.org/10.1016/mock4"
+  }
+]

@@ -1,0 +1,54 @@
+[
+  {
+    "id": "proj-1",
+    "title": "Scalable LLM Training on HPC Clusters",
+    "titlePt": "Treinamento Escalável de LLMs em Clusters HPC",
+    "description": "Research on distributed training of large language models using custom scheduling and data parallelism strategies on heterogeneous HPC clusters.",
+    "descriptionPt": "Pesquisa sobre treinamento distribuído de modelos de linguagem de grande porte usando escalonamento customizado e estratégias de paralelismo de dados em clusters HPC heterogêneos.",
+    "content": "## Overview\n\nThis project investigates novel approaches to scaling the training of Large Language Models (LLMs) across heterogeneous HPC clusters. As model sizes continue to grow exponentially, efficient distributed training becomes critical.\n\n## Research Goals\n\n- Develop adaptive scheduling algorithms that account for GPU heterogeneity\n- Implement hybrid data/model parallelism strategies\n- Minimize communication overhead in multi-node setups\n- Create reproducible benchmarks for distributed LLM training\n\n## Key Results\n\n- **34% improvement** in training throughput on mixed A100/V100 clusters\n- Novel gradient compression technique reducing network traffic by 60%\n- Open-source scheduler released on GitHub with 200+ stars\n\n## Team\n\n- Prof. Marcos José Santana (PI)\n- Dr. Ana Silva (Postdoc)\n- Carlos Mendes (PhD Student)\n- Julia Santos (MSc Student)\n\n## Funding\n\nFAPESP Grant #2023/12345-6, CNPq Productivity Fellowship.",
+    "contentPt": "## Visão Geral\n\nEste projeto investiga novas abordagens para escalar o treinamento de Modelos de Linguagem de Grande Porte (LLMs) em clusters HPC heterogêneos. À medida que os tamanhos dos modelos continuam crescendo exponencialmente, o treinamento distribuído eficiente se torna crítico.\n\n## Objetivos de Pesquisa\n\n- Desenvolver algoritmos de escalonamento adaptativo que considerem a heterogeneidade de GPUs\n- Implementar estratégias híbridas de paralelismo de dados/modelo\n- Minimizar overhead de comunicação em configurações multi-nó\n- Criar benchmarks reprodutíveis para treinamento distribuído de LLMs\n\n## Resultados Principais\n\n- **Melhoria de 34%** no throughput de treinamento em clusters mistos A100/V100\n- Nova técnica de compressão de gradientes reduzindo tráfego de rede em 60%\n- Escalonador open-source publicado no GitHub com 200+ stars\n\n## Equipe\n\n- Prof. Marcos José Santana (PI)\n- Dra. Ana Silva (Pós-doc)\n- Carlos Mendes (Doutorando)\n- Julia Santos (Mestranda)\n\n## Financiamento\n\nFAPESP Processo #2023/12345-6, Bolsa Produtividade CNPq.",
+    "status": "active",
+    "tags": ["HPC", "LLM", "AI", "Deep Learning"],
+    "publications": 12,
+    "impact": "High"
+  },
+  {
+    "id": "proj-2",
+    "title": "Cloud-Edge Continuum for IoT",
+    "titlePt": "Continuum Nuvem-Borda para IoT",
+    "description": "Investigating optimal resource allocation across cloud and edge nodes for real-time IoT data processing and analytics.",
+    "descriptionPt": "Investigação de alocação ótima de recursos entre nós de nuvem e borda para processamento e análise de dados IoT em tempo real.",
+    "content": "## Overview\n\nThe Cloud-Edge Continuum project addresses the growing need for intelligent workload distribution between cloud data centers and edge computing nodes, particularly for IoT applications requiring low-latency processing.\n\n## Research Challenges\n\n- Dynamic workload migration with minimal service interruption\n- Energy-efficient resource allocation at the edge\n- Federated learning across heterogeneous edge devices\n- QoS guarantees for time-critical IoT applications\n\n## Architecture\n\nOur proposed architecture features a three-tier system:\n1. **Cloud Layer** - Heavy computation, model training, data aggregation\n2. **Fog Layer** - Regional processing, caching, load balancing\n3. **Edge Layer** - Real-time inference, data filtering, local decisions\n\n## Applications\n\n- Smart city traffic management\n- Industrial IoT predictive maintenance\n- Agricultural sensor networks\n- Healthcare wearable monitoring\n\n## Funding\n\nFAPESP Thematic Project #2022/98765-4.",
+    "contentPt": "## Visão Geral\n\nO projeto Continuum Nuvem-Borda aborda a crescente necessidade de distribuição inteligente de cargas de trabalho entre data centers em nuvem e nós de computação de borda, particularmente para aplicações IoT que requerem processamento de baixa latência.\n\n## Desafios de Pesquisa\n\n- Migração dinâmica de cargas de trabalho com interrupção mínima do serviço\n- Alocação de recursos energeticamente eficiente na borda\n- Aprendizado federado em dispositivos de borda heterogêneos\n- Garantias de QoS para aplicações IoT de tempo crítico\n\n## Arquitetura\n\nNossa arquitetura proposta apresenta um sistema de três camadas:\n1. **Camada Cloud** - Computação pesada, treinamento de modelos, agregação de dados\n2. **Camada Fog** - Processamento regional, cache, balanceamento de carga\n3. **Camada Edge** - Inferência em tempo real, filtragem de dados, decisões locais\n\n## Aplicações\n\n- Gestão de tráfego de cidades inteligentes\n- Manutenção preditiva IoT industrial\n- Redes de sensores agrícolas\n- Monitoramento de wearables na saúde\n\n## Financiamento\n\nFAPESP Projeto Temático #2022/98765-4.",
+    "status": "active",
+    "tags": ["Cloud", "Edge Computing", "IoT"],
+    "publications": 8,
+    "impact": "High"
+  },
+  {
+    "id": "proj-3",
+    "title": "Automated Testing of Concurrent Programs",
+    "titlePt": "Teste Automatizado de Programas Concorrentes",
+    "description": "Development of tools and methodologies for systematic testing and verification of concurrent and parallel programs.",
+    "descriptionPt": "Desenvolvimento de ferramentas e metodologias para teste sistemático e verificação de programas concorrentes e paralelos.",
+    "content": "## Overview\n\nConcurrent programs are notoriously difficult to test due to non-deterministic behavior. This project develops automated tools and methodologies that make concurrent software testing more systematic and reliable.\n\n## Key Contributions\n\n- **ValiPar** - A testing tool for MPI, OpenMP, and Pthreads programs\n- **State-space reduction** algorithms that decrease test execution time by up to 80%\n- **Mutation testing** operators specific to concurrent defects\n- **Coverage criteria** tailored for synchronization and communication patterns\n\n## Publications\n\nThis project has produced 15 peer-reviewed publications in top venues including IEEE TSE, ACM TOSEM, ICSE, and ISSTA.\n\n## Open Source\n\nAll tools are available on our GitHub organization under open-source licenses.\n\n## Funding\n\nCNPq Universal Grant #2021/54321-0.",
+    "contentPt": "## Visão Geral\n\nProgramas concorrentes são notoriamente difíceis de testar devido ao comportamento não-determinístico. Este projeto desenvolve ferramentas e metodologias automatizadas que tornam o teste de software concorrente mais sistemático e confiável.\n\n## Contribuições Principais\n\n- **ValiPar** - Ferramenta de teste para programas MPI, OpenMP e Pthreads\n- **Algoritmos de redução de espaço de estados** que diminuem o tempo de execução de testes em até 80%\n- **Operadores de teste de mutação** específicos para defeitos concorrentes\n- **Critérios de cobertura** adaptados para padrões de sincronização e comunicação\n\n## Publicações\n\nEste projeto produziu 15 publicações revisadas por pares em veículos de destaque incluindo IEEE TSE, ACM TOSEM, ICSE e ISSTA.\n\n## Open Source\n\nTodas as ferramentas estão disponíveis em nossa organização GitHub sob licenças open-source.\n\n## Financiamento\n\nCNPq Universal #2021/54321-0.",
+    "status": "active",
+    "tags": ["Testing", "Concurrency", "Verification"],
+    "publications": 15,
+    "impact": "Medium"
+  },
+  {
+    "id": "proj-4",
+    "title": "Performance Modeling with Machine Learning",
+    "titlePt": "Modelagem de Desempenho com Aprendizado de Máquina",
+    "description": "Using ML techniques to predict and optimize the performance of distributed systems and web services.",
+    "descriptionPt": "Uso de técnicas de ML para prever e otimizar o desempenho de sistemas distribuídos e serviços web.",
+    "content": "## Overview\n\nThis project applies machine learning techniques to model and predict the performance of complex distributed systems. By learning from historical data, our models can forecast bottlenecks and suggest optimizations before they impact users.\n\n## Methodology\n\n- Collect performance metrics from production systems\n- Train ensemble ML models (Random Forest, XGBoost, Neural Networks)\n- Integrate predictions into auto-scaling and load-balancing decisions\n- Validate with real-world web service workloads\n\n## Results\n\n- **95% accuracy** in predicting response time violations 10 minutes ahead\n- **40% cost reduction** in cloud resource usage through ML-driven auto-scaling\n- Benchmark dataset with 20M+ data points released publicly\n\n## Applications\n\n- Cloud auto-scaling optimization\n- SLA compliance prediction\n- Capacity planning for web services\n- Anomaly detection in distributed systems\n\n## Funding\n\nFAPESP Regular Grant #2020/11111-2, completed in 2023.",
+    "contentPt": "## Visão Geral\n\nEste projeto aplica técnicas de aprendizado de máquina para modelar e prever o desempenho de sistemas distribuídos complexos. Ao aprender com dados históricos, nossos modelos podem prever gargalos e sugerir otimizações antes que impactem os usuários.\n\n## Metodologia\n\n- Coletar métricas de desempenho de sistemas em produção\n- Treinar modelos ML ensemble (Random Forest, XGBoost, Redes Neurais)\n- Integrar previsões em decisões de auto-scaling e load-balancing\n- Validar com cargas de trabalho reais de serviços web\n\n## Resultados\n\n- **95% de acurácia** na previsão de violações de tempo de resposta 10 minutos antes\n- **Redução de 40% nos custos** de uso de recursos cloud através de auto-scaling guiado por ML\n- Dataset benchmark com 20M+ pontos de dados publicado publicamente\n\n## Aplicações\n\n- Otimização de auto-scaling em nuvem\n- Previsão de conformidade com SLA\n- Planejamento de capacidade para serviços web\n- Detecção de anomalias em sistemas distribuídos\n\n## Financiamento\n\nFAPESP Regular #2020/11111-2, concluído em 2023.",
+    "status": "completed",
+    "tags": ["ML", "Performance", "Modeling"],
+    "publications": 20,
+    "impact": "High"
+  }
+]

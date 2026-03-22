@@ -1,0 +1,38 @@
+[
+  {
+    "id": "getting-started",
+    "category": "guides",
+    "titlePt": "Primeiros Passos",
+    "title": "Getting Started",
+    "content": "# Getting Started\n\nWelcome to the LASDPC documentation. This guide will help you get started with our HPC infrastructure.\n\n## Prerequisites\n\n- USP institutional account\n- VPN access configured\n- SSH key registered\n\n## Connecting to the Cluster\n\n```bash\nssh your-username@cluster.lasdpc.icmc.usp.br\n```\n\n## Submitting Your First Job\n\nUse SLURM to submit jobs:\n\n```bash\nsbatch my_script.sh\n```\n\nCheck job status with:\n\n```bash\nsqueue -u your-username\n```",
+    "contentPt": "# Primeiros Passos\n\nBem-vindo à documentação do LASDPC. Este guia ajudará você a começar com nossa infraestrutura HPC.\n\n## Pré-requisitos\n\n- Conta institucional USP\n- Acesso VPN configurado\n- Chave SSH registrada\n\n## Conectando ao Cluster\n\n```bash\nssh seu-usuario@cluster.lasdpc.icmc.usp.br\n```\n\n## Submetendo Seu Primeiro Job\n\nUse o SLURM para submeter jobs:\n\n```bash\nsbatch meu_script.sh\n```\n\nVerifique o status do job com:\n\n```bash\nsqueue -u seu-usuario\n```",
+    "updatedAt": "2024-01-15"
+  },
+  {
+    "id": "slurm-guide",
+    "category": "guides",
+    "titlePt": "Guia do SLURM",
+    "title": "SLURM Guide",
+    "content": "# SLURM Workload Manager\n\nSLURM is the job scheduler used across all LASDPC clusters.\n\n## Common Commands\n\n| Command | Description |\n|---------|-------------|\n| `sbatch` | Submit a batch script |\n| `squeue` | View job queue |\n| `scancel` | Cancel a job |\n| `sinfo` | View cluster info |\n\n## Job Script Example\n\n```bash\n#!/bin/bash\n#SBATCH --job-name=my_job\n#SBATCH --nodes=2\n#SBATCH --ntasks-per-node=4\n#SBATCH --time=01:00:00\n#SBATCH --partition=gpu\n\nmodule load cuda/12.0\npython train.py\n```\n\n## GPU Partitions\n\n- `gpu` - General GPU jobs (A100, V100)\n- `gpu-large` - Multi-node GPU training\n- `cpu` - CPU-only workloads",
+    "contentPt": "# Gerenciador de Carga SLURM\n\nO SLURM é o escalonador de jobs usado em todos os clusters do LASDPC.\n\n## Comandos Comuns\n\n| Comando | Descrição |\n|---------|-------------|\n| `sbatch` | Submeter script batch |\n| `squeue` | Ver fila de jobs |\n| `scancel` | Cancelar um job |\n| `sinfo` | Ver info do cluster |\n\n## Exemplo de Script\n\n```bash\n#!/bin/bash\n#SBATCH --job-name=meu_job\n#SBATCH --nodes=2\n#SBATCH --ntasks-per-node=4\n#SBATCH --time=01:00:00\n#SBATCH --partition=gpu\n\nmodule load cuda/12.0\npython train.py\n```\n\n## Partições GPU\n\n- `gpu` - Jobs GPU gerais (A100, V100)\n- `gpu-large` - Treinamento GPU multi-nó\n- `cpu` - Workloads somente CPU",
+    "updatedAt": "2024-02-10"
+  },
+  {
+    "id": "storage-policy",
+    "category": "policies",
+    "titlePt": "Política de Armazenamento",
+    "title": "Storage Policy",
+    "content": "# Storage Policy\n\n## Home Directory\n\nEach user has a **50GB** quota in their home directory.\n\n## Scratch Storage\n\nThe `/scratch` filesystem is available for temporary large-scale data:\n\n- **No quota** but files older than 30 days are automatically purged\n- Not backed up\n- Use for intermediate computation results\n\n## Data Backup\n\nHome directories are backed up **weekly**. For critical data, use the archive system:\n\n```bash\narchive-submit /path/to/data\n```\n\n> **Important:** Do not store sensitive or personal data on the cluster without prior authorization.",
+    "contentPt": "# Política de Armazenamento\n\n## Diretório Home\n\nCada usuário tem uma cota de **50GB** em seu diretório home.\n\n## Armazenamento Scratch\n\nO sistema de arquivos `/scratch` está disponível para dados temporários de grande escala:\n\n- **Sem cota**, mas arquivos com mais de 30 dias são purgados automaticamente\n- Sem backup\n- Use para resultados intermediários de computação\n\n## Backup de Dados\n\nDiretórios home têm backup **semanal**. Para dados críticos, use o sistema de arquivamento:\n\n```bash\narchive-submit /caminho/para/dados\n```\n\n> **Importante:** Não armazene dados sensíveis ou pessoais no cluster sem autorização prévia.",
+    "updatedAt": "2024-03-01"
+  },
+  {
+    "id": "python-env",
+    "category": "tutorials",
+    "titlePt": "Ambientes Python",
+    "title": "Python Environments",
+    "content": "# Python Environments on the Cluster\n\n## Using Conda\n\n```bash\nmodule load anaconda3\nconda create -n myenv python=3.11\nconda activate myenv\n```\n\n## Installing PyTorch with CUDA\n\n```bash\nconda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia\n```\n\n## Virtual Environments\n\nAlternatively, use `venv`:\n\n```bash\npython -m venv ~/.envs/myproject\nsource ~/.envs/myproject/bin/activate\npip install -r requirements.txt\n```\n\n## Best Practices\n\n1. Always use a virtual environment\n2. Pin your dependencies with `pip freeze > requirements.txt`\n3. Use `--no-cache-dir` for pip installs to save disk space",
+    "contentPt": "# Ambientes Python no Cluster\n\n## Usando Conda\n\n```bash\nmodule load anaconda3\nconda create -n meuenv python=3.11\nconda activate meuenv\n```\n\n## Instalando PyTorch com CUDA\n\n```bash\nconda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia\n```\n\n## Ambientes Virtuais\n\nAlternativamente, use `venv`:\n\n```bash\npython -m venv ~/.envs/meuprojeto\nsource ~/.envs/meuprojeto/bin/activate\npip install -r requirements.txt\n```\n\n## Boas Práticas\n\n1. Sempre use um ambiente virtual\n2. Fixe suas dependências com `pip freeze > requirements.txt`\n3. Use `--no-cache-dir` em installs pip para economizar espaço",
+    "updatedAt": "2024-01-20"
+  }
+]

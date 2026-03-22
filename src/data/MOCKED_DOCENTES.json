@@ -1,0 +1,58 @@
+[
+  {
+    "id": "prof-1",
+    "name": "Prof. Dr. Marcos José Santana",
+    "role": "Full Professor",
+    "rolePt": "Professor Titular",
+    "area": "Distributed Systems, Performance Evaluation",
+    "areaPt": "Sistemas Distribuídos, Avaliação de Desempenho",
+    "email": "marcos@icmc.usp.br",
+    "lattes": "http://lattes.cnpq.br/mock1",
+    "orcid": "https://orcid.org/0000-0001-0000-0001",
+    "scholar": "https://scholar.google.com/citations?user=mock1",
+    "page": "/people/marcos-santana",
+    "photo": null
+  },
+  {
+    "id": "prof-2",
+    "name": "Profa. Dra. Regina Helena Carlucci Santana",
+    "role": "Full Professor",
+    "rolePt": "Professora Titular",
+    "area": "Performance Modeling, Cloud Computing",
+    "areaPt": "Modelagem de Desempenho, Computação em Nuvem",
+    "email": "regina@icmc.usp.br",
+    "lattes": "http://lattes.cnpq.br/mock2",
+    "orcid": "https://orcid.org/0000-0001-0000-0002",
+    "scholar": "https://scholar.google.com/citations?user=mock2",
+    "page": "/people/regina-santana",
+    "photo": null
+  },
+  {
+    "id": "prof-3",
+    "name": "Prof. Dr. Paulo Sérgio Lopes de Souza",
+    "role": "Associate Professor",
+    "rolePt": "Professor Associado",
+    "area": "Concurrent Programming, Software Testing",
+    "areaPt": "Programação Concorrente, Teste de Software",
+    "email": "pssouza@icmc.usp.br",
+    "lattes": "http://lattes.cnpq.br/mock3",
+    "orcid": "https://orcid.org/0000-0001-0000-0003",
+    "scholar": "https://scholar.google.com/citations?user=mock3",
+    "page": "/people/paulo-souza",
+    "photo": null
+  },
+  {
+    "id": "prof-4",
+    "name": "Prof. Dr. Julio Cezar Estrella",
+    "role": "Associate Professor",
+    "rolePt": "Professor Associado",
+    "area": "Service-Oriented Architectures, Cloud Computing",
+    "areaPt": "Arquiteturas Orientadas a Serviço, Computação em Nuvem",
+    "email": "jcezar@icmc.usp.br",
+    "lattes": "http://lattes.cnpq.br/mock4",
+    "orcid": "https://orcid.org/0000-0001-0000-0004",
+    "scholar": "https://scholar.google.com/citations?user=mock4",
+    "page": "/people/julio-estrella",
+    "photo": null
+  }
+]
