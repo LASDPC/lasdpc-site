@@ -15,6 +15,7 @@ import BlogPage from "@/pages/BlogPage";
 import BlogPostPage from "@/pages/BlogPostPage";
 import ContactPage from "@/pages/ContactPage";
 import DocsPage from "@/pages/DocsPage";
+import LoginPage from "@/pages/LoginPage";
 import ProjectPage from "@/pages/ProjectPage";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -37,10 +38,10 @@ const App = () => (
                   <Route path="/infrastructure" element={<InfrastructurePage />} />
                   <Route path="/blog" element={<BlogPage />} />
                   <Route path="/blog/:id" element={<BlogPostPage />} />
-                  <Route path="/research" element={<ResearchPage />} />
                   <Route path="/research/:id" element={<ProjectPage />} />
                   <Route path="/contact" element={<ContactPage />} />
                   <Route path="/docs" element={<DocsPage />} />
+                  <Route path="/login" element={<LoginPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

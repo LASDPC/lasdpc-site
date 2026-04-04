@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Sun, Moon, Contrast, Search, Menu, X, Globe, AArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
+import UserAvatarButton from "@/components/UserAvatarButton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navKeys = [
   { key: "nav.home", path: "/" },
@@ -19,6 +22,7 @@ const navKeys = [
 const Header = () => {
   const { theme, setTheme, fontSize, setFontSize, toggleHighContrast } = useTheme();
   const { lang, setLang, t } = useLang();
+  const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
@@ -46,10 +50,14 @@ const Header = () => {
 
       <header className="fixed top-0 left-0 right-0 z-50 glass-surface border-b border-border">
         <div className="container mx-auto relative flex items-center justify-between h-16 px-4">
-          <Link to="/" className="flex items-center gap-3 shrink-0">
-            <img src={logo} alt="LASDPC Logo" className="h-9 w-9" />
-            <span className="font-display font-bold text-lg text-foreground hidden sm:block">LASDPC</span>
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link to="/" className="flex items-center gap-3">
+              <img src={logo} alt="LASDPC Logo" className="h-9 w-9" />
+              <span className="font-display font-bold text-lg text-foreground hidden sm:block">LASDPC</span>
+            </Link>
+            <div className="w-px h-5 bg-border/60 hidden sm:block" />
+            <UserAvatarButton />
+          </div>
 
           <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             {navKeys.map(({ key, path }) => (
@@ -136,6 +144,22 @@ const Header = () => {
               className="lg:hidden border-t border-border bg-card px-4 overflow-hidden"
             >
               <div className="pb-4 pt-2">
+                {/* Mobile user info */}
+                {user && (
+                  <div className="flex items-center gap-3 px-3 py-2.5 mb-2 border-b border-border pb-3">
+                    <Avatar className="h-8 w-8">
+                      {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                        {user.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                  </div>
+                )}
+
                 {navKeys.map(({ key, path }, i) => (
                   <motion.div
                     key={key}

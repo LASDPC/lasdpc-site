@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
@@ -52,32 +53,16 @@ const DocsPageSkeleton = () => (
 
 const DocsPage = () => {
   const { lang } = useLang();
-  const { user, login, logout } = useAuth();
+  const { user, logout } = useAuth();
   const isPt = lang === "pt-BR";
 
   const [activeDocId, setActiveDocId] = useState(docs[0]?.id ?? "");
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
 
   const activeDoc = docs.find((d) => d.id === activeDocId);
 
   const categories = Array.from(new Set(docs.map((d) => d.category)));
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const ok = login(loginEmail, loginPassword);
-    if (ok) {
-      setShowLogin(false);
-      setLoginEmail("");
-      setLoginPassword("");
-      toast.success(isPt ? "Login realizado!" : "Logged in!");
-    } else {
-      toast.error(isPt ? "Credenciais inválidas" : "Invalid credentials");
-    }
-  };
 
   const startEditing = () => {
     if (!activeDoc) return;
@@ -142,13 +127,14 @@ const DocsPage = () => {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setShowLogin(true)}
+            <Link
+              to="/login"
+              state={{ from: "/docs" }}
               className="flex items-center gap-1.5 text-sm text-primary hover:underline"
             >
               <LogIn size={14} />
               {isPt ? "Entrar como admin" : "Login as admin"}
-            </button>
+            </Link>
           )}
         </div>
       </aside>
@@ -169,9 +155,13 @@ const DocsPage = () => {
             ))}
           </select>
           {!user && (
-            <button onClick={() => setShowLogin(true)} className="mt-2 flex items-center gap-1.5 text-sm text-primary hover:underline">
+            <Link
+              to="/login"
+              state={{ from: "/docs" }}
+              className="mt-2 flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
               <LogIn size={14} /> {isPt ? "Entrar como admin" : "Login as admin"}
-            </button>
+            </Link>
           )}
         </div>
 
@@ -253,46 +243,6 @@ const DocsPage = () => {
           </div>
         )}
       </div>
-
-      {/* Login modal */}
-      {showLogin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20">
-          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-lg">
-            <h3 className="font-display font-bold text-foreground text-lg mb-4">
-              {isPt ? "Login Administrativo" : "Admin Login"}
-            </h3>
-            <form onSubmit={handleLogin} className="space-y-3">
-              <input
-                type="email"
-                placeholder="Email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="w-full bg-secondary text-secondary-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                required
-              />
-              <input
-                type="password"
-                placeholder={isPt ? "Senha" : "Password"}
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full bg-secondary text-secondary-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                required
-              />
-              <div className="flex gap-2 pt-1">
-                <button type="submit" className="flex-1 bg-primary text-primary-foreground rounded-md py-2 text-sm font-medium hover:bg-primary/90 transition-colors">
-                  {isPt ? "Entrar" : "Login"}
-                </button>
-                <button type="button" onClick={() => setShowLogin(false)} className="flex-1 bg-secondary text-secondary-foreground rounded-md py-2 text-sm font-medium hover:bg-muted transition-colors">
-                  {isPt ? "Cancelar" : "Cancel"}
-                </button>
-              </div>
-            </form>
-            <p className="text-xs text-muted-foreground mt-3">
-              {isPt ? "Use" : "Use"}: admin@lasdpc.usp.br / lasdpc2024
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
