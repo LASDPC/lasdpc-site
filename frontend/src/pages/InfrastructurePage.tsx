@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
-import { Cpu, HardDrive, MemoryStick, Activity } from "lucide-react";
-import infra from "@/data/MOCKED_INFRASTRUCTURE.json";
+import { useAuth } from "@/contexts/AuthContext";
+import { useInfrastructure } from "@/hooks/useInfrastructure";
 import { Skeleton } from "@/components/ui/skeleton";
+import PencilButton from "@/components/admin/PencilButton";
+import AddNewButton from "@/components/admin/AddNewButton";
+import AdminEditModal from "@/components/admin/AdminEditModal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -25,42 +28,15 @@ const UsageBar = ({ label, value }: { label: string; value: number }) => (
 const InfrastructurePageSkeleton = () => (
   <div className="py-10">
     <div className="container mx-auto px-4">
-      <Skeleton className="h-10 w-56 mb-4" />
-      <Skeleton className="h-4 w-56 mb-12" />
+      <Skeleton className="h-10 w-56 mb-4" /><Skeleton className="h-4 w-56 mb-12" />
       <div className="grid md:grid-cols-3 gap-6 mb-20">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="bg-card rounded-xl p-6 border border-border space-y-4">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-5 w-14 rounded" />
-            </div>
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <div className="space-y-3 pt-1">
-              {Array.from({ length: 4 }).map((_, j) => (
-                <div key={j} className="space-y-1">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-3 w-8" />
-                    <Skeleton className="h-3 w-8" />
-                  </div>
-                  <Skeleton className="h-2 w-full rounded-full" />
-                </div>
-              ))}
-            </div>
+            <div className="flex items-center justify-between"><Skeleton className="h-6 w-32" /><Skeleton className="h-5 w-14 rounded" /></div>
+            <Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-5/6" />
+            <div className="space-y-3 pt-1">{Array.from({ length: 4 }).map((_, j) => (<div key={j} className="space-y-1"><Skeleton className="h-2 w-full rounded-full" /></div>))}</div>
           </div>
         ))}
-      </div>
-      <Skeleton className="h-8 w-48 mb-6" />
-      <div className="max-w-lg space-y-4">
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-10 w-full rounded-lg" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-10 w-full rounded-lg" />
-        </div>
-        <Skeleton className="h-10 w-36 rounded-lg" />
       </div>
     </div>
   </div>
@@ -68,31 +44,46 @@ const InfrastructurePageSkeleton = () => (
 
 const InfrastructurePage = () => {
   const { lang, t } = useLang();
+  const { isAdmin } = useAuth();
   const isPt = lang === "pt-BR";
-  const [form, setForm] = useState({ resource: infra.resources[0], date: "" });
+  const { data: infra, isLoading } = useInfrastructure();
+  const [form, setForm] = useState({ resource: "", date: "" });
+  const [editItem, setEditItem] = useState<any>(null);
+  const [showNew, setShowNew] = useState(false);
+
+  if (isLoading || !infra) return <InfrastructurePageSkeleton />;
+
+  const defaultResource = form.resource || infra.resources[0] || "";
+
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">
-        <h1 className="font-display text-4xl font-bold text-foreground mb-4">{t("section.infrastructure")}</h1>
-        <p className="text-muted-foreground mb-12 text-sm font-mono">[MOCKED_INFRASTRUCTURE.json]</p>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="font-display text-4xl font-bold text-foreground">{t("section.infrastructure")}</h1>
+          {isAdmin && <AddNewButton label={isPt ? "Novo Cluster" : "New Cluster"} onClick={() => setShowNew(true)} />}
+        </div>
+        <p className="text-muted-foreground mb-12 text-sm font-mono">{t("section.infrastructure")}</p>
 
         <div className="grid md:grid-cols-3 gap-6 mb-20">
           {infra.clusters.map((c, i) => (
-            <motion.div key={c.id} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-display text-lg font-semibold text-foreground">{c.name}</h3>
-                <span className={`text-xs font-mono px-2 py-0.5 rounded ${c.status === "online" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"}`}>
-                  {c.status}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-5">{isPt ? c.descriptionPt : c.description}</p>
-              <div className="space-y-3">
-                <UsageBar label="CPU" value={c.cpuUsage} />
-                <UsageBar label="GPU" value={c.gpuUsage} />
-                <UsageBar label="Memory" value={c.memoryUsage} />
-                <UsageBar label="Storage" value={c.storageUsage} />
-              </div>
-            </motion.div>
+            <div key={c.id} className="relative group">
+              {isAdmin && <PencilButton onClick={() => setEditItem(c)} />}
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-lg font-semibold text-foreground">{c.name}</h3>
+                  <span className={`text-xs font-mono px-2 py-0.5 rounded ${c.status === "online" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"}`}>
+                    {c.status}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">{isPt ? c.descriptionPt : c.description}</p>
+                <div className="space-y-3">
+                  <UsageBar label="CPU" value={c.cpuUsage} />
+                  <UsageBar label="GPU" value={c.gpuUsage} />
+                  <UsageBar label="Memory" value={c.memoryUsage} />
+                  <UsageBar label="Storage" value={c.storageUsage} />
+                </div>
+              </motion.div>
+            </div>
           ))}
         </div>
 
@@ -102,7 +93,7 @@ const InfrastructurePage = () => {
           <form onSubmit={(e) => { e.preventDefault(); alert(isPt ? "Reserva simulada enviada!" : "Mock reservation submitted!"); }} className="space-y-4">
             <div>
               <label className="text-sm font-medium text-foreground block mb-1.5">{t("reservation.resource")}</label>
-              <select value={form.resource} onChange={e => setForm({ ...form, resource: e.target.value })} className="w-full bg-secondary text-secondary-foreground rounded-lg px-3 py-2.5 text-sm border border-border focus:outline-none focus:ring-2 focus:ring-ring">
+              <select value={defaultResource} onChange={e => setForm({ ...form, resource: e.target.value })} className="w-full bg-secondary text-secondary-foreground rounded-lg px-3 py-2.5 text-sm border border-border focus:outline-none focus:ring-2 focus:ring-ring">
                 {infra.resources.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
@@ -116,6 +107,15 @@ const InfrastructurePage = () => {
           </form>
         </div>
       </div>
+
+      {(editItem || showNew) && (
+        <AdminEditModal
+          open={true}
+          onClose={() => { setEditItem(null); setShowNew(false); }}
+          resource="cluster"
+          data={editItem}
+        />
+      )}
     </div>
   );
 };

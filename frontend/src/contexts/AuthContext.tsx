@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
+import { authService } from "@/services/auth";
+import { setToken, removeToken } from "@/lib/api";
 
 export type UserRole = "admin" | "normal";
 
@@ -13,35 +15,9 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
-
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    email: "admin@lasdpc.usp.br",
-    password: "lasdpc2024",
-    name: "Admin LASDPC",
-    role: "admin",
-    initials: "AL",
-  },
-  {
-    email: "joao.silva@usp.br",
-    password: "usuario123",
-    name: "João Silva",
-    role: "normal",
-    avatar: "https://i.pravatar.cc/150?u=joao.silva@usp.br",
-    initials: "JS",
-  },
-  {
-    email: "maria.santos@usp.br",
-    password: "senha456",
-    name: "Maria Santos",
-    role: "normal",
-    avatar: "https://i.pravatar.cc/150?u=maria.santos@usp.br",
-    initials: "MS",
-  },
-];
 
 const SESSION_KEY = "lasdpc-auth-user";
 
@@ -58,7 +34,7 @@ function loadSession(): User | null {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAdmin: false,
-  login: () => false,
+  login: async () => false,
   logout: () => {},
 });
 
@@ -67,19 +43,28 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(loadSession);
 
-  const login = (email: string, password: string): boolean => {
-    const found = MOCK_USERS.find((u) => u.email === email && u.password === password);
-    if (found) {
-      const { password: _, ...userData } = found;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const res = await authService.login(email, password);
+      setToken(res.access_token);
+      const userData: User = {
+        email: res.user.email,
+        name: res.user.name,
+        role: res.user.role as UserRole,
+        avatar: res.user.avatar ?? undefined,
+        initials: res.user.initials,
+      };
       setUser(userData);
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
       return true;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
     setUser(null);
+    removeToken();
     sessionStorage.removeItem(SESSION_KEY);
   };
 

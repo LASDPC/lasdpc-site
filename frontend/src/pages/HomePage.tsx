@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { ArrowRight, Cpu, Users, BookOpen, Server } from "lucide-react";
-import projects from "@/data/MOCKED_PROJECTS.json";
-import publications from "@/data/MOCKED_PUBLICATIONS.json";
-import blog from "@/data/MOCKED_BLOG.json";
+import { useProjects } from "@/hooks/useProjects";
+import { usePublications } from "@/hooks/usePublications";
+import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
@@ -136,6 +136,12 @@ const HomePageSkeleton = () => (
 const HomePage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
+  const { data: projects = [], isLoading: loadingProjects } = useProjects();
+  const { data: publications = [], isLoading: loadingPubs } = usePublications();
+  const { data: blog = [], isLoading: loadingBlog } = useBlog();
+
+  if (loadingProjects || loadingPubs || loadingBlog) return <HomePageSkeleton />;
+
   return (
     <div>
       {/* Hero */}

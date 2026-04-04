@@ -4,7 +4,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import blog from "@/data/MOCKED_BLOG.json";
+import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const blogImages = [
@@ -37,6 +37,10 @@ const BlogPostPage = () => {
   const { id } = useParams<{ id: string }>();
   const { lang } = useLang();
   const isPt = lang === "pt-BR";
+  const { data: blog = [], isLoading } = useBlog();
+
+  if (isLoading) return <BlogPostPageSkeleton />;
+
   const postIndex = blog.findIndex((p) => p.id === id);
   const post = blog[postIndex];
 
@@ -77,7 +81,7 @@ const BlogPostPage = () => {
             <span className="inline-flex items-center gap-1.5">
               <Calendar size={14} /> {post.date}
             </span>
-            {"author" in post && (
+            {post.author && (
               <span className="inline-flex items-center gap-1.5">
                 <User size={14} /> {post.author}
               </span>
@@ -90,7 +94,7 @@ const BlogPostPage = () => {
 
           <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {isPt ? (post as any).contentPt : (post as any).content}
+              {isPt ? post.contentPt : post.content}
             </ReactMarkdown>
           </article>
         </motion.div>

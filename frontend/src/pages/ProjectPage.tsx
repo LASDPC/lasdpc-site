@@ -4,7 +4,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { ArrowLeft, BookOpen, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import projects from "@/data/MOCKED_PROJECTS.json";
+import { useProjects } from "@/hooks/useProjects";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ProjectPageSkeleton = () => (
@@ -37,6 +37,10 @@ const ProjectPage = () => {
   const { id } = useParams<{ id: string }>();
   const { lang } = useLang();
   const isPt = lang === "pt-BR";
+  const { data: projects = [], isLoading } = useProjects();
+
+  if (isLoading) return <ProjectPageSkeleton />;
+
   const project = projects.find((p) => p.id === id);
 
   if (!project) {
@@ -90,7 +94,7 @@ const ProjectPage = () => {
 
           <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {isPt ? (project as any).contentPt : (project as any).content}
+              {isPt ? project.contentPt : project.content}
             </ReactMarkdown>
           </article>
         </motion.div>

@@ -33,9 +33,7 @@ const LoginPage = () => {
     setError(false);
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 400));
-
-    const ok = login(email, password);
+    const ok = await login(email, password);
     setLoading(false);
     if (!ok) {
       setError(true);
@@ -53,14 +51,14 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex">
-      {/* Left panel — desktop only */}
+      {/* Left panel - desktop only */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground flex-col justify-between p-12">
         <div>
           <div className="flex items-center gap-4 mb-12">
             <img src={logo} alt="LASDPC" className="h-14 w-14 brightness-0 invert" />
             <div>
               <h1 className="font-display font-bold text-2xl">LASDPC</h1>
-              <p className="text-sm text-primary-foreground/80">ICMC — USP</p>
+              <p className="text-sm text-primary-foreground/80">ICMC - USP</p>
             </div>
           </div>
 
@@ -84,11 +82,11 @@ const LoginPage = () => {
         </div>
 
         <p className="text-xs text-primary-foreground/50">
-          ICMC-USP, Av. Trabalhador São-Carlense, 400 — São Carlos, SP
+          ICMC-USP, Av. Trabalhador São-Carlense, 400 - São Carlos, SP
         </p>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

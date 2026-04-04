@@ -4,7 +4,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import docs from "@/data/MOCKED_DOCS.json";
+import { useDocs, useUpdateDoc } from "@/hooks/useDocs";
 import { FileText, BookOpen, Shield, GraduationCap, Plus, LogIn, LogOut, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,12 +56,17 @@ const DocsPage = () => {
   const { user, logout } = useAuth();
   const isPt = lang === "pt-BR";
 
-  const [activeDocId, setActiveDocId] = useState(docs[0]?.id ?? "");
+  const { data: docs = [], isLoading } = useDocs();
+  const updateDoc = useUpdateDoc();
+
+  const [activeDocId, setActiveDocId] = useState<string>("");
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
 
-  const activeDoc = docs.find((d) => d.id === activeDocId);
+  if (isLoading) return <DocsPageSkeleton />;
 
+  const effectiveDocId = activeDocId || docs[0]?.id || "";
+  const activeDoc = docs.find((d) => d.id === effectiveDocId);
   const categories = Array.from(new Set(docs.map((d) => d.category)));
 
   const startEditing = () => {
@@ -71,8 +76,22 @@ const DocsPage = () => {
   };
 
   const saveEdit = () => {
-    setEditing(false);
-    toast.success(isPt ? "Documentação salva (mock)" : "Documentation saved (mock)");
+    if (!activeDoc) return;
+    const updatedDoc = {
+      ...activeDoc,
+      ...(isPt ? { contentPt: editContent } : { content: editContent }),
+      updatedAt: new Date().toISOString().split("T")[0],
+    };
+    const { id: _, ...data } = updatedDoc;
+    updateDoc.mutate(
+      { id: activeDoc.id, data },
+      {
+        onSuccess: () => {
+          setEditing(false);
+          toast.success(isPt ? "Documentação salva" : "Documentation saved");
+        },
+      },
+    );
   };
 
   return (
@@ -99,7 +118,7 @@ const DocsPage = () => {
                       <button
                         onClick={() => { setActiveDocId(d.id); setEditing(false); }}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          activeDocId === d.id
+                          effectiveDocId === d.id
                             ? "bg-primary text-primary-foreground font-medium"
                             : "text-foreground hover:bg-secondary"
                         }`}
@@ -144,7 +163,7 @@ const DocsPage = () => {
         {/* Mobile doc selector */}
         <div className="md:hidden p-4 border-b border-border">
           <select
-            value={activeDocId}
+            value={effectiveDocId}
             onChange={(e) => { setActiveDocId(e.target.value); setEditing(false); }}
             className="w-full bg-secondary text-secondary-foreground rounded-md px-3 py-2 text-sm"
           >
