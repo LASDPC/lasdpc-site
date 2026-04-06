@@ -4,14 +4,11 @@ import { useLang } from "@/contexts/LanguageContext";
 import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { urlTransform } from "@/lib/markdown";
 import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const blogImages = [
-  "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=500&fit=crop",
-  "https://images.unsplash.com/photo-1639322537228-f710d846310a?w=1200&h=500&fit=crop",
-  "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&h=500&fit=crop",
-];
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=500&fit=crop";
 
 const BlogPostPageSkeleton = () => (
   <div className="py-10">
@@ -41,8 +38,7 @@ const BlogPostPage = () => {
 
   if (isLoading) return <BlogPostPageSkeleton />;
 
-  const postIndex = blog.findIndex((p) => p.id === id);
-  const post = blog[postIndex];
+  const post = blog.find((p) => p.id === id);
 
   if (!post) {
     return (
@@ -68,7 +64,7 @@ const BlogPostPage = () => {
           </Link>
 
           <img
-            src={blogImages[postIndex % blogImages.length]}
+            src={post.coverImage || FALLBACK_IMAGE}
             alt={isPt ? post.titlePt : post.title}
             className="w-full h-64 sm:h-80 object-cover rounded-xl mb-8"
           />
@@ -93,7 +89,7 @@ const BlogPostPage = () => {
           </h1>
 
           <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
               {isPt ? post.contentPt : post.content}
             </ReactMarkdown>
           </article>

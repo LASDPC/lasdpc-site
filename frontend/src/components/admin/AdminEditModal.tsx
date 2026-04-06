@@ -163,7 +163,7 @@ const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-5xl w-[95vw]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>

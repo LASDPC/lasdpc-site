@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -11,6 +13,7 @@ class BlogPostBase(BaseModel):
     date: str
     tag: str
     author: str
+    coverImage: Optional[str] = None
 
 
 class BlogPostCreate(BlogPostBase):

@@ -1,10 +1,11 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Doc } from "@/services/docs";
+import MarkdownEditor from "./MarkdownEditor";
 
 const schema = z.object({
   category: z.string().min(1),
@@ -23,8 +24,10 @@ interface DocFormProps {
   loading?: boolean;
 }
 
+const DOCS_PROSE = "prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-xl prose-h3:text-lg prose-a:text-primary prose-code:text-primary";
+
 const DocForm = ({ initial, onSubmit, loading }: DocFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { updatedAt: new Date().toISOString().split("T")[0], category: "guides" },
   });
@@ -39,10 +42,20 @@ const DocForm = ({ initial, onSubmit, loading }: DocFormProps) => {
         <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
         <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Content (EN, Markdown)</Label><textarea {...register("content")} className="w-full min-h-[150px] bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono" /></div>
-        <div><Label>Content (PT, Markdown)</Label><textarea {...register("contentPt")} className="w-full min-h-[150px] bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono" /></div>
-      </div>
+      <Controller
+        name="content"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label="Content (EN, Markdown)" value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
+        )}
+      />
+      <Controller
+        name="contentPt"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label="Content (PT, Markdown)" value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
+        )}
+      />
       <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
     </form>
   );

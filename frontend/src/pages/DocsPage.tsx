@@ -4,6 +4,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { urlTransform } from "@/lib/markdown";
 import { useDocs, useUpdateDoc } from "@/hooks/useDocs";
 import { FileText, BookOpen, Shield, GraduationCap, Plus, LogIn, LogOut, Save, X } from "lucide-react";
 import { toast } from "sonner";
@@ -248,13 +249,13 @@ const DocsPage = () => {
                     {isPt ? "Pré-visualização" : "Preview"}
                   </p>
                   <div className="bg-card border border-border rounded-lg p-6 prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{editContent}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>{editContent}</ReactMarkdown>
                   </div>
                 </div>
               </div>
             ) : (
               <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
                   {isPt ? activeDoc.contentPt : activeDoc.content}
                 </ReactMarkdown>
               </article>

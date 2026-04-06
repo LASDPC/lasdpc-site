@@ -1,10 +1,11 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/services/projects";
+import MarkdownEditor from "./MarkdownEditor";
 
 const schema = z.object({
   title: z.string().min(1),
@@ -28,7 +29,7 @@ interface ProjectFormProps {
 }
 
 const ProjectForm = ({ initial, onSubmit, loading }: ProjectFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial
       ? { ...initial, tags: initial.tags.join(", ") }
@@ -52,10 +53,20 @@ const ProjectForm = ({ initial, onSubmit, loading }: ProjectFormProps) => {
         <div><Label>Description (EN)</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
         <div><Label>Description (PT)</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Content (EN, Markdown)</Label><textarea {...register("content")} className="w-full min-h-[120px] bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono" /></div>
-        <div><Label>Content (PT, Markdown)</Label><textarea {...register("contentPt")} className="w-full min-h-[120px] bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono" /></div>
-      </div>
+      <Controller
+        name="content"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label="Content (EN, Markdown)" value={field.value || ""} onChange={field.onChange} />
+        )}
+      />
+      <Controller
+        name="contentPt"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label="Content (PT, Markdown)" value={field.value || ""} onChange={field.onChange} />
+        )}
+      />
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Status</Label><select {...register("status")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="active">Active</option><option value="completed">Completed</option></select></div>
         <div><Label>Impact</Label><select {...register("impact")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="High">High</option><option value="Medium">Medium</option></select></div>

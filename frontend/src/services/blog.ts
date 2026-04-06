@@ -11,6 +11,7 @@ export interface BlogPost {
   date: string;
   tag: string;
   author: string;
+  coverImage?: string;
 }
 
 export type BlogPostInput = Omit<BlogPost, "id">;

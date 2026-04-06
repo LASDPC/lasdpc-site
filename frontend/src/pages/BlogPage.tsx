@@ -14,11 +14,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
 };
 
-const blogImages = [
-  "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=340&fit=crop",
-  "https://images.unsplash.com/photo-1639322537228-f710d846310a?w=600&h=340&fit=crop",
-  "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&h=340&fit=crop",
-];
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=340&fit=crop";
 
 const BlogPageSkeleton = () => (
   <div className="py-10">
@@ -64,7 +60,7 @@ const BlogPage = () => {
               <Link to={`/blog/${post.id}`} className="h-full">
                 <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
                   <img
-                    src={blogImages[i % blogImages.length]}
+                    src={post.coverImage || FALLBACK_IMAGE}
                     alt={isPt ? post.titlePt : post.title}
                     className="w-full h-44 object-cover shrink-0"
                     loading="lazy"

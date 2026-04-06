@@ -4,6 +4,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { ArrowLeft, BookOpen, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { urlTransform } from "@/lib/markdown";
 import { useProjects } from "@/hooks/useProjects";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -93,7 +94,7 @@ const ProjectPage = () => {
           </div>
 
           <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
               {isPt ? project.contentPt : project.content}
             </ReactMarkdown>
           </article>
