@@ -1,5 +1,4 @@
 from typing import Optional
-
 from pydantic import BaseModel, EmailStr
 
 
@@ -19,6 +18,12 @@ class UserOut(BaseModel):
     role: str
     avatar: Optional[str] = None
     initials: str
+
+
+class BootstrapAdmin(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
 
 
 class LoginRequest(BaseModel):

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 480
     cors_origins: str = "http://localhost:8080"
     backend_port: int = 8000
+    admin_bootstrap_token: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
