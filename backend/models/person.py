@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -8,11 +10,11 @@ class DocenteBase(BaseModel):
     area: str
     areaPt: str
     email: str
-    lattes: str | None = None
-    orcid: str | None = None
-    scholar: str | None = None
-    page: str | None = None
-    photo: str | None = None
+    lattes: Optional[str] = None
+    orcid: Optional[str] = None
+    scholar: Optional[str] = None
+    page: Optional[str] = None
+    photo: Optional[str] = None
 
 
 class DocenteCreate(DocenteBase):

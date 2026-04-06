@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -6,7 +8,7 @@ class UserCreate(BaseModel):
     password: str
     name: str
     role: str = "normal"
-    avatar: str | None = None
+    avatar: Optional[str] = None
     initials: str
 
 
@@ -15,7 +17,7 @@ class UserOut(BaseModel):
     email: str
     name: str
     role: str
-    avatar: str | None = None
+    avatar: Optional[str] = None
     initials: str
 
 

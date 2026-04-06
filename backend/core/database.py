@@ -1,8 +1,10 @@
+from typing import Optional
+
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from core.config import settings
 
-_client: AsyncIOMotorClient | None = None
+_client: Optional[AsyncIOMotorClient] = None
 
 
 def get_client() -> AsyncIOMotorClient:
