@@ -21,20 +21,30 @@ interface PublicationFormProps {
   initial?: Publication;
   onSubmit: (data: Omit<Publication, "id">) => void;
   loading?: boolean;
+  lang?: "en" | "pt";
 }
 
-const PublicationForm = ({ initial, onSubmit, loading }: PublicationFormProps) => {
+const PublicationForm = ({ initial, onSubmit, loading, lang }: PublicationFormProps) => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { year: new Date().getFullYear() },
   });
 
+  const showEn = !lang || lang === "en";
+  const showPt = !lang || lang === "pt";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-        <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+          <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Title</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+      ) : (
+        <div><Label>Title</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+      )}
       <div><Label>Authors</Label><Input {...register("authors")} placeholder="A. Silva, B. Costa" /></div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Venue</Label><Input {...register("venue")} /></div>

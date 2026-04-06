@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +7,6 @@ import { useInfrastructure } from "@/hooks/useInfrastructure";
 import { Skeleton } from "@/components/ui/skeleton";
 import PencilButton from "@/components/admin/PencilButton";
 import AddNewButton from "@/components/admin/AddNewButton";
-import AdminEditModal from "@/components/admin/AdminEditModal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -48,8 +48,7 @@ const InfrastructurePage = () => {
   const isPt = lang === "pt-BR";
   const { data: infra, isLoading } = useInfrastructure();
   const [form, setForm] = useState({ resource: "", date: "" });
-  const [editItem, setEditItem] = useState<any>(null);
-  const [showNew, setShowNew] = useState(false);
+  const navigate = useNavigate();
 
   if (isLoading || !infra) return <InfrastructurePageSkeleton />;
 
@@ -60,14 +59,14 @@ const InfrastructurePage = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-display text-4xl font-bold text-foreground">{t("section.infrastructure")}</h1>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Cluster" : "New Cluster"} onClick={() => setShowNew(true)} />}
+          {isAdmin && <AddNewButton label={isPt ? "Novo Cluster" : "New Cluster"} onClick={() => navigate("/admin/edit/cluster")} />}
         </div>
         <p className="text-muted-foreground mb-12 text-sm font-mono">{t("section.infrastructure")}</p>
 
         <div className="grid md:grid-cols-3 gap-6 mb-20">
           {infra.clusters.map((c, i) => (
             <div key={c.id} className="relative group">
-              {isAdmin && <PencilButton onClick={() => setEditItem(c)} />}
+              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/cluster/${c.id}`)} />}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-display text-lg font-semibold text-foreground">{c.name}</h3>
@@ -107,15 +106,6 @@ const InfrastructurePage = () => {
           </form>
         </div>
       </div>
-
-      {(editItem || showNew) && (
-        <AdminEditModal
-          open={true}
-          onClose={() => { setEditItem(null); setShowNew(false); }}
-          resource="cluster"
-          data={editItem}
-        />
-      )}
     </div>
   );
 };

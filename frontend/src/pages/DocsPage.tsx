@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
-import { useDocs, useUpdateDoc } from "@/hooks/useDocs";
-import { FileText, BookOpen, Shield, GraduationCap, Plus, LogIn, LogOut, Save, X } from "lucide-react";
-import { toast } from "sonner";
+import { useDocs } from "@/hooks/useDocs";
+import { FileText, BookOpen, Shield, GraduationCap, Plus, LogIn, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -54,46 +53,19 @@ const DocsPageSkeleton = () => (
 
 const DocsPage = () => {
   const { lang } = useLang();
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const isPt = lang === "pt-BR";
+  const navigate = useNavigate();
 
   const { data: docs = [], isLoading } = useDocs();
-  const updateDoc = useUpdateDoc();
 
   const [activeDocId, setActiveDocId] = useState<string>("");
-  const [editing, setEditing] = useState(false);
-  const [editContent, setEditContent] = useState("");
 
   if (isLoading) return <DocsPageSkeleton />;
 
   const effectiveDocId = activeDocId || docs[0]?.id || "";
   const activeDoc = docs.find((d) => d.id === effectiveDocId);
   const categories = Array.from(new Set(docs.map((d) => d.category)));
-
-  const startEditing = () => {
-    if (!activeDoc) return;
-    setEditContent(isPt ? activeDoc.contentPt : activeDoc.content);
-    setEditing(true);
-  };
-
-  const saveEdit = () => {
-    if (!activeDoc) return;
-    const updatedDoc = {
-      ...activeDoc,
-      ...(isPt ? { contentPt: editContent } : { content: editContent }),
-      updatedAt: new Date().toISOString().split("T")[0],
-    };
-    const { id: _, ...data } = updatedDoc;
-    updateDoc.mutate(
-      { id: activeDoc.id, data },
-      {
-        onSuccess: () => {
-          setEditing(false);
-          toast.success(isPt ? "Documentação salva" : "Documentation saved");
-        },
-      },
-    );
-  };
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex">
@@ -117,7 +89,7 @@ const DocsPage = () => {
                   .map((d) => (
                     <li key={d.id}>
                       <button
-                        onClick={() => { setActiveDocId(d.id); setEditing(false); }}
+                        onClick={() => setActiveDocId(d.id)}
                         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                           effectiveDocId === d.id
                             ? "bg-primary text-primary-foreground font-medium"
@@ -165,7 +137,7 @@ const DocsPage = () => {
         <div className="md:hidden p-4 border-b border-border">
           <select
             value={effectiveDocId}
-            onChange={(e) => { setActiveDocId(e.target.value); setEditing(false); }}
+            onChange={(e) => setActiveDocId(e.target.value)}
             className="w-full bg-secondary text-secondary-foreground rounded-md px-3 py-2 text-sm"
           >
             {docs.map((d) => (
@@ -194,72 +166,36 @@ const DocsPage = () => {
                   {categoryIcons[activeDoc.category]}
                   {categoryLabels[activeDoc.category]?.[isPt ? "pt" : "en"]}
                 </p>
-                {!editing && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {isPt ? "Atualizado em" : "Updated"} {activeDoc.updatedAt}
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isPt ? "Atualizado em" : "Updated"} {activeDoc.updatedAt}
+                </p>
               </div>
-              {user && !editing && (
+              {isAdmin && (
                 <div className="flex gap-2">
                   <button
-                    onClick={startEditing}
+                    onClick={() => navigate(`/admin/edit/doc/${activeDoc.id}`)}
                     className="inline-flex items-center gap-1.5 text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
                   >
                     <FileText size={14} />
                     {isPt ? "Editar" : "Edit"}
                   </button>
-                  <button className="inline-flex items-center gap-1.5 text-sm bg-accent text-accent-foreground px-3 py-1.5 rounded-md hover:opacity-90 transition-opacity">
-                    <Plus size={14} />
-                    {isPt ? "Novo" : "New"}
-                  </button>
-                </div>
-              )}
-              {user && editing && (
-                <div className="flex gap-2">
                   <button
-                    onClick={saveEdit}
+                    onClick={() => navigate("/admin/edit/doc")}
                     className="inline-flex items-center gap-1.5 text-sm bg-accent text-accent-foreground px-3 py-1.5 rounded-md hover:opacity-90 transition-opacity"
                   >
-                    <Save size={14} />
-                    {isPt ? "Salvar" : "Save"}
-                  </button>
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="inline-flex items-center gap-1.5 text-sm bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-muted transition-colors"
-                  >
-                    <X size={14} />
-                    {isPt ? "Cancelar" : "Cancel"}
+                    <Plus size={14} />
+                    {isPt ? "Novo" : "New"}
                   </button>
                 </div>
               )}
             </div>
 
             {/* Content */}
-            {editing ? (
-              <div className="space-y-4">
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full min-h-[60vh] bg-card border border-border rounded-lg p-4 font-mono text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
-                  placeholder="Write markdown here..."
-                />
-                <div>
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">
-                    {isPt ? "Pré-visualização" : "Preview"}
-                  </p>
-                  <div className="bg-card border border-border rounded-lg p-6 prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>{editContent}</ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
+            <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
                   {isPt ? activeDoc.contentPt : activeDoc.content}
                 </ReactMarkdown>
-              </article>
-            )}
+            </article>
           </div>
         )}
       </div>

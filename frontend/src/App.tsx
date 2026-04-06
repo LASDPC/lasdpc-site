@@ -17,6 +17,7 @@ import ContactPage from "@/pages/ContactPage";
 import DocsPage from "@/pages/DocsPage";
 import LoginPage from "@/pages/LoginPage";
 import ProjectPage from "@/pages/ProjectPage";
+import AdminEditPage from "@/pages/AdminEditPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient({
@@ -50,6 +51,8 @@ const App = () => (
                   <Route path="/contact" element={<ContactPage />} />
                   <Route path="/docs" element={<DocsPage />} />
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
+                  <Route path="/admin/edit/:resource/:id" element={<AdminEditPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

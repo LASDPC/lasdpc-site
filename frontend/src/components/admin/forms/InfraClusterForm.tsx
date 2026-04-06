@@ -23,21 +23,31 @@ interface InfraClusterFormProps {
   initial?: Cluster;
   onSubmit: (data: Omit<Cluster, "id">) => void;
   loading?: boolean;
+  lang?: "en" | "pt";
 }
 
-const InfraClusterForm = ({ initial, onSubmit, loading }: InfraClusterFormProps) => {
+const InfraClusterForm = ({ initial, onSubmit, loading, lang }: InfraClusterFormProps) => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { cpuUsage: 0, gpuUsage: 0, memoryUsage: 0, storageUsage: 0, status: "online" },
   });
 
+  const showEn = !lang || lang === "en";
+  const showPt = !lang || lang === "pt";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Description (EN)</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-        <div><Label>Description (PT)</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-      </div>
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Description (EN)</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+          <div><Label>Description (PT)</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Description</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      ) : (
+        <div><Label>Description</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      )}
       <div><Label>Status</Label><select {...register("status")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="online">Online</option><option value="maintenance">Maintenance</option></select></div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>CPU Usage %</Label><Input type="number" {...register("cpuUsage")} /></div>

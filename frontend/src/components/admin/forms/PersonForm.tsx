@@ -33,6 +33,7 @@ interface DocenteFormProps {
   initial?: Docente;
   onSubmit: (data: Omit<Docente, "id">) => void;
   loading?: boolean;
+  lang?: "en" | "pt";
 }
 
 interface StudentFormProps {
@@ -40,6 +41,7 @@ interface StudentFormProps {
   initial?: Student;
   onSubmit: (data: Omit<Student, "id">) => void;
   loading?: boolean;
+  lang?: "en" | "pt";
 }
 
 type PersonFormProps = DocenteFormProps | StudentFormProps;
@@ -51,7 +53,7 @@ const PersonForm = (props: PersonFormProps) => {
   return <DocenteFormInner {...props} />;
 };
 
-const DocenteFormInner = ({ initial, onSubmit, loading }: Omit<DocenteFormProps, "type">) => {
+const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteFormProps, "type">) => {
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof docenteSchema>>({
     resolver: zodResolver(docenteSchema),
     defaultValues: initial ? {
@@ -64,17 +66,32 @@ const DocenteFormInner = ({ initial, onSubmit, loading }: Omit<DocenteFormProps,
     } : {},
   });
 
+  const showEn = !lang || lang === "en";
+  const showPt = !lang || lang === "pt";
+
   return (
-    <form onSubmit={handleSubmit((v) => onSubmit({ ...v, lattes: v.lattes || null, orcid: v.orcid || null, scholar: v.scholar || null, page: v.page || null, photo: v.photo || null }))} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <form onSubmit={handleSubmit((v) => onSubmit({ ...v, lattes: v.lattes || null, orcid: v.orcid || null, scholar: v.scholar || null, page: v.page || null, photo: v.photo || null }))} className="space-y-4">
       <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Role (EN)</Label><Input {...register("role")} /></div>
-        <div><Label>Role (PT)</Label><Input {...register("rolePt")} /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Area (EN)</Label><Input {...register("area")} /></div>
-        <div><Label>Area (PT)</Label><Input {...register("areaPt")} /></div>
-      </div>
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Role (EN)</Label><Input {...register("role")} /></div>
+          <div><Label>Role (PT)</Label><Input {...register("rolePt")} /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Role</Label><Input {...register("role")} /></div>
+      ) : (
+        <div><Label>Role</Label><Input {...register("rolePt")} /></div>
+      )}
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Area (EN)</Label><Input {...register("area")} /></div>
+          <div><Label>Area (PT)</Label><Input {...register("areaPt")} /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Area</Label><Input {...register("area")} /></div>
+      ) : (
+        <div><Label>Area</Label><Input {...register("areaPt")} /></div>
+      )}
       <div><Label>Email</Label><Input {...register("email")} /></div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Lattes URL</Label><Input {...register("lattes")} /></div>
@@ -89,23 +106,38 @@ const DocenteFormInner = ({ initial, onSubmit, loading }: Omit<DocenteFormProps,
   );
 };
 
-const StudentFormInner = ({ initial, onSubmit, loading }: Omit<StudentFormProps, "type">) => {
+const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentFormProps, "type">) => {
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof studentSchema>>({
     resolver: zodResolver(studentSchema),
     defaultValues: initial ?? {},
   });
 
+  const showEn = !lang || lang === "en";
+  const showPt = !lang || lang === "pt";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Level (EN)</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
-        <div><Label>Level (PT)</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Area (EN)</Label><Input {...register("area")} /></div>
-        <div><Label>Area (PT)</Label><Input {...register("areaPt")} /></div>
-      </div>
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Level (EN)</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
+          <div><Label>Level (PT)</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Level</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
+      ) : (
+        <div><Label>Level</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
+      )}
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Area (EN)</Label><Input {...register("area")} /></div>
+          <div><Label>Area (PT)</Label><Input {...register("areaPt")} /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Area</Label><Input {...register("area")} /></div>
+      ) : (
+        <div><Label>Area</Label><Input {...register("areaPt")} /></div>
+      )}
       <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
     </form>
   );

@@ -5,6 +5,10 @@ export function useDocentes() {
   return useQuery({ queryKey: ["docentes"], queryFn: peopleService.listDocentes });
 }
 
+export function useDocente(id: string) {
+  return useQuery({ queryKey: ["docentes", id], queryFn: () => peopleService.getDocente(id), enabled: !!id });
+}
+
 export function useCreateDocente() {
   const qc = useQueryClient();
   return useMutation({ mutationFn: (data: DocenteInput) => peopleService.createDocente(data), onSuccess: () => qc.invalidateQueries({ queryKey: ["docentes"] }) });
@@ -22,6 +26,10 @@ export function useDeleteDocente() {
 
 export function useStudents() {
   return useQuery({ queryKey: ["students"], queryFn: peopleService.listStudents });
+}
+
+export function useStudent(id: string) {
+  return useQuery({ queryKey: ["students", id], queryFn: () => peopleService.getStudent(id), enabled: !!id });
 }
 
 export function useCreateStudent() {

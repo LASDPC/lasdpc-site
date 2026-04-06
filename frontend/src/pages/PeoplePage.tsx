@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,7 +7,6 @@ import { useDocentes, useStudents } from "@/hooks/usePeople";
 import { Skeleton } from "@/components/ui/skeleton";
 import PencilButton from "@/components/admin/PencilButton";
 import AddNewButton from "@/components/admin/AddNewButton";
-import AdminEditModal, { type ResourceType } from "@/components/admin/AdminEditModal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -44,8 +43,7 @@ const PeoplePage = () => {
   const isPt = lang === "pt-BR";
   const { data: docentes = [], isLoading: loadingDocentes } = useDocentes();
   const { data: students = [], isLoading: loadingStudents } = useStudents();
-
-  const [editModal, setEditModal] = useState<{ resource: ResourceType; data?: any } | null>(null);
+  const navigate = useNavigate();
 
   if (loadingDocentes || loadingStudents) return <PeoplePageSkeleton />;
 
@@ -54,14 +52,14 @@ const PeoplePage = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-display text-4xl font-bold text-foreground">{t("section.faculty")}</h1>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Docente" : "New Faculty"} onClick={() => setEditModal({ resource: "docente" })} />}
+          {isAdmin && <AddNewButton label={isPt ? "Novo Docente" : "New Faculty"} onClick={() => navigate("/admin/edit/docente")} />}
         </div>
         <p className="text-muted-foreground mb-12 text-sm font-mono">{t("section.faculty")}</p>
 
         <div className="grid md:grid-cols-2 gap-6 mb-20">
           {docentes.map((d, i) => (
             <div key={d.id} className="relative group">
-              {isAdmin && <PencilButton onClick={() => setEditModal({ resource: "docente", data: d })} />}
+              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/docente/${d.id}`)} />}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border hover:glow-primary transition-shadow">
                 <div className="flex items-start gap-4">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-xl shrink-0">
@@ -86,13 +84,13 @@ const PeoplePage = () => {
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-3xl font-bold text-foreground">{t("section.students")}</h2>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Aluno" : "New Student"} onClick={() => setEditModal({ resource: "student" })} />}
+          {isAdmin && <AddNewButton label={isPt ? "Novo Aluno" : "New Student"} onClick={() => navigate("/admin/edit/student")} />}
         </div>
         <p className="text-muted-foreground mb-8 text-sm font-mono">{t("section.students")}</p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {students.map((s, i) => (
             <div key={s.id} className="relative group">
-              {isAdmin && <PencilButton onClick={() => setEditModal({ resource: "student", data: s })} />}
+              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/student/${s.id}`)} />}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-lg p-4 border border-border">
                 <p className="font-semibold text-foreground">{s.name}</p>
                 <p className="text-sm text-accent">{isPt ? s.levelPt : s.level}</p>
@@ -102,15 +100,6 @@ const PeoplePage = () => {
           ))}
         </div>
       </div>
-
-      {editModal && (
-        <AdminEditModal
-          open={true}
-          onClose={() => setEditModal(null)}
-          resource={editModal.resource}
-          data={editModal.data}
-        />
-      )}
     </div>
   );
 };

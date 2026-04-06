@@ -28,9 +28,10 @@ interface BlogFormProps {
   initial?: BlogPost;
   onSubmit: (data: Omit<BlogPost, "id">) => void;
   loading?: boolean;
+  lang?: "en" | "pt";
 }
 
-const BlogForm = ({ initial, onSubmit, loading }: BlogFormProps) => {
+const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
   const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { date: new Date().toISOString().split("T")[0] },
@@ -47,16 +48,32 @@ const BlogForm = ({ initial, onSubmit, loading }: BlogFormProps) => {
     reader.readAsDataURL(file);
   };
 
+  const showEn = !lang || lang === "en";
+  const showPt = !lang || lang === "pt";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-        <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Excerpt (EN)</Label><textarea {...register("excerpt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-        <div><Label>Excerpt (PT)</Label><textarea {...register("excerptPt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+          <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Title</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+      ) : (
+        <div><Label>Title</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+      )}
+
+      {showEn && showPt ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div><Label>Excerpt (EN)</Label><textarea {...register("excerpt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+          <div><Label>Excerpt (PT)</Label><textarea {...register("excerptPt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+        </div>
+      ) : showEn ? (
+        <div><Label>Excerpt</Label><textarea {...register("excerpt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      ) : (
+        <div><Label>Excerpt</Label><textarea {...register("excerptPt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      )}
 
       {/* Cover Image */}
       <div>
@@ -94,20 +111,24 @@ const BlogForm = ({ initial, onSubmit, loading }: BlogFormProps) => {
         </div>
       </div>
 
-      <Controller
-        name="content"
-        control={control}
-        render={({ field }) => (
-          <MarkdownEditor label="Content (EN, Markdown)" value={field.value || ""} onChange={field.onChange} />
-        )}
-      />
-      <Controller
-        name="contentPt"
-        control={control}
-        render={({ field }) => (
-          <MarkdownEditor label="Content (PT, Markdown)" value={field.value || ""} onChange={field.onChange} />
-        )}
-      />
+      {showEn && (
+        <Controller
+          name="content"
+          control={control}
+          render={({ field }) => (
+            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (EN, Markdown)"} value={field.value || ""} onChange={field.onChange} />
+          )}
+        />
+      )}
+      {showPt && (
+        <Controller
+          name="contentPt"
+          control={control}
+          render={({ field }) => (
+            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (PT, Markdown)"} value={field.value || ""} onChange={field.onChange} />
+          )}
+        />
+      )}
 
       <div className="grid grid-cols-3 gap-4">
         <div><Label>Date</Label><Input type="date" {...register("date")} /></div>

@@ -5,6 +5,10 @@ export function useInfrastructure() {
   return useQuery({ queryKey: ["infrastructure"], queryFn: infrastructureService.get });
 }
 
+export function useCluster(id: string) {
+  return useQuery({ queryKey: ["clusters", id], queryFn: () => infrastructureService.getCluster(id), enabled: !!id });
+}
+
 export function useCreateCluster() {
   const qc = useQueryClient();
   return useMutation({ mutationFn: (data: ClusterInput) => infrastructureService.createCluster(data), onSuccess: () => qc.invalidateQueries({ queryKey: ["infrastructure"] }) });
