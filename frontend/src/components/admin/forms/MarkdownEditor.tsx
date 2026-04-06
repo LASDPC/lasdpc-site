@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Bold, Italic, Heading2, Code, Link2, ImagePlus } from "lucide-react";
+import { Bold, Italic, Heading2, Code, Link2, ImagePlus, Columns2, PanelLeft, PanelRight, Minimize2, Maximize2, Crosshair } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
@@ -20,14 +20,12 @@ const DEFAULT_PROSE =
 const IMG_PLACEHOLDER_RE = /!\[([^\]]*)\]\((img:\d+)\)/g;
 const IMG_DATA_RE = /!\[([^\]]*)\]\((data:[^)]+)\)/g;
 
-/** Replace all `img:N` placeholders with their base64 data URIs. */
 const expand = (text: string, map: Record<string, string>) =>
   text.replace(IMG_PLACEHOLDER_RE, (match, alt, id) => {
     const src = map[id];
     return src ? `![${alt}](${src})` : match;
   });
 
-/** Extract `data:` images from raw markdown, store them in a map, and return display text with placeholders. */
 const collapse = (raw: string) => {
   const map: Record<string, string> = {};
   let counter = 0;
@@ -40,6 +38,8 @@ const collapse = (raw: string) => {
   return { display, map, counter };
 };
 
+type ViewMode = "split" | "editor" | "preview";
+
 const MarkdownEditor = ({
   label,
   value,
@@ -49,13 +49,17 @@ const MarkdownEditor = ({
 }: MarkdownEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const imageMapRef = useRef<Record<string, string>>({});
   const counterRef = useRef(0);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [displayValue, setDisplayValue] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("split");
+  const [collapsed, setCollapsed] = useState(false);
+  const [syncMode, setSyncMode] = useState(true);
+  const [editorHeight, setEditorHeight] = useState(300);
 
-  // Initialise (and re-sync) when the parent value changes externally
-  // (e.g. form reset, loading a saved record).
   useEffect(() => {
     const { display, map, counter } = collapse(value);
     imageMapRef.current = map;
@@ -64,6 +68,26 @@ const MarkdownEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, []);
+
+  // Auto-resize textarea to fit content and track its height
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el || collapsed) return;
+    el.style.height = "auto";
+    const h = Math.max(300, el.scrollHeight);
+    el.style.height = h + "px";
+    setEditorHeight(h);
+  }, [collapsed]);
+
+  useEffect(() => {
+    autoResize();
+  }, [displayValue, viewMode, collapsed, autoResize]);
+
   const handleDisplayChange = useCallback(
     (newDisplay: string) => {
       setDisplayValue(newDisplay);
@@ -71,6 +95,53 @@ const MarkdownEditor = ({
     },
     [onChange],
   );
+
+  // Sync preview to editor cursor position
+  const syncPreviewToEditor = useCallback(() => {
+    if (!syncMode || !textareaRef.current || !previewRef.current) return;
+
+    const textarea = textareaRef.current;
+    const text = textarea.value;
+    if (!text) return;
+
+    const cursorPos = textarea.selectionStart;
+    const totalLines = text.split("\n").length;
+    const currentLine = text.substring(0, cursorPos).split("\n").length;
+    const ratio = totalLines <= 1 ? 0 : (currentLine - 1) / (totalLines - 1);
+
+    const article = previewRef.current.querySelector("article");
+    if (!article || article.children.length === 0) return;
+
+    const blocks = article.children;
+    const targetIdx = Math.min(Math.floor(ratio * blocks.length), blocks.length - 1);
+    const target = blocks[targetIdx] as HTMLElement;
+
+    // Clear previous highlights
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    article.querySelectorAll("[data-md-sync]").forEach(el => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.removeProperty("border-left");
+      htmlEl.style.removeProperty("padding-left");
+      htmlEl.style.removeProperty("transition");
+      htmlEl.removeAttribute("data-md-sync");
+    });
+
+    // Highlight target block
+    target.setAttribute("data-md-sync", "1");
+    target.style.transition = "border-left 0.2s, padding-left 0.2s";
+    target.style.borderLeft = "3px solid hsl(var(--primary))";
+    target.style.paddingLeft = "8px";
+
+    // Scroll the target into view within the preview container
+    target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    highlightTimerRef.current = setTimeout(() => {
+      target.style.removeProperty("border-left");
+      target.style.removeProperty("padding-left");
+      target.style.removeProperty("transition");
+      target.removeAttribute("data-md-sync");
+    }, 2000);
+  }, [syncMode]);
 
   const insertAtCursor = (before: string, after = "") => {
     const el = textareaRef.current;
@@ -109,63 +180,140 @@ const MarkdownEditor = ({
 
   const previewMarkdown = expand(displayValue, imageMapRef.current);
 
+  const showEditor = viewMode === "split" || viewMode === "editor";
+  const showPreview = viewMode === "split" || viewMode === "preview";
+
   return (
     <div>
-      <Label>{label}</Label>
-      <div className="grid grid-cols-2 gap-4 mt-1">
+      <div className="flex items-center justify-between mb-1">
+        <Label>{label}</Label>
+        <div className="flex items-center gap-0.5">
+          <Button
+            type="button"
+            variant={syncMode ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setSyncMode(!syncMode)}
+            title={syncMode ? "Disable sync scroll" : "Enable sync scroll"}
+          >
+            <Crosshair size={14} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            type="button"
+            variant={viewMode === "editor" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setViewMode(viewMode === "editor" ? "split" : "editor")}
+            title="Editor only"
+          >
+            <PanelLeft size={14} />
+          </Button>
+          <Button
+            type="button"
+            variant={viewMode === "split" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setViewMode("split")}
+            title="Split view"
+          >
+            <Columns2 size={14} />
+          </Button>
+          <Button
+            type="button"
+            variant={viewMode === "preview" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setViewMode(viewMode === "preview" ? "split" : "preview")}
+            title="Preview only"
+          >
+            <PanelRight size={14} />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            type="button"
+            variant={collapsed ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand to full height" : "Minimize to fixed height"}
+          >
+            {collapsed ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+          </Button>
+        </div>
+      </div>
+      <div className={`grid gap-4 ${viewMode === "split" ? "grid-cols-2" : "grid-cols-1"}`}>
         {/* Editor */}
-        <div className="flex flex-col">
-          <div className="flex gap-1 mb-1">
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("**", "**")}>
-              <Bold size={14} />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("*", "*")}>
-              <Italic size={14} />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("## ")}>
-              <Heading2 size={14} />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("`", "`")}>
-              <Code size={14} />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("[", "](url)")}>
-              <Link2 size={14} />
-            </Button>
-            {enableImageUpload && (
-              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => fileInputRef.current?.click()}>
-                <ImagePlus size={14} />
+        {showEditor && (
+          <div className={`flex flex-col ${collapsed ? "h-[360px] overflow-y-auto" : ""}`}>
+            <div className="flex gap-1 mb-1 shrink-0">
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("**", "**")}>
+                <Bold size={14} />
               </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("*", "*")}>
+                <Italic size={14} />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("## ")}>
+                <Heading2 size={14} />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("`", "`")}>
+                <Code size={14} />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertAtCursor("[", "](url)")}>
+                <Link2 size={14} />
+              </Button>
+              {enableImageUpload && (
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => fileInputRef.current?.click()}>
+                  <ImagePlus size={14} />
+                </Button>
+              )}
+            </div>
+            <textarea
+              ref={textareaRef}
+              value={displayValue}
+              onChange={(e) => handleDisplayChange(e.target.value)}
+              onClick={syncPreviewToEditor}
+              onKeyUp={syncPreviewToEditor}
+              className={`w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono ${
+                collapsed
+                  ? "flex-1 min-h-0 resize-none overflow-y-auto"
+                  : "min-h-[300px] resize-none overflow-hidden"
+              }`}
+            />
+            {enableImageUpload && (
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                  e.target.value = "";
+                }}
+              />
             )}
           </div>
-          <textarea
-            ref={textareaRef}
-            value={displayValue}
-            onChange={(e) => handleDisplayChange(e.target.value)}
-            className="w-full h-[360px] overflow-y-auto bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono resize-none"
-          />
-          {enableImageUpload && (
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleImageUpload(file);
-                e.target.value = "";
-              }}
-            />
-          )}
-        </div>
+        )}
 
-        {/* Preview */}
-        <div className="h-[360px] overflow-y-auto border border-border rounded-md px-4 py-3 bg-background">
-          <article className={proseClassName}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
-              {previewMarkdown}
-            </ReactMarkdown>
-          </article>
-        </div>
+        {/* Preview — height follows editor, scrolls internally */}
+        {showPreview && (
+          <div
+            ref={previewRef}
+            className="border border-border rounded-md px-4 py-3 bg-background overflow-y-auto"
+            style={
+              collapsed
+                ? { height: 360 }
+                : { height: editorHeight, minHeight: 300 }
+            }
+          >
+            <article className={proseClassName}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
+                {previewMarkdown}
+              </ReactMarkdown>
+            </article>
+          </div>
+        )}
       </div>
     </div>
   );

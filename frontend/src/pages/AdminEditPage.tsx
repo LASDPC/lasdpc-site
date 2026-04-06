@@ -53,8 +53,8 @@ const AdminEditPage = () => {
   };
 
   return (
-    <div className="py-6">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="py-4">
+      <div className="mx-auto px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

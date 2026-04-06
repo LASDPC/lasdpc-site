@@ -71,6 +71,15 @@ const ProjectForm = ({ initial, onSubmit, loading, lang }: ProjectFormProps) => 
         <div><Label>Description</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
       )}
 
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>Status</Label><select {...register("status")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="active">Active</option><option value="completed">Completed</option></select></div>
+        <div><Label>Impact</Label><select {...register("impact")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="High">High</option><option value="Medium">Medium</option></select></div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>Tags (comma-separated)</Label><Input {...register("tags")} placeholder="HPC, AI, Cloud" /></div>
+        <div><Label>Publications count</Label><Input type="number" {...register("publications")} /></div>
+      </div>
+
       {showEn && (
         <Controller
           name="content"
@@ -89,15 +98,6 @@ const ProjectForm = ({ initial, onSubmit, loading, lang }: ProjectFormProps) => 
           )}
         />
       )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Status</Label><select {...register("status")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="active">Active</option><option value="completed">Completed</option></select></div>
-        <div><Label>Impact</Label><select {...register("impact")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="High">High</option><option value="Medium">Medium</option></select></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Tags (comma-separated)</Label><Input {...register("tags")} placeholder="HPC, AI, Cloud" /></div>
-        <div><Label>Publications count</Label><Input type="number" {...register("publications")} /></div>
-      </div>
       <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
     </form>
   );
