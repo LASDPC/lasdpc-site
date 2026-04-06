@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
-import { ArrowRight, Cpu, Users, BookOpen, Server } from "lucide-react";
+import { ArrowRight, Cpu, Users, BookOpen } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
 import { useBlog } from "@/hooks/useBlog";
+import { useStats } from "@/hooks/useStats";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const fadeUp = {
@@ -41,8 +42,8 @@ const HomePageSkeleton = () => (
 
     {/* Stats skeleton */}
     <section className="py-16 bg-card border-b border-border">
-      <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="container mx-auto px-4 grid grid-cols-3 gap-8">
+        {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-3">
             <Skeleton className="w-14 h-14 rounded-xl" />
             <Skeleton className="h-9 w-16" />
@@ -139,8 +140,9 @@ const HomePage = () => {
   const { data: projects = [], isLoading: loadingProjects } = useProjects();
   const { data: publications = [], isLoading: loadingPubs } = usePublications();
   const { data: blog = [], isLoading: loadingBlog } = useBlog();
+  const { data: stats, isLoading: loadingStats } = useStats();
 
-  if (loadingProjects || loadingPubs || loadingBlog) return <HomePageSkeleton />;
+  if (loadingProjects || loadingPubs || loadingBlog || loadingStats) return <HomePageSkeleton />;
 
   return (
     <div>
@@ -171,12 +173,11 @@ const HomePage = () => {
 
       {/* Stats */}
       <section className="py-16 bg-card border-b border-border">
-        <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="container mx-auto px-4 grid grid-cols-3 gap-8">
           {[
-            { icon: <Users size={28} />, value: "20+", label: isPt ? "Pesquisadores" : "Researchers" },
-            { icon: <BookOpen size={28} />, value: "200+", label: isPt ? "Publicações" : "Publications" },
-            { icon: <Cpu size={28} />, value: "3", label: "Clusters HPC" },
-            { icon: <Server size={28} />, value: "500+", label: isPt ? "TFLOPs" : "TFLOPs" },
+            { icon: <Users size={28} />, value: String(stats?.researchers ?? 0), label: isPt ? "Pesquisadores" : "Researchers" },
+            { icon: <BookOpen size={28} />, value: String(stats?.publications ?? 0), label: isPt ? "Publicações" : "Publications" },
+            { icon: <Cpu size={28} />, value: String(stats?.clusters ?? 0), label: "Clusters HPC" },
           ].map((s, i) => (
             <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="text-center">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10 text-primary mb-3">{s.icon}</div>

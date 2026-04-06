@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
-from routers import auth, users, projects, publications, blog, people, infrastructure, docs
+from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats
 
 app = FastAPI(title="LASDPC API")
 
@@ -22,6 +22,7 @@ app.include_router(blog.router, prefix="/api/v1/blog", tags=["blog"])
 app.include_router(people.router, prefix="/api/v1/people", tags=["people"])
 app.include_router(infrastructure.router, prefix="/api/v1/infrastructure", tags=["infrastructure"])
 app.include_router(docs.router, prefix="/api/v1/docs", tags=["docs"])
+app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
 
 
 @app.get("/api/v1/health")
