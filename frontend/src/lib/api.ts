@@ -1,4 +1,5 @@
 const TOKEN_KEY = "lasdpc-token";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -22,7 +23,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(`${BASE_URL}${url}`, { ...options, headers });
 
   if (res.status === 204) {
     return undefined as T;

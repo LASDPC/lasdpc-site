@@ -298,6 +298,9 @@ const MarkdownEditor = ({
 
         {/* Preview — height follows editor, scrolls internally */}
         {showPreview && (
+          <div className="flex flex-col">
+            {/* Spacer matching the toolbar height */}
+            {showEditor && <div className="h-7 mb-1 shrink-0" />}
           <div
             ref={previewRef}
             className="border border-border rounded-md px-4 py-3 bg-background overflow-y-auto"
@@ -312,6 +315,7 @@ const MarkdownEditor = ({
                 {previewMarkdown}
               </ReactMarkdown>
             </article>
+          </div>
           </div>
         )}
       </div>
