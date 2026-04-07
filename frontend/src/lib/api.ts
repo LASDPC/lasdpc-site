@@ -1,5 +1,5 @@
 const TOKEN_KEY = "lasdpc-token";
-const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
