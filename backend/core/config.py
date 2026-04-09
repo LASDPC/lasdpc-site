@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:8080"
     backend_port: int = 8000
     admin_bootstrap_token: str = ""
+    admin_email: str = ""
+    admin_password: str = ""
+    admin_name: str = "Admin LASDPC"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";
 import HomePage from "@/pages/HomePage";
 import PeoplePage from "@/pages/PeoplePage";
@@ -18,7 +18,10 @@ import DocsPage from "@/pages/DocsPage";
 import LoginPage from "@/pages/LoginPage";
 import ProjectPage from "@/pages/ProjectPage";
 import AdminEditPage from "@/pages/AdminEditPage";
+import ComingSoonPage from "@/pages/ComingSoonPage";
 import NotFound from "./pages/NotFound.tsx";
+
+const MAINTENANCE_MODE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +33,45 @@ const queryClient = new QueryClient({
   },
 });
 
+const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  if (!MAINTENANCE_MODE) return <>{children}</>;
+  if (user?.role === "admin") return <>{children}</>;
+  if (location.pathname === "/login") {
+    return (
+      <Layout>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </Layout>
+    );
+  }
+
+  return <ComingSoonPage />;
+};
+
+const AppRoutes = () => (
+  <Layout>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/people" element={<PeoplePage />} />
+      <Route path="/research" element={<ResearchPage />} />
+      <Route path="/infrastructure" element={<InfrastructurePage />} />
+      <Route path="/blog" element={<BlogPage />} />
+      <Route path="/blog/:id" element={<BlogPostPage />} />
+      <Route path="/research/:id" element={<ProjectPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/docs" element={<DocsPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
+      <Route path="/admin/edit/:resource/:id" element={<AdminEditPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </Layout>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -39,23 +81,9 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/people" element={<PeoplePage />} />
-                  <Route path="/research" element={<ResearchPage />} />
-                  <Route path="/infrastructure" element={<InfrastructurePage />} />
-                  <Route path="/blog" element={<BlogPage />} />
-                  <Route path="/blog/:id" element={<BlogPostPage />} />
-                  <Route path="/research/:id" element={<ProjectPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/docs" element={<DocsPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
-                  <Route path="/admin/edit/:resource/:id" element={<AdminEditPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
+              <MaintenanceGate>
+                <AppRoutes />
+              </MaintenanceGate>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

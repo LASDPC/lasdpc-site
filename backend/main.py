@@ -1,8 +1,14 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
+from core.database import get_db
+from core.security import hash_password
 from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LASDPC API")
 
@@ -23,6 +29,28 @@ app.include_router(people.router, prefix="/api/v1/people", tags=["people"])
 app.include_router(infrastructure.router, prefix="/api/v1/infrastructure", tags=["infrastructure"])
 app.include_router(docs.router, prefix="/api/v1/docs", tags=["docs"])
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
+
+
+@app.on_event("startup")
+async def auto_bootstrap_admin():
+    if not settings.admin_email or not settings.admin_password:
+        return
+    db = get_db()
+    existing = await db.users.find_one({"email": settings.admin_email, "role": "admin"})
+    if existing:
+        logger.info("Admin user already exists, skipping bootstrap")
+        return
+    names = settings.admin_name.strip().split()
+    initials = (names[0][0] + names[-1][0]).upper() if len(names) >= 2 else settings.admin_name[:2].upper()
+    await db.users.insert_one({
+        "email": settings.admin_email,
+        "hashed_password": hash_password(settings.admin_password),
+        "name": settings.admin_name,
+        "role": "admin",
+        "avatar": None,
+        "initials": initials,
+    })
+    logger.info("Admin user created: %s", settings.admin_email)
 
 
 @app.get("/api/v1/health")

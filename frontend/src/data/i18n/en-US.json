@@ -51,13 +51,15 @@
   "auth.backToHome": "Back to home",
   "auth.noAccount": "Don't have an account?",
   "auth.contactAdmin": "Contact the lab administrator.",
-  "auth.hintTitle": "Demo credentials",
-  "auth.hintAdmin": "Admin: admin@lasdpc.usp.br / lasdpc2024",
-  "auth.hintUser": "User: joao.silva@usp.br / usuario123",
   "menu.profile": "My Profile",
   "menu.settings": "Settings",
   "menu.logout": "Logout",
   "menu.addUser": "Add New User",
   "menu.role.admin": "Admin",
-  "menu.role.normal": "User"
+  "menu.role.normal": "User",
+  "comingsoon.title": "News Coming Soon",
+  "comingsoon.subtitle": "We're working on something new. The lab will have updates for you soon.",
+  "comingsoon.labName": "Distributed Systems and Concurrent Programming Laboratory",
+  "comingsoon.institution": "ICMC - USP",
+  "comingsoon.adminLink": "Admin access"
 }

@@ -143,19 +143,7 @@ const LoginPage = () => {
               </Button>
             </form>
 
-            <div className="mt-6">
-              <details className="text-xs text-muted-foreground">
-                <summary className="cursor-pointer hover:text-foreground transition-colors">
-                  {t("auth.hintTitle")}
-                </summary>
-                <div className="mt-2 space-y-1 bg-muted rounded-md p-3 font-mono">
-                  <p>{t("auth.hintAdmin")}</p>
-                  <p>{t("auth.hintUser")}</p>
-                </div>
-              </details>
-            </div>
-
-            <p className="text-xs text-muted-foreground mt-4">
+            <p className="text-xs text-muted-foreground mt-6">
               {t("auth.noAccount")}{" "}
               <span className="text-foreground">{t("auth.contactAdmin")}</span>
             </p>
