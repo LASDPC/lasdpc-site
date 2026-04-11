@@ -59,9 +59,16 @@ const UserAvatarButton = () => {
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{user.name}</p>
               <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-              <Badge variant={isAdmin ? "default" : "secondary"} className="w-fit mt-1 text-[10px]">
-                {isAdmin ? t("menu.role.admin") : t("menu.role.normal")}
-              </Badge>
+              <div className="flex gap-1 mt-1">
+                <Badge variant="secondary" className="w-fit text-[10px] capitalize">
+                  {user.role.replace("_", " ")}
+                </Badge>
+                {isAdmin && (
+                  <Badge variant="default" className="w-fit text-[10px]">
+                    Admin
+                  </Badge>
+                )}
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

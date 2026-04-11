@@ -2,12 +2,14 @@ import React, { createContext, useContext, useState } from "react";
 import { authService } from "@/services/auth";
 import { setToken, removeToken } from "@/lib/api";
 
-export type UserRole = "admin" | "normal";
+export type UserRole = "docente" | "aluno_ativo" | "alumni";
 
 export interface User {
+  id: string;
   email: string;
   name: string;
   role: UserRole;
+  is_admin: boolean;
   avatar?: string;
   initials: string;
 }
@@ -48,9 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await authService.login(email, password);
       setToken(res.access_token);
       const userData: User = {
+        id: res.user.id,
         email: res.user.email,
         name: res.user.name,
         role: res.user.role as UserRole,
+        is_admin: res.user.is_admin ?? false,
         avatar: res.user.avatar ?? undefined,
         initials: res.user.initials,
       };
@@ -68,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.removeItem(SESSION_KEY);
   };
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.is_admin ?? false;
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, login, logout }}>

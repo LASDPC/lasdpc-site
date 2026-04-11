@@ -13,14 +13,14 @@ def _to_out(doc: dict) -> DocOut:
 
 
 @router.get("", response_model=list[DocOut])
-async def list_docs():
+async def list_docs(_user: dict = Depends(get_current_user)):
     db = get_db()
     items = await db.docs.find().to_list(1000)
     return [_to_out(d) for d in items]
 
 
 @router.get("/{item_id}", response_model=DocOut)
-async def get_doc(item_id: str):
+async def get_doc(item_id: str, _user: dict = Depends(get_current_user)):
     db = get_db()
     doc = await db.docs.find_one({"_id": ObjectId(item_id)})
     if not doc:

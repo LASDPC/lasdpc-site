@@ -26,5 +26,4 @@ dist-ssr
 backend/venv
 backend/.venv
 backend/.env
-backend/uploads
 frontend/.env

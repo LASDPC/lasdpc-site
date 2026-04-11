@@ -1,12 +1,14 @@
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from core.config import settings
 from core.database import get_db
 from core.security import hash_password
-from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats
+from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats, uploads
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,11 @@ app.include_router(people.router, prefix="/api/v1/people", tags=["people"])
 app.include_router(infrastructure.router, prefix="/api/v1/infrastructure", tags=["infrastructure"])
 app.include_router(docs.router, prefix="/api/v1/docs", tags=["docs"])
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
+app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["uploads"])
+
+UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
 @app.on_event("startup")
@@ -36,7 +43,7 @@ async def auto_bootstrap_admin():
     if not settings.admin_email or not settings.admin_password:
         return
     db = get_db()
-    existing = await db.users.find_one({"email": settings.admin_email, "role": "admin"})
+    existing = await db.users.find_one({"email": settings.admin_email, "is_admin": True})
     if existing:
         logger.info("Admin user already exists, skipping bootstrap")
         return
@@ -46,7 +53,8 @@ async def auto_bootstrap_admin():
         "email": settings.admin_email,
         "hashed_password": hash_password(settings.admin_password),
         "name": settings.admin_name,
-        "role": "admin",
+        "role": "docente",
+        "is_admin": True,
         "avatar": None,
         "initials": initials,
     })

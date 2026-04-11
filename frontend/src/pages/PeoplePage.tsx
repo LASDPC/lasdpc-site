@@ -60,20 +60,36 @@ const PeoplePage = () => {
           {docentes.map((d, i) => (
             <div key={d.id} className="relative group">
               {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/docente/${d.id}`)} />}
-              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border hover:glow-primary transition-shadow">
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                custom={i}
+                className="bg-card rounded-xl p-6 border border-border hover:glow-primary transition-shadow cursor-pointer"
+                onClick={() => navigate(`/profile/${d.id}`)}
+              >
                 <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-xl shrink-0">
-                    {d.name.split(" ").filter((_, j) => j === 0 || j === d.name.split(" ").length - 1).map(n => n[0]).join("")}
-                  </div>
+                  {d.photo ? (
+                    <img
+                      src={d.photo}
+                      alt={d.name}
+                      className="w-16 h-16 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-xl shrink-0">
+                      {d.initials}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display text-lg font-semibold text-foreground">{d.name}</h3>
-                    <p className="text-sm text-muted-foreground">{isPt ? d.rolePt : d.role}</p>
+                    <p className="text-sm text-muted-foreground">{isPt ? d.titlePt : d.title}</p>
                     <p className="text-sm text-accent mt-1">{isPt ? d.areaPt : d.area}</p>
                     <div className="flex flex-wrap gap-3 mt-3 text-xs">
-                      <a href={`mailto:${d.email}`} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><Mail size={12} /> Email</a>
-                      {d.lattes && <a href={d.lattes} target="_blank" rel="noopener" className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> Lattes</a>}
-                      {d.orcid && <a href={d.orcid} target="_blank" rel="noopener" className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> ORCID</a>}
-                      {d.scholar && <a href={d.scholar} target="_blank" rel="noopener" className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> Scholar</a>}
+                      <a href={`mailto:${d.email}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><Mail size={12} /> Email</a>
+                      {d.lattes && <a href={d.lattes} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> Lattes</a>}
+                      {d.orcid && <a href={d.orcid} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> ORCID</a>}
+                      {d.scholar && <a href={d.scholar} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> Scholar</a>}
                     </div>
                   </div>
                 </div>
@@ -91,7 +107,15 @@ const PeoplePage = () => {
           {students.map((s, i) => (
             <div key={s.id} className="relative group">
               {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/student/${s.id}`)} />}
-              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-lg p-4 border border-border">
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                custom={i}
+                className="bg-card rounded-lg p-4 border border-border cursor-pointer hover:bg-accent/5 transition-colors"
+                onClick={() => navigate(`/profile/${s.id}`)}
+              >
                 <p className="font-semibold text-foreground">{s.name}</p>
                 <p className="text-sm text-accent">{isPt ? s.levelPt : s.level}</p>
                 <p className="text-xs text-muted-foreground mt-1">{isPt ? s.areaPt : s.area}</p>

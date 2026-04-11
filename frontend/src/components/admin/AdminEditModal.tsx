@@ -118,9 +118,9 @@ const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) 
             type="docente"
             initial={data}
             loading={createDocente.isPending || updateDocente.isPending}
-            onSubmit={(values) => {
+            onSubmit={(values: Record<string, unknown>) => {
               if (isEdit) updateDocente.mutate({ id: data.id, data: values }, { onSuccess: handleSuccess });
-              else createDocente.mutate(values, { onSuccess: handleSuccess });
+              else createDocente.mutate(values as never, { onSuccess: handleSuccess });
             }}
           />
         );
@@ -130,9 +130,9 @@ const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) 
             type="student"
             initial={data}
             loading={createStudent.isPending || updateStudent.isPending}
-            onSubmit={(values) => {
+            onSubmit={(values: Record<string, unknown>) => {
               if (isEdit) updateStudent.mutate({ id: data.id, data: values }, { onSuccess: handleSuccess });
-              else createStudent.mutate(values, { onSuccess: handleSuccess });
+              else createStudent.mutate(values as never, { onSuccess: handleSuccess });
             }}
           />
         );

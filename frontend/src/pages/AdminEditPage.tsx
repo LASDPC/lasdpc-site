@@ -246,9 +246,9 @@ const DocenteResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrap
         initial={isEdit ? data : undefined}
         lang={lang}
         loading={create.isPending || update.isPending}
-        onSubmit={(values) => {
+        onSubmit={(values: Record<string, unknown>) => {
           if (isEdit && id) update.mutate({ id, data: values }, { onSuccess });
-          else create.mutate(values, { onSuccess });
+          else create.mutate(values as never, { onSuccess });
         }}
       />
       {isEdit && (
@@ -278,9 +278,9 @@ const StudentResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrap
         initial={isEdit ? data : undefined}
         lang={lang}
         loading={create.isPending || update.isPending}
-        onSubmit={(values) => {
+        onSubmit={(values: Record<string, unknown>) => {
           if (isEdit && id) update.mutate({ id, data: values }, { onSuccess });
-          else create.mutate(values, { onSuccess });
+          else create.mutate(values as never, { onSuccess });
         }}
       />
       {isEdit && (

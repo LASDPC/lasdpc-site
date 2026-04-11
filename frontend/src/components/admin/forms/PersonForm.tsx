@@ -4,42 +4,44 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import type { Docente, Student } from "@/services/people";
+import type { User } from "@/services/auth";
 
 const docenteSchema = z.object({
   name: z.string().min(1),
-  role: z.string().min(1),
-  rolePt: z.string().min(1),
-  area: z.string().min(1),
-  areaPt: z.string().min(1),
   email: z.string().email(),
+  title: z.string().optional(),
+  titlePt: z.string().optional(),
+  area: z.string().optional(),
+  areaPt: z.string().optional(),
   lattes: z.string().optional(),
   orcid: z.string().optional(),
   scholar: z.string().optional(),
   page: z.string().optional(),
-  photo: z.string().optional(),
+  password: z.string().optional(),
 });
 
 const studentSchema = z.object({
   name: z.string().min(1),
-  level: z.string().min(1),
-  levelPt: z.string().min(1),
-  area: z.string().min(1),
-  areaPt: z.string().min(1),
+  email: z.string().email(),
+  level: z.string().optional(),
+  levelPt: z.string().optional(),
+  area: z.string().optional(),
+  areaPt: z.string().optional(),
+  password: z.string().optional(),
 });
 
 interface DocenteFormProps {
   type: "docente";
-  initial?: Docente;
-  onSubmit: (data: Omit<Docente, "id">) => void;
+  initial?: User;
+  onSubmit: (data: Record<string, unknown>) => void;
   loading?: boolean;
   lang?: "en" | "pt";
 }
 
 interface StudentFormProps {
   type: "student";
-  initial?: Student;
-  onSubmit: (data: Omit<Student, "id">) => void;
+  initial?: User;
+  onSubmit: (data: Record<string, unknown>) => void;
   loading?: boolean;
   lang?: "en" | "pt";
 }
@@ -54,15 +56,20 @@ const PersonForm = (props: PersonFormProps) => {
 };
 
 const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteFormProps, "type">) => {
+  const isEdit = !!initial;
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof docenteSchema>>({
     resolver: zodResolver(docenteSchema),
     defaultValues: initial ? {
-      ...initial,
+      name: initial.name,
+      email: initial.email,
+      title: initial.title ?? "",
+      titlePt: initial.titlePt ?? "",
+      area: initial.area ?? "",
+      areaPt: initial.areaPt ?? "",
       lattes: initial.lattes ?? "",
       orcid: initial.orcid ?? "",
       scholar: initial.scholar ?? "",
       page: initial.page ?? "",
-      photo: initial.photo ?? "",
     } : {},
   });
 
@@ -70,17 +77,38 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
   const showPt = !lang || lang === "pt";
 
   return (
-    <form onSubmit={handleSubmit((v) => onSubmit({ ...v, lattes: v.lattes || null, orcid: v.orcid || null, scholar: v.scholar || null, page: v.page || null, photo: v.photo || null }))} className="space-y-4">
+    <form onSubmit={handleSubmit((v) => {
+      const data: Record<string, unknown> = {
+        ...v,
+        role: "docente",
+        lattes: v.lattes || null,
+        orcid: v.orcid || null,
+        scholar: v.scholar || null,
+        page: v.page || null,
+        title: v.title || null,
+        titlePt: v.titlePt || null,
+      };
+      if (!isEdit) {
+        const names = v.name.trim().split(" ");
+        data.initials = names.length >= 2
+          ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
+          : v.name.slice(0, 2).toUpperCase();
+        if (!v.password) data.password = "changeme123";
+      }
+      onSubmit(data);
+    })} className="space-y-4">
       <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+      <div><Label>Email</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">Valid email required</p>}</div>
+      {!isEdit && <div><Label>Password</Label><Input type="password" {...register("password")} placeholder="Default: changeme123" /></div>}
       {showEn && showPt ? (
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Role (EN)</Label><Input {...register("role")} /></div>
-          <div><Label>Role (PT)</Label><Input {...register("rolePt")} /></div>
+          <div><Label>Title (EN)</Label><Input {...register("title")} placeholder="Full Professor" /></div>
+          <div><Label>Title (PT)</Label><Input {...register("titlePt")} placeholder="Professor Titular" /></div>
         </div>
       ) : showEn ? (
-        <div><Label>Role</Label><Input {...register("role")} /></div>
+        <div><Label>Title</Label><Input {...register("title")} /></div>
       ) : (
-        <div><Label>Role</Label><Input {...register("rolePt")} /></div>
+        <div><Label>Title</Label><Input {...register("titlePt")} /></div>
       )}
       {showEn && showPt ? (
         <div className="grid grid-cols-2 gap-4">
@@ -92,7 +120,6 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
       ) : (
         <div><Label>Area</Label><Input {...register("areaPt")} /></div>
       )}
-      <div><Label>Email</Label><Input {...register("email")} /></div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Lattes URL</Label><Input {...register("lattes")} /></div>
         <div><Label>ORCID URL</Label><Input {...register("orcid")} /></div>
@@ -101,23 +128,46 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
         <div><Label>Scholar URL</Label><Input {...register("scholar")} /></div>
         <div><Label>Page</Label><Input {...register("page")} /></div>
       </div>
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : isEdit ? "Update" : "Create"}</Button>
     </form>
   );
 };
 
 const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentFormProps, "type">) => {
+  const isEdit = !!initial;
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof studentSchema>>({
     resolver: zodResolver(studentSchema),
-    defaultValues: initial ?? {},
+    defaultValues: initial ? {
+      name: initial.name,
+      email: initial.email,
+      level: initial.level ?? "",
+      levelPt: initial.levelPt ?? "",
+      area: initial.area ?? "",
+      areaPt: initial.areaPt ?? "",
+    } : {},
   });
 
   const showEn = !lang || lang === "en";
   const showPt = !lang || lang === "pt";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit((v) => {
+      const data: Record<string, unknown> = {
+        ...v,
+        role: "aluno_ativo",
+      };
+      if (!isEdit) {
+        const names = v.name.trim().split(" ");
+        data.initials = names.length >= 2
+          ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
+          : v.name.slice(0, 2).toUpperCase();
+        if (!v.password) data.password = "changeme123";
+      }
+      onSubmit(data);
+    })} className="space-y-4">
       <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+      <div><Label>Email</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">Valid email required</p>}</div>
+      {!isEdit && <div><Label>Password</Label><Input type="password" {...register("password")} placeholder="Default: changeme123" /></div>}
       {showEn && showPt ? (
         <div className="grid grid-cols-2 gap-4">
           <div><Label>Level (EN)</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
@@ -138,7 +188,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       ) : (
         <div><Label>Area</Label><Input {...register("areaPt")} /></div>
       )}
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : isEdit ? "Update" : "Create"}</Button>
     </form>
   );
 };

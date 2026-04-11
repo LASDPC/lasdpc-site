@@ -16,12 +16,12 @@ async def login(body: LoginRequest):
     token = create_access_token({"sub": user["email"]})
     return LoginResponse(
         access_token=token,
-        user=UserOut(
-            id=str(user["_id"]),
-            email=user["email"],
-            name=user["name"],
-            role=user["role"],
-            avatar=user.get("avatar"),
-            initials=user["initials"],
-        ),
+        user=_user_out(user),
+    )
+
+
+def _user_out(user: dict) -> UserOut:
+    return UserOut(
+        id=str(user["_id"]),
+        **{k: user.get(k) for k in UserOut.model_fields if k != "id" and k in user},
     )

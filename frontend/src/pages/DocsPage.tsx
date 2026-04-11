@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
@@ -60,6 +60,10 @@ const DocsPage = () => {
   const { data: docs = [], isLoading } = useDocs();
 
   const [activeDocId, setActiveDocId] = useState<string>("");
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: "/docs" }} replace />;
+  }
 
   if (isLoading) return <DocsPageSkeleton />;
 

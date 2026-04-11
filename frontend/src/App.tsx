@@ -18,6 +18,7 @@ import DocsPage from "@/pages/DocsPage";
 import LoginPage from "@/pages/LoginPage";
 import ProjectPage from "@/pages/ProjectPage";
 import AdminEditPage from "@/pages/AdminEditPage";
+import ProfilePage from "@/pages/ProfilePage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -38,7 +39,7 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   if (!MAINTENANCE_MODE) return <>{children}</>;
-  if (user?.role === "admin") return <>{children}</>;
+  if (user?.is_admin) return <>{children}</>;
   if (location.pathname === "/login") {
     return (
       <Layout>
@@ -65,6 +66,7 @@ const AppRoutes = () => (
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/docs" element={<DocsPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/profile/:userId" element={<ProfilePage />} />
       <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
       <Route path="/admin/edit/:resource/:id" element={<AdminEditPage />} />
       <Route path="*" element={<NotFound />} />

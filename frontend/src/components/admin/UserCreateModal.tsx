@@ -19,7 +19,8 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(1),
-  role: z.enum(["admin", "normal"]),
+  role: z.enum(["docente", "aluno_ativo", "alumni"]),
+  is_admin: z.boolean().default(false),
   initials: z.string().min(1).max(3),
 });
 
@@ -34,7 +35,7 @@ const UserCreateModal = ({ open, onClose }: UserCreateModalProps) => {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { role: "normal" },
+    defaultValues: { role: "aluno_ativo", is_admin: false },
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -65,7 +66,11 @@ const UserCreateModal = ({ open, onClose }: UserCreateModalProps) => {
             <div><Label>Name</Label><Input {...register("name")} /></div>
             <div><Label>Initials</Label><Input {...register("initials")} maxLength={3} placeholder="JS" /></div>
           </div>
-          <div><Label>Role</Label><select {...register("role")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="normal">Normal</option><option value="admin">Admin</option></select></div>
+          <div><Label>Role</Label><select {...register("role")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="docente">Docente</option><option value="aluno_ativo">Aluno Ativo</option><option value="alumni">Alumni</option></select></div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" {...register("is_admin")} id="is_admin" className="rounded border-border" />
+            <Label htmlFor="is_admin">Admin</Label>
+          </div>
           <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : "Create User"}</Button>
         </form>
       </DialogContent>
