@@ -58,6 +58,44 @@ async def create_user(body: UserCreate, _admin: dict = Depends(require_admin)):
     return _user_out(doc)
 
 
+@router.get("/pending")
+async def list_pending(_admin: dict = Depends(require_admin)):
+    db = get_db()
+    items = await db.users.find({"status": "pending"}).to_list(1000)
+    result = []
+    for d in items:
+        out = _user_out(d).model_dump()
+        out["observation"] = d.get("observation", "")
+        result.append(out)
+    return result
+
+
+@router.put("/{user_id}/approve", response_model=UserOut)
+async def approve_user(user_id: str, _admin: dict = Depends(require_admin)):
+    db = get_db()
+    result = await db.users.update_one(
+        {"_id": ObjectId(user_id), "status": "pending"},
+        {"$set": {"status": "active"}, "$unset": {"observation": ""}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pending user not found")
+    doc = await db.users.find_one({"_id": ObjectId(user_id)})
+    return _user_out(doc)
+
+
+@router.put("/{user_id}/reject", response_model=UserOut)
+async def reject_user(user_id: str, _admin: dict = Depends(require_admin)):
+    db = get_db()
+    result = await db.users.update_one(
+        {"_id": ObjectId(user_id), "status": "pending"},
+        {"$set": {"status": "rejected"}, "$unset": {"observation": ""}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pending user not found")
+    doc = await db.users.find_one({"_id": ObjectId(user_id)})
+    return _user_out(doc)
+
+
 @router.get("/me", response_model=UserOut)
 async def me(user: dict = Depends(get_current_user)):
     return _user_out(user)

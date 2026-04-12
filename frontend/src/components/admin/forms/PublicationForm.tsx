@@ -25,33 +25,25 @@ interface PublicationFormProps {
 }
 
 const PublicationForm = ({ initial, onSubmit, loading, lang }: PublicationFormProps) => {
+  const pt = lang === "pt";
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { year: new Date().getFullYear() },
   });
 
-  const showEn = !lang || lang === "en";
-  const showPt = !lang || lang === "pt";
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-          <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Title</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      ) : (
-        <div><Label>Title</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      )}
-      <div><Label>Authors</Label><Input {...register("authors")} placeholder="A. Silva, B. Costa" /></div>
       <div className="grid grid-cols-2 gap-4">
-        <div><Label>Venue</Label><Input {...register("venue")} /></div>
-        <div><Label>Year</Label><Input type="number" {...register("year")} /></div>
+        <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+        <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+      </div>
+      <div><Label>{pt ? "Autores" : "Authors"}</Label><Input {...register("authors")} placeholder="A. Silva, B. Costa" /></div>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Veículo" : "Venue"}</Label><Input {...register("venue")} /></div>
+        <div><Label>{pt ? "Ano" : "Year"}</Label><Input type="number" {...register("year")} /></div>
       </div>
       <div><Label>DOI URL</Label><Input {...register("doi")} /></div>
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>
   );
 };

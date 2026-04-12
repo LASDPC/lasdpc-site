@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from core.config import settings
 from core.database import get_db
 from core.security import hash_password
-from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats, uploads
+from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats, uploads, cluster_requests, notifications
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,8 @@ app.include_router(infrastructure.router, prefix="/api/v1/infrastructure", tags=
 app.include_router(docs.router, prefix="/api/v1/docs", tags=["docs"])
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
 app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["uploads"])
+app.include_router(cluster_requests.router, prefix="/api/v1/cluster-requests", tags=["cluster-requests"])
+app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -57,6 +59,7 @@ async def auto_bootstrap_admin():
         "is_admin": True,
         "avatar": None,
         "initials": initials,
+        "status": "active",
     })
     logger.info("Admin user created: %s", settings.admin_email)
 

@@ -30,6 +30,7 @@ interface ProjectFormProps {
 }
 
 const ProjectForm = ({ initial, onSubmit, loading, lang }: ProjectFormProps) => {
+  const pt = lang === "pt";
   const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial
@@ -44,61 +45,42 @@ const ProjectForm = ({ initial, onSubmit, loading, lang }: ProjectFormProps) => 
     });
   };
 
-  const showEn = !lang || lang === "en";
-  const showPt = !lang || lang === "pt";
-
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-          <div><Label>Title (PT)</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Title</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      ) : (
-        <div><Label>Title</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      )}
-
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Description (EN)</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-          <div><Label>Description (PT)</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Description</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-      ) : (
-        <div><Label>Description</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-      )}
-
       <div className="grid grid-cols-2 gap-4">
-        <div><Label>Status</Label><select {...register("status")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="active">Active</option><option value="completed">Completed</option></select></div>
-        <div><Label>Impact</Label><select {...register("impact")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="High">High</option><option value="Medium">Medium</option></select></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Tags (comma-separated)</Label><Input {...register("tags")} placeholder="HPC, AI, Cloud" /></div>
-        <div><Label>Publications count</Label><Input type="number" {...register("publications")} /></div>
+        <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+        <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
       </div>
 
-      {showEn && (
-        <Controller
-          name="content"
-          control={control}
-          render={({ field }) => (
-            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (EN, Markdown)"} value={field.value || ""} onChange={field.onChange} />
-          )}
-        />
-      )}
-      {showPt && (
-        <Controller
-          name="contentPt"
-          control={control}
-          render={({ field }) => (
-            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (PT, Markdown)"} value={field.value || ""} onChange={field.onChange} />
-          )}
-        />
-      )}
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Descrição (EN)" : "Description (EN)"}</Label><textarea {...register("description")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+        <div><Label>{pt ? "Descrição (PT)" : "Description (PT)"}</Label><textarea {...register("descriptionPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>Status</Label><select {...register("status")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="active">{pt ? "Ativo" : "Active"}</option><option value="completed">{pt ? "Concluído" : "Completed"}</option></select></div>
+        <div><Label>{pt ? "Impacto" : "Impact"}</Label><select {...register("impact")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="High">{pt ? "Alto" : "High"}</option><option value="Medium">{pt ? "Médio" : "Medium"}</option></select></div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Tags (separadas por vírgula)" : "Tags (comma-separated)"}</Label><Input {...register("tags")} placeholder="HPC, AI, Cloud" /></div>
+        <div><Label>{pt ? "Nº de publicações" : "Publications count"}</Label><Input type="number" {...register("publications")} /></div>
+      </div>
+
+      <Controller
+        name="content"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label={pt ? "Conteúdo EN (Markdown)" : "Content EN (Markdown)"} value={field.value || ""} onChange={field.onChange} />
+        )}
+      />
+      <Controller
+        name="contentPt"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label={pt ? "Conteúdo PT (Markdown)" : "Content PT (Markdown)"} value={field.value || ""} onChange={field.onChange} />
+        )}
+      />
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>
   );
 };

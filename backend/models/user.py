@@ -2,6 +2,14 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    role: str = "aluno_ativo"  # docente | aluno_ativo | alumni
+    observation: str = ""
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -10,6 +18,7 @@ class UserCreate(BaseModel):
     is_admin: bool = False
     avatar: Optional[str] = None
     initials: str
+    status: str = "active"  # active | pending | rejected
     # Docente-specific fields
     title: Optional[str] = None       # e.g. "Full Professor"
     titlePt: Optional[str] = None
@@ -52,6 +61,7 @@ class UserOut(BaseModel):
     is_admin: bool = False
     avatar: Optional[str] = None
     initials: str
+    status: str = "active"
     title: Optional[str] = None
     titlePt: Optional[str] = None
     area: Optional[str] = None

@@ -12,8 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, UserPlus, Settings, LogOut } from "lucide-react";
-import { toast } from "sonner";
+import { User, UserPlus, Settings, LogOut, Clock } from "lucide-react";
 import UserCreateModal from "@/components/admin/UserCreateModal";
 
 const UserAvatarButton = () => {
@@ -82,19 +81,26 @@ const UserAvatarButton = () => {
                 <UserPlus className="mr-2 h-4 w-4" />
                 {t("menu.addUser")}
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate("/admin/pending")}
+                className="cursor-pointer"
+              >
+                <Clock className="mr-2 h-4 w-4" />
+                {t("admin.pendingUsers")}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
           )}
 
           <DropdownMenuItem
-            onClick={() => toast.info(t("menu.profile") + " - feature em desenvolvimento")}
+            onClick={() => navigate(`/profile/${user.id}`)}
             className="cursor-pointer"
           >
             <User className="mr-2 h-4 w-4" />
             {t("menu.profile")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info(t("menu.settings") + " - feature em desenvolvimento")}
+            onClick={() => navigate(`/profile/${user.id}`)}
             className="cursor-pointer"
           >
             <Settings className="mr-2 h-4 w-4" />

@@ -7,15 +7,19 @@ import { Sun, Moon, Contrast, Search, Menu, X, Globe, AArrowUp } from "lucide-re
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
 import UserAvatarButton from "@/components/UserAvatarButton";
+import NotificationBell from "@/components/NotificationBell";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-const navKeys = [
+const publicNavKeys = [
   { key: "nav.home", path: "/" },
   { key: "nav.people", path: "/people" },
   { key: "nav.research", path: "/research" },
-  { key: "nav.infrastructure", path: "/infrastructure" },
   { key: "nav.blog", path: "/blog" },
   { key: "nav.contact", path: "/contact" },
+];
+
+const authNavKeys = [
+  { key: "nav.infrastructure", path: "/infrastructure" },
   { key: "nav.docs", path: "/docs" },
 ];
 
@@ -57,10 +61,11 @@ const Header = () => {
             </Link>
             <div className="w-px h-5 bg-border/60 hidden sm:block" />
             <UserAvatarButton />
+            <NotificationBell />
           </div>
 
           <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {navKeys.map(({ key, path }) => (
+            {[...publicNavKeys, ...(user ? authNavKeys : [])].map(({ key, path }) => (
               <Link
                 key={key}
                 to={path}
@@ -160,7 +165,7 @@ const Header = () => {
                   </div>
                 )}
 
-                {navKeys.map(({ key, path }, i) => (
+                {[...publicNavKeys, ...(user ? authNavKeys : [])].map(({ key, path }, i) => (
                   <motion.div
                     key={key}
                     initial={{ opacity: 0, x: -12 }}

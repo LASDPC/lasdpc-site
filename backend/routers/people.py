@@ -19,7 +19,7 @@ def _user_out(doc: dict) -> UserOut:
 @router.get("/docentes", response_model=list[UserOut])
 async def list_docentes():
     db = get_db()
-    items = await db.users.find({"role": "docente"}).to_list(1000)
+    items = await db.users.find({"role": "docente", "status": {"$ne": "pending"}}).to_list(1000)
     return [_user_out(d) for d in items]
 
 
@@ -36,7 +36,7 @@ async def get_docente(item_id: str):
 @router.get("/students", response_model=list[UserOut])
 async def list_students():
     db = get_db()
-    items = await db.users.find({"role": {"$in": ["aluno_ativo", "alumni"]}}).to_list(1000)
+    items = await db.users.find({"role": {"$in": ["aluno_ativo", "alumni"]}, "status": {"$ne": "pending"}}).to_list(1000)
     return [_user_out(d) for d in items]
 
 

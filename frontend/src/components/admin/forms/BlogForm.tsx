@@ -32,6 +32,7 @@ interface BlogFormProps {
 }
 
 const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
+  const pt = lang === "pt";
   const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { date: new Date().toISOString().split("T")[0] },
@@ -48,40 +49,25 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
     reader.readAsDataURL(file);
   };
 
-  const showEn = !lang || lang === "en";
-  const showPt = !lang || lang === "pt";
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-          <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Title</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      ) : (
-        <div><Label>Title</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      )}
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+        <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+      </div>
 
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Excerpt (EN)</Label><textarea {...register("excerpt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-          <div><Label>Excerpt (PT)</Label><textarea {...register("excerptPt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Excerpt</Label><textarea {...register("excerpt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-      ) : (
-        <div><Label>Excerpt</Label><textarea {...register("excerptPt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-      )}
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Resumo (EN)" : "Excerpt (EN)"}</Label><textarea {...register("excerpt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+        <div><Label>{pt ? "Resumo (PT)" : "Excerpt (PT)"}</Label><textarea {...register("excerptPt")} className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      </div>
 
       {/* Cover Image */}
       <div>
-        <Label>Cover Image</Label>
+        <Label>{pt ? "Imagem de capa" : "Cover Image"}</Label>
         <div className="flex items-center gap-3 mt-1">
           {coverImage ? (
             <div className="relative">
-              <img src={coverImage} alt="Cover preview" className="h-24 rounded-md object-cover" />
+              <img src={coverImage} alt={pt ? "Prévia da capa" : "Cover preview"} className="h-24 rounded-md object-cover" />
               <Button
                 type="button"
                 variant="destructive"
@@ -94,7 +80,7 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
             </div>
           ) : (
             <Button type="button" variant="outline" size="sm" onClick={() => coverInputRef.current?.click()}>
-              <ImagePlus size={14} className="mr-2" /> Upload Cover
+              <ImagePlus size={14} className="mr-2" /> {pt ? "Enviar capa" : "Upload Cover"}
             </Button>
           )}
           <input
@@ -111,31 +97,27 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
         </div>
       </div>
 
-      {showEn && (
-        <Controller
-          name="content"
-          control={control}
-          render={({ field }) => (
-            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (EN, Markdown)"} value={field.value || ""} onChange={field.onChange} />
-          )}
-        />
-      )}
-      {showPt && (
-        <Controller
-          name="contentPt"
-          control={control}
-          render={({ field }) => (
-            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (PT, Markdown)"} value={field.value || ""} onChange={field.onChange} />
-          )}
-        />
-      )}
+      <Controller
+        name="content"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label={pt ? "Conteúdo EN (Markdown)" : "Content EN (Markdown)"} value={field.value || ""} onChange={field.onChange} />
+        )}
+      />
+      <Controller
+        name="contentPt"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label={pt ? "Conteúdo PT (Markdown)" : "Content PT (Markdown)"} value={field.value || ""} onChange={field.onChange} />
+        )}
+      />
 
       <div className="grid grid-cols-3 gap-4">
-        <div><Label>Date</Label><Input type="date" {...register("date")} /></div>
-        <div><Label>Tag</Label><Input {...register("tag")} placeholder="Conference" /></div>
-        <div><Label>Author</Label><Input {...register("author")} /></div>
+        <div><Label>{pt ? "Data" : "Date"}</Label><Input type="date" {...register("date")} /></div>
+        <div><Label>Tag</Label><Input {...register("tag")} placeholder={pt ? "Conferência" : "Conference"} /></div>
+        <div><Label>{pt ? "Autor" : "Author"}</Label><Input {...register("author")} /></div>
       </div>
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>
   );
 };

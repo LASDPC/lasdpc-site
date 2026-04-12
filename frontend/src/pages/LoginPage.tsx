@@ -28,15 +28,30 @@ const LoginPage = () => {
     }
   }, [user, navigate, from]);
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(false);
+    setErrorMsg("");
     setLoading(true);
 
-    const ok = await login(email, password);
-    setLoading(false);
-    if (!ok) {
-      setError(true);
+    try {
+      const ok = await login(email, password);
+      if (!ok) {
+        setError(true);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("pending")) {
+        setErrorMsg(t("auth.pendingAccount"));
+      } else if (msg.includes("rejected")) {
+        setErrorMsg(t("auth.rejectedAccount"));
+      } else {
+        setError(true);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,9 +123,9 @@ const LoginPage = () => {
               {t("auth.loginSubtitle")}
             </p>
 
-            {error && (
+            {(error || errorMsg) && (
               <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-3">
-                {t("auth.loginError")}
+                {errorMsg || t("auth.loginError")}
               </div>
             )}
 
@@ -145,7 +160,9 @@ const LoginPage = () => {
 
             <p className="text-xs text-muted-foreground mt-6">
               {t("auth.noAccount")}{" "}
-              <span className="text-foreground">{t("auth.contactAdmin")}</span>
+              <Link to="/register" className="text-primary hover:underline">
+                {t("auth.register")}
+              </Link>
             </p>
           </div>
 

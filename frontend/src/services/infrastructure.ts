@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { CustomFieldDef } from "./clusterRequests";
 
 export interface Cluster {
   id: string;
@@ -10,6 +11,7 @@ export interface Cluster {
   memoryUsage: number;
   storageUsage: number;
   status: "online" | "maintenance";
+  custom_fields: CustomFieldDef[];
 }
 
 export type ClusterInput = Omit<Cluster, "id">;

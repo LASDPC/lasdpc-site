@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,21 +22,22 @@ import { useDoc, useCreateDoc, useUpdateDoc, useDeleteDoc } from "@/hooks/useDoc
 
 type ResourceType = "blog" | "project" | "publication" | "docente" | "student" | "cluster" | "doc";
 
-const RESOURCE_LABELS: Record<ResourceType, string> = {
-  blog: "Blog",
-  project: "Project",
-  publication: "Publication",
-  docente: "Docente",
-  student: "Student",
-  cluster: "Cluster",
-  doc: "Doc",
+const RESOURCE_LABELS: Record<ResourceType, { en: string; pt: string }> = {
+  blog: { en: "Blog Post", pt: "Post do Blog" },
+  project: { en: "Project", pt: "Projeto" },
+  publication: { en: "Publication", pt: "Publicação" },
+  docente: { en: "Faculty Member", pt: "Docente" },
+  student: { en: "Student", pt: "Aluno" },
+  cluster: { en: "Cluster", pt: "Cluster" },
+  doc: { en: "Document", pt: "Documento" },
 };
 
 const AdminEditPage = () => {
   const { resource, id } = useParams<{ resource: string; id?: string }>();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const [lang, setLang] = useState<"en" | "pt">("en");
+  const { lang: globalLang } = useLang();
+  const lang: "en" | "pt" = globalLang === "pt-BR" ? "pt" : "en";
 
   if (!isAdmin) {
     return <Navigate to="/login" replace />;
@@ -44,11 +45,16 @@ const AdminEditPage = () => {
 
   const res = resource as ResourceType;
   const isEdit = !!id;
-  const label = RESOURCE_LABELS[res] || res;
-  const title = `${isEdit ? "Edit" : "New"} ${label}`;
+  const labels = RESOURCE_LABELS[res] || { en: res, pt: res };
+  const label = lang === "pt" ? labels.pt : labels.en;
+  const title = lang === "pt"
+    ? `${isEdit ? "Editar" : "Novo(a)"} ${label}`
+    : `${isEdit ? "Edit" : "New"} ${label}`;
 
   const handleSuccess = () => {
-    toast.success(isEdit ? "Updated successfully" : "Created successfully");
+    toast.success(lang === "pt"
+      ? (isEdit ? "Atualizado com sucesso" : "Criado com sucesso")
+      : (isEdit ? "Updated successfully" : "Created successfully"));
     navigate(-1);
   };
 
@@ -62,33 +68,6 @@ const AdminEditPage = () => {
               <ArrowLeft size={20} />
             </Button>
             <h1 className="font-display text-2xl font-bold text-foreground">{title}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Language Switcher */}
-            <div className="flex rounded-md border border-border overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setLang("en")}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  lang === "en"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-muted"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang("pt")}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  lang === "pt"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-muted"
-                }`}
-              >
-                PT
-              </button>
-            </div>
           </div>
         </div>
 

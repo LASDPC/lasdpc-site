@@ -28,49 +28,37 @@ interface DocFormProps {
 const DOCS_PROSE = "prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-xl prose-h3:text-lg prose-a:text-primary prose-code:text-primary";
 
 const DocForm = ({ initial, onSubmit, loading, lang }: DocFormProps) => {
+  const pt = lang === "pt";
   const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial ?? { updatedAt: new Date().toISOString().split("T")[0], category: "guides" },
   });
 
-  const showEn = !lang || lang === "en";
-  const showPt = !lang || lang === "pt";
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div><Label>Category</Label><select {...register("category")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="guides">Guides</option><option value="policies">Policies</option><option value="tutorials">Tutorials</option></select></div>
-        <div><Label>Updated At</Label><Input type="date" {...register("updatedAt")} /></div>
+        <div><Label>{pt ? "Categoria" : "Category"}</Label><select {...register("category")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="guides">{pt ? "Guias" : "Guides"}</option><option value="policies">{pt ? "Políticas" : "Policies"}</option><option value="tutorials">{pt ? "Tutoriais" : "Tutorials"}</option></select></div>
+        <div><Label>{pt ? "Atualizado em" : "Updated At"}</Label><Input type="date" {...register("updatedAt")} /></div>
       </div>
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Title (EN)</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-          <div><Label>Title (PT)</Label><Input {...register("titlePt")} /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Title</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      ) : (
-        <div><Label>Title</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      )}
-      {showEn && (
-        <Controller
-          name="content"
-          control={control}
-          render={({ field }) => (
-            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (EN, Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
-          )}
-        />
-      )}
-      {showPt && (
-        <Controller
-          name="contentPt"
-          control={control}
-          render={({ field }) => (
-            <MarkdownEditor label={lang ? "Content (Markdown)" : "Content (PT, Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
-          )}
-        />
-      )}
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? "Update" : "Create"}</Button>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+        <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+      </div>
+      <Controller
+        name="content"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label={pt ? "Conteúdo EN (Markdown)" : "Content EN (Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
+        )}
+      />
+      <Controller
+        name="contentPt"
+        control={control}
+        render={({ field }) => (
+          <MarkdownEditor label={pt ? "Conteúdo PT (Markdown)" : "Content PT (Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
+        )}
+      />
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>
   );
 };

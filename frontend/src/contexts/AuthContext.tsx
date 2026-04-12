@@ -61,7 +61,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
       return true;
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("pending") || msg.includes("rejected")) {
+        throw err;
+      }
       return false;
     }
   };

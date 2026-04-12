@@ -57,6 +57,7 @@ const PersonForm = (props: PersonFormProps) => {
 
 const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteFormProps, "type">) => {
   const isEdit = !!initial;
+  const pt = lang === "pt";
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof docenteSchema>>({
     resolver: zodResolver(docenteSchema),
     defaultValues: initial ? {
@@ -72,9 +73,6 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
       page: initial.page ?? "",
     } : {},
   });
-
-  const showEn = !lang || lang === "en";
-  const showPt = !lang || lang === "pt";
 
   return (
     <form onSubmit={handleSubmit((v) => {
@@ -97,44 +95,33 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
       }
       onSubmit(data);
     })} className="space-y-4">
-      <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      <div><Label>Email</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">Valid email required</p>}</div>
-      {!isEdit && <div><Label>Password</Label><Input type="password" {...register("password")} placeholder="Default: changeme123" /></div>}
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Title (EN)</Label><Input {...register("title")} placeholder="Full Professor" /></div>
-          <div><Label>Title (PT)</Label><Input {...register("titlePt")} placeholder="Professor Titular" /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Title</Label><Input {...register("title")} /></div>
-      ) : (
-        <div><Label>Title</Label><Input {...register("titlePt")} /></div>
-      )}
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Area (EN)</Label><Input {...register("area")} /></div>
-          <div><Label>Area (PT)</Label><Input {...register("areaPt")} /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Area</Label><Input {...register("area")} /></div>
-      ) : (
-        <div><Label>Area</Label><Input {...register("areaPt")} /></div>
-      )}
+      <div><Label>{pt ? "Nome" : "Name"}</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+      <div><Label>E-mail</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
+      {!isEdit && <div><Label>{pt ? "Senha" : "Password"}</Label><Input type="password" {...register("password")} placeholder={pt ? "Padrão: changeme123" : "Default: changeme123"} /></div>}
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} placeholder="Full Professor" /></div>
+        <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} placeholder="Professor Titular" /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Área (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>
+        <div><Label>{pt ? "Área (PT)" : "Area (PT)"}</Label><Input {...register("areaPt")} /></div>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Lattes URL</Label><Input {...register("lattes")} /></div>
         <div><Label>ORCID URL</Label><Input {...register("orcid")} /></div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Scholar URL</Label><Input {...register("scholar")} /></div>
-        <div><Label>Page</Label><Input {...register("page")} /></div>
+        <div><Label>{pt ? "Página pessoal" : "Personal page"}</Label><Input {...register("page")} /></div>
       </div>
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : isEdit ? "Update" : "Create"}</Button>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : isEdit ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>
   );
 };
 
 const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentFormProps, "type">) => {
   const isEdit = !!initial;
+  const pt = lang === "pt";
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof studentSchema>>({
     resolver: zodResolver(studentSchema),
     defaultValues: initial ? {
@@ -146,9 +133,6 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       areaPt: initial.areaPt ?? "",
     } : {},
   });
-
-  const showEn = !lang || lang === "en";
-  const showPt = !lang || lang === "pt";
 
   return (
     <form onSubmit={handleSubmit((v) => {
@@ -165,30 +149,18 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       }
       onSubmit(data);
     })} className="space-y-4">
-      <div><Label>Name</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">Required</p>}</div>
-      <div><Label>Email</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">Valid email required</p>}</div>
-      {!isEdit && <div><Label>Password</Label><Input type="password" {...register("password")} placeholder="Default: changeme123" /></div>}
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Level (EN)</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
-          <div><Label>Level (PT)</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Level</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
-      ) : (
-        <div><Label>Level</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
-      )}
-      {showEn && showPt ? (
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>Area (EN)</Label><Input {...register("area")} /></div>
-          <div><Label>Area (PT)</Label><Input {...register("areaPt")} /></div>
-        </div>
-      ) : showEn ? (
-        <div><Label>Area</Label><Input {...register("area")} /></div>
-      ) : (
-        <div><Label>Area</Label><Input {...register("areaPt")} /></div>
-      )}
-      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : isEdit ? "Update" : "Create"}</Button>
+      <div><Label>{pt ? "Nome" : "Name"}</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
+      <div><Label>E-mail</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
+      {!isEdit && <div><Label>{pt ? "Senha" : "Password"}</Label><Input type="password" {...register("password")} placeholder={pt ? "Padrão: changeme123" : "Default: changeme123"} /></div>}
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Nível (EN)" : "Level (EN)"}</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
+        <div><Label>{pt ? "Nível (PT)" : "Level (PT)"}</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label>{pt ? "Área (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>
+        <div><Label>{pt ? "Área (PT)" : "Area (PT)"}</Label><Input {...register("areaPt")} /></div>
+      </div>
+      <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : isEdit ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>
   );
 };
