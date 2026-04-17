@@ -10,7 +10,12 @@ _client: Optional[AsyncIOMotorClient] = None
 def get_client() -> AsyncIOMotorClient:
     global _client
     if _client is None:
-        _client = AsyncIOMotorClient(settings.mongo_uri)
+        # Fail fast with a clear error if MongoDB is not reachable (default is ~30s).
+        _client = AsyncIOMotorClient(
+            settings.mongo_uri,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+        )
     return _client
 
 

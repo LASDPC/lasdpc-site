@@ -65,7 +65,6 @@ const MarkdownEditor = ({
     imageMapRef.current = map;
     counterRef.current = counter;
     setDisplayValue(display);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   useEffect(() => {

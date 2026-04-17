@@ -30,7 +30,11 @@ def _initials(name: str) -> str:
 
 
 async def main():
-    client = AsyncIOMotorClient(settings.mongo_uri)
+    client = AsyncIOMotorClient(
+        settings.mongo_uri,
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000,
+    )
     db = client[settings.mongo_db_name]
 
     # --- Seed content collections from JSON files ---

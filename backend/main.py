@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI
+from pymongo.errors import ServerSelectionTimeoutError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -45,21 +46,38 @@ async def auto_bootstrap_admin():
     if not settings.admin_email or not settings.admin_password:
         return
     db = get_db()
-    existing = await db.users.find_one({"email": settings.admin_email, "is_admin": True})
-    if existing:
-        logger.info("Admin user already exists, skipping bootstrap")
-        return
+    try:
+        existing = await db.users.find_one({"email": settings.admin_email})
+    except ServerSelectionTimeoutError:
+        logger.error(
+            "MongoDB is not reachable at %s. Start it with: docker compose up -d",
+            settings.mongo_uri,
+        )
+        raise
     names = settings.admin_name.strip().split()
     initials = (names[0][0] + names[-1][0]).upper() if len(names) >= 2 else settings.admin_name[:2].upper()
-    await db.users.insert_one({
-        "email": settings.admin_email,
+    admin_doc = {
         "hashed_password": hash_password(settings.admin_password),
         "name": settings.admin_name,
         "role": "docente",
         "is_admin": True,
-        "avatar": None,
         "initials": initials,
         "status": "active",
+    }
+    if existing and existing.get("is_admin"):
+        logger.info("Admin user already exists, skipping bootstrap")
+        return
+    if existing:
+        await db.users.update_one(
+            {"email": settings.admin_email},
+            {"$set": admin_doc},
+        )
+        logger.info("Existing user promoted to admin: %s", settings.admin_email)
+        return
+    await db.users.insert_one({
+        "email": settings.admin_email,
+        "avatar": None,
+        **admin_doc,
     })
     logger.info("Admin user created: %s", settings.admin_email)
 

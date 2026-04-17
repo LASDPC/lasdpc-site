@@ -20,14 +20,18 @@ import { useCreateBlogPost, useUpdateBlogPost, useDeleteBlogPost } from "@/hooks
 import { useCreateDocente, useUpdateDocente, useDeleteDocente, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/usePeople";
 import { useCreateCluster, useUpdateCluster, useDeleteCluster } from "@/hooks/useInfrastructure";
 import { useCreateDoc, useUpdateDoc, useDeleteDoc } from "@/hooks/useDocs";
+import type { UseMutationResult } from "@tanstack/react-query";
 
 export type ResourceType = "project" | "publication" | "blog" | "docente" | "student" | "cluster" | "doc";
+
+/** Editable row payload from the API; kept loose so each form can narrow it. */
+export type AdminEditRow = (Record<string, unknown> & { id?: string }) | undefined;
 
 interface AdminEditModalProps {
   open: boolean;
   onClose: () => void;
   resource: ResourceType;
-  data?: any;
+  data?: AdminEditRow;
 }
 
 const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) => {
@@ -63,7 +67,8 @@ const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) 
 
   const handleDelete = () => {
     if (!data?.id) return;
-    const mutations: Record<ResourceType, any> = {
+    type DeleteMutation = UseMutationResult<unknown, Error, string, unknown>;
+    const mutations: Record<ResourceType, DeleteMutation> = {
       project: deleteProject,
       publication: deletePublication,
       blog: deleteBlogPost,
