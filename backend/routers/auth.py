@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException, status
 
 from core.database import get_db
@@ -17,7 +19,11 @@ def _initials(name: str) -> str:
 @router.post("/login", response_model=LoginResponse)
 async def login(body: LoginRequest):
     db = get_db()
-    user = await db.users.find_one({"email": body.email})
+    # If identifier contains '@', search by email; otherwise by usp_number
+    if "@" in body.identifier:
+        user = await db.users.find_one({"email": body.identifier})
+    else:
+        user = await db.users.find_one({"usp_number": body.identifier})
     if not user or not verify_password(body.password, user["hashed_password"]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     user_status = user.get("status", "active")
@@ -35,9 +41,18 @@ async def login(body: LoginRequest):
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterRequest):
     db = get_db()
+    if not body.lgpd_consent:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="LGPD consent is required",
+        )
     existing = await db.users.find_one({"email": body.email})
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+    if body.usp_number:
+        existing_usp = await db.users.find_one({"usp_number": body.usp_number})
+        if existing_usp:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="USP number already registered")
     if body.role not in ("docente", "aluno_ativo", "alumni"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
     doc = {
@@ -50,6 +65,10 @@ async def register(body: RegisterRequest):
         "initials": _initials(body.name),
         "status": "pending",
         "observation": body.observation,
+        "usp_number": body.usp_number,
+        "lgpd_consent": True,
+        "lgpd_consent_at": datetime.now(timezone.utc).isoformat(),
+        "lgpd_consent_version": "1.0",
     }
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id

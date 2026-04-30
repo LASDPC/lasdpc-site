@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime, timezone
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -7,9 +8,19 @@ from core.config import settings
 from core.database import get_db
 from core.dependencies import get_current_user, require_admin
 from core.security import hash_password
-from models.user import BootstrapAdmin, UserCreate, UserUpdate, UserOut
+from models.user import (
+    BootstrapAdmin,
+    LgpdDeletionRequest,
+    LgpdRequestOut,
+    UserCreate,
+    UserUpdate,
+    UserOut,
+)
 
 router = APIRouter()
+
+# Fields that non-admins cannot modify
+ADMIN_ONLY_FIELDS = {"is_admin", "role", "usp_number", "lgpd_consent", "lgpd_consent_at", "lgpd_consent_version"}
 
 
 def _user_out(doc: dict) -> UserOut:
@@ -101,6 +112,124 @@ async def me(user: dict = Depends(get_current_user)):
     return _user_out(user)
 
 
+# ---- LGPD self-service endpoints ---- #
+
+@router.post("/me/lgpd/export")
+async def lgpd_export(user: dict = Depends(get_current_user)):
+    db = get_db()
+    # Record the request
+    lgpd_doc = {
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name", ""),
+        "user_email": user.get("email", ""),
+        "request_type": "export",
+        "status": "completed",
+        "reason": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "resolved_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.lgpd_requests.insert_one(lgpd_doc)
+    # Return user data (exclude hashed_password)
+    export = {k: v for k, v in user.items() if k not in ("hashed_password",)}
+    export["_id"] = str(export["_id"])
+    return export
+
+
+@router.post("/me/lgpd/deletion")
+async def lgpd_deletion(body: LgpdDeletionRequest, user: dict = Depends(get_current_user)):
+    db = get_db()
+    # Check for existing pending deletion request
+    existing = await db.lgpd_requests.find_one({
+        "user_id": str(user["_id"]),
+        "request_type": "deletion",
+        "status": "pending",
+    })
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A deletion request is already pending",
+        )
+    lgpd_doc = {
+        "user_id": str(user["_id"]),
+        "user_name": user.get("name", ""),
+        "user_email": user.get("email", ""),
+        "request_type": "deletion",
+        "status": "pending",
+        "reason": body.reason,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "resolved_at": None,
+    }
+    await db.lgpd_requests.insert_one(lgpd_doc)
+    return {"message": "Deletion request submitted"}
+
+
+# ---- Admin LGPD management ---- #
+
+@router.get("/lgpd-requests", response_model=list[LgpdRequestOut])
+async def list_lgpd_requests(_admin: dict = Depends(require_admin)):
+    db = get_db()
+    items = await db.lgpd_requests.find({"status": "pending"}).to_list(1000)
+    return [
+        LgpdRequestOut(id=str(d["_id"]), **{k: d[k] for k in LgpdRequestOut.model_fields if k != "id"})
+        for d in items
+    ]
+
+
+@router.put("/lgpd-requests/{request_id}/complete")
+async def complete_lgpd_request(request_id: str, _admin: dict = Depends(require_admin)):
+    db = get_db()
+    req = await db.lgpd_requests.find_one({"_id": ObjectId(request_id)})
+    if not req or req["status"] != "pending":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pending LGPD request not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.lgpd_requests.update_one(
+        {"_id": ObjectId(request_id)},
+        {"$set": {"status": "completed", "resolved_at": now}},
+    )
+
+    # If deletion, anonymize the user
+    if req["request_type"] == "deletion":
+        user_id = req["user_id"]
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "name": "[Removido]",
+                "email": f"deleted_{user_id}@anon.invalid",
+                "status": "rejected",
+                "photo": None,
+                "avatar": None,
+                "bio": None,
+                "bioPt": None,
+                "linkedin": None,
+                "github": None,
+                "twitter": None,
+                "researchgate": None,
+                "usp_number": None,
+                "skills": None,
+                "research_areas": None,
+            }},
+        )
+
+    return {"message": "LGPD request completed"}
+
+
+@router.put("/lgpd-requests/{request_id}/reject")
+async def reject_lgpd_request(request_id: str, _admin: dict = Depends(require_admin)):
+    db = get_db()
+    req = await db.lgpd_requests.find_one({"_id": ObjectId(request_id)})
+    if not req or req["status"] != "pending":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pending LGPD request not found")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.lgpd_requests.update_one(
+        {"_id": ObjectId(request_id)},
+        {"$set": {"status": "rejected", "resolved_at": now}},
+    )
+    return {"message": "LGPD request rejected"}
+
+
+# ---- Standard CRUD ---- #
+
 @router.get("/{user_id}", response_model=UserOut)
 async def get_user(user_id: str):
     db = get_db()
@@ -112,14 +241,14 @@ async def get_user(user_id: str):
 
 @router.put("/{user_id}", response_model=UserOut)
 async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depends(get_current_user)):
-    is_own_profile = current_user["_id"] == user_id
+    is_own_profile = str(current_user["_id"]) == user_id
     if not is_own_profile and not current_user.get("is_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
     db = get_db()
     update_data = {k: v for k, v in body.model_dump().items() if v is not None}
     if not current_user.get("is_admin"):
-        update_data.pop("is_admin", None)
-        update_data.pop("role", None)
+        for field in ADMIN_ONLY_FIELDS:
+            update_data.pop(field, None)
     if not update_data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to update")
     result = await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_data})

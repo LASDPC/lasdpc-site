@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { Github, Linkedin, Mail, MapPin } from "lucide-react";
 
@@ -44,6 +45,7 @@ const Footer = () => {
             <ul className="space-y-1.5">
               <li><a href="https://www.icmc.usp.br" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">ICMC-USP</a></li>
               <li><a href="https://www.usp.br" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">{isPt ? "Universidade de São Paulo" : "University of São Paulo"}</a></li>
+              <li><Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">{isPt ? "Politica de Privacidade" : "Privacy Policy"}</Link></li>
             </ul>
           </div>
         </div>

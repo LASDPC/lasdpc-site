@@ -38,7 +38,7 @@ async def get_stats():
 
 async def _count_researchers(db) -> int:
     docentes, students = await asyncio.gather(
-        db.docentes.count_documents({}),
-        db.students.count_documents({}),
+        db.users.count_documents({"role": "docente", "status": "active"}),
+        db.users.count_documents({"role": {"$in": ["aluno_ativo", "alumni"]}, "status": "active"}),
     )
     return docentes + students

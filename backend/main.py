@@ -65,7 +65,11 @@ async def auto_bootstrap_admin():
         "status": "active",
     }
     if existing and existing.get("is_admin"):
-        logger.info("Admin user already exists, skipping bootstrap")
+        await db.users.update_one(
+            {"email": settings.admin_email},
+            {"$set": admin_doc},
+        )
+        logger.info("Admin credentials refreshed from env: %s", settings.admin_email)
         return
     if existing:
         await db.users.update_one(

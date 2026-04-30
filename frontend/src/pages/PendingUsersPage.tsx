@@ -6,7 +6,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { authService } from "@/services/auth";
 import { clusterRequestsService, type ClusterRequest } from "@/services/clusterRequests";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Clock, Users, Server } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Users, Server, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_LABELS: Record<string, { en: string; pt: string }> = {
@@ -51,13 +51,25 @@ function TabButton({ active, onClick, icon, label, count }: {
   );
 }
 
+interface LgpdRequest {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  request_type: string;
+  status: string;
+  reason: string | null;
+  created_at: string;
+  resolved_at: string | null;
+}
+
 /* ========== MAIN PAGE ========== */
 const PendingUsersPage = () => {
   const { isAdmin } = useAuth();
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "clusters">("users");
+  const [tab, setTab] = useState<"users" | "clusters" | "lgpd">("users");
 
   // Users
   const { data: pendingUsers = [], isLoading: loadingUsers } = useQuery({
@@ -69,7 +81,7 @@ const PendingUsersPage = () => {
     mutationFn: (id: string) => authService.approveUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "pending"] });
-      toast.success(isPt ? "Usuário aprovado!" : "User approved!");
+      toast.success(isPt ? "Usuario aprovado!" : "User approved!");
     },
   });
 
@@ -77,7 +89,7 @@ const PendingUsersPage = () => {
     mutationFn: (id: string) => authService.rejectUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "pending"] });
-      toast.success(isPt ? "Solicitação recusada." : "Request rejected.");
+      toast.success(isPt ? "Solicitacao recusada." : "Request rejected.");
     },
   });
 
@@ -91,7 +103,7 @@ const PendingUsersPage = () => {
     mutationFn: (id: string) => clusterRequestsService.approve(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cluster-requests"] });
-      toast.success(isPt ? "Solicitação aprovada!" : "Request approved!");
+      toast.success(isPt ? "Solicitacao aprovada!" : "Request approved!");
     },
   });
 
@@ -99,13 +111,35 @@ const PendingUsersPage = () => {
     mutationFn: (id: string) => clusterRequestsService.reject(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cluster-requests"] });
-      toast.success(isPt ? "Solicitação recusada." : "Request rejected.");
+      toast.success(isPt ? "Solicitacao recusada." : "Request rejected.");
+    },
+  });
+
+  // LGPD
+  const { data: lgpdRequests = [], isLoading: loadingLgpd } = useQuery<LgpdRequest[]>({
+    queryKey: ["lgpd-requests"],
+    queryFn: authService.listLgpdRequests as () => Promise<LgpdRequest[]>,
+  });
+
+  const completeLgpd = useMutation({
+    mutationFn: (id: string) => authService.completeLgpdRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lgpd-requests"] });
+      toast.success(isPt ? "Solicitacao LGPD concluida!" : "LGPD request completed!");
+    },
+  });
+
+  const rejectLgpd = useMutation({
+    mutationFn: (id: string) => authService.rejectLgpdRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lgpd-requests"] });
+      toast.success(isPt ? "Solicitacao LGPD rejeitada." : "LGPD request rejected.");
     },
   });
 
   if (!isAdmin) return <Navigate to="/login" replace />;
 
-  const isLoading = tab === "users" ? loadingUsers : loadingClusters;
+  const isLoading = tab === "users" ? loadingUsers : tab === "clusters" ? loadingClusters : loadingLgpd;
 
   return (
     <div className="py-8">
@@ -132,6 +166,13 @@ const PendingUsersPage = () => {
             icon={<Server size={16} />}
             label={t("admin.tabClusters")}
             count={pendingClusters.length}
+          />
+          <TabButton
+            active={tab === "lgpd"}
+            onClick={() => setTab("lgpd")}
+            icon={<Shield size={16} />}
+            label={t("admin.tabLgpd")}
+            count={lgpdRequests.length}
           />
         </div>
 
@@ -174,7 +215,7 @@ const PendingUsersPage = () => {
                     </div>
                     {observation && (
                       <div className="bg-muted/50 rounded-lg px-3 py-2 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{isPt ? "Observação:" : "Note:"}</span> {observation}
+                        <span className="font-medium text-foreground">{isPt ? "Observacao:" : "Note:"}</span> {observation}
                       </div>
                     )}
                   </div>
@@ -182,7 +223,7 @@ const PendingUsersPage = () => {
               })}
             </div>
           )
-        ) : (
+        ) : tab === "clusters" ? (
           /* ---- Clusters Tab ---- */
           pendingClusters.length === 0 ? (
             <EmptyState text={t("admin.noPending")} />
@@ -198,6 +239,51 @@ const PendingUsersPage = () => {
                   onReject={() => rejectCluster.mutate(req.id)}
                   loading={approveCluster.isPending || rejectCluster.isPending}
                 />
+              ))}
+            </div>
+          )
+        ) : (
+          /* ---- LGPD Tab ---- */
+          lgpdRequests.length === 0 ? (
+            <EmptyState text={t("admin.noPending")} />
+          ) : (
+            <div className="space-y-4">
+              {lgpdRequests.map((req) => (
+                <div key={req.id} className="p-4 bg-card border border-border rounded-xl space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase ${
+                          req.request_type === "deletion"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-primary/10 text-primary"
+                        }`}>
+                          {req.request_type === "deletion"
+                            ? (isPt ? "Exclusao" : "Deletion")
+                            : (isPt ? "Exportacao" : "Export")}
+                        </span>
+                      </div>
+                      <p className="font-medium text-foreground mt-1">{req.user_name}</p>
+                      <p className="text-xs text-muted-foreground">{req.user_email}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(req.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button size="sm" onClick={() => completeLgpd.mutate(req.id)} disabled={completeLgpd.isPending || rejectLgpd.isPending}>
+                        <CheckCircle size={14} className="mr-1" /> {isPt ? "Concluir" : "Complete"}
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => rejectLgpd.mutate(req.id)} disabled={completeLgpd.isPending || rejectLgpd.isPending}>
+                        <XCircle size={14} className="mr-1" /> {t("admin.reject")}
+                      </Button>
+                    </div>
+                  </div>
+                  {req.reason && (
+                    <div className="bg-muted/50 rounded-lg px-3 py-2 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{isPt ? "Motivo:" : "Reason:"}</span> {req.reason}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )
@@ -246,7 +332,7 @@ function ClusterRequestCard({ req, isPt, t, onApprove, onReject, loading }: {
       </div>
       {req.observation && (
         <div className="bg-muted/50 rounded-lg px-3 py-2 text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{isPt ? "Observação:" : "Note:"}</span> {req.observation}
+          <span className="font-medium text-foreground">{isPt ? "Observacao:" : "Note:"}</span> {req.observation}
         </div>
       )}
       {/* Show filled custom fields */}

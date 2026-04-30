@@ -21,6 +21,7 @@ import AdminEditPage from "@/pages/AdminEditPage";
 import ProfilePage from "@/pages/ProfilePage";
 import RegisterPage from "@/pages/RegisterPage";
 import PendingUsersPage from "@/pages/PendingUsersPage";
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -42,12 +43,13 @@ const MaintenanceGate = ({ children }: { children: React.ReactNode }) => {
 
   if (!MAINTENANCE_MODE) return <>{children}</>;
   if (user?.is_admin) return <>{children}</>;
-  if (location.pathname === "/login" || location.pathname === "/register") {
+  if (location.pathname === "/login" || location.pathname === "/register" || location.pathname === "/privacy-policy") {
     return (
       <Layout>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         </Routes>
       </Layout>
     );
@@ -71,6 +73,7 @@ const AppRoutes = () => (
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile/:userId" element={<ProfilePage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/admin/pending" element={<PendingUsersPage />} />
       <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
       <Route path="/admin/edit/:resource/:id" element={<AdminEditPage />} />

@@ -8,6 +8,8 @@ class RegisterRequest(BaseModel):
     name: str
     role: str = "aluno_ativo"  # docente | aluno_ativo | alumni
     observation: str = ""
+    usp_number: Optional[str] = None
+    lgpd_consent: bool = False
 
 
 class UserCreate(BaseModel):
@@ -32,6 +34,20 @@ class UserCreate(BaseModel):
     # Student-specific fields
     level: Optional[str] = None       # e.g. "PhD", "MSc"
     levelPt: Optional[str] = None
+    # Enriched profile
+    research_areas: Optional[list[str]] = None
+    year_joined: Optional[int] = None
+    bio: Optional[str] = None
+    bioPt: Optional[str] = None
+    skills: Optional[list[str]] = None
+    graduation_year: Optional[int] = None
+    # Social links
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    twitter: Optional[str] = None
+    researchgate: Optional[str] = None
+    # USP
+    usp_number: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -51,6 +67,24 @@ class UserUpdate(BaseModel):
     photo: Optional[str] = None
     level: Optional[str] = None
     levelPt: Optional[str] = None
+    # Enriched profile
+    research_areas: Optional[list[str]] = None
+    year_joined: Optional[int] = None
+    bio: Optional[str] = None
+    bioPt: Optional[str] = None
+    skills: Optional[list[str]] = None
+    graduation_year: Optional[int] = None
+    # Social links
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    twitter: Optional[str] = None
+    researchgate: Optional[str] = None
+    # USP
+    usp_number: Optional[str] = None
+    # LGPD
+    lgpd_consent: Optional[bool] = None
+    lgpd_consent_at: Optional[str] = None
+    lgpd_consent_version: Optional[str] = None
 
 
 class UserOut(BaseModel):
@@ -73,6 +107,22 @@ class UserOut(BaseModel):
     photo: Optional[str] = None
     level: Optional[str] = None
     levelPt: Optional[str] = None
+    # Enriched profile
+    research_areas: Optional[list[str]] = None
+    year_joined: Optional[int] = None
+    bio: Optional[str] = None
+    bioPt: Optional[str] = None
+    skills: Optional[list[str]] = None
+    graduation_year: Optional[int] = None
+    # Social links
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    twitter: Optional[str] = None
+    researchgate: Optional[str] = None
+    # USP
+    usp_number: Optional[str] = None
+    # LGPD
+    lgpd_consent: Optional[bool] = None
 
 
 class BootstrapAdmin(BaseModel):
@@ -82,7 +132,7 @@ class BootstrapAdmin(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    identifier: str   # email or USP number
     password: str
 
 
@@ -90,3 +140,19 @@ class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class LgpdDeletionRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+class LgpdRequestOut(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    user_email: str
+    request_type: str    # "export" | "deletion"
+    status: str          # "pending" | "completed" | "rejected"
+    reason: Optional[str] = None
+    created_at: str
+    resolved_at: Optional[str] = None

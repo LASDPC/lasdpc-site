@@ -17,7 +17,7 @@ const LoginPage = () => {
 
   const from = (location.state as { from?: string })?.from || "/";
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,7 +37,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const ok = await login(email, password);
+      const ok = await login(identifier, password);
       if (!ok) {
         setError(true);
       }
@@ -78,10 +78,10 @@ const LoginPage = () => {
           </div>
 
           <h2 className="font-display text-3xl font-bold mb-4">
-            Laboratório de Sistemas Distribuídos e Programação Concorrente
+            Laboratorio de Sistemas Distribuidos e Programacao Concorrente
           </h2>
           <p className="text-primary-foreground/80 mb-10 max-w-md">
-            Pesquisa de ponta em computação de alto desempenho, inteligência artificial e sistemas distribuídos.
+            Pesquisa de ponta em computacao de alto desempenho, inteligencia artificial e sistemas distribuidos.
           </p>
 
           <ul className="space-y-4">
@@ -97,7 +97,7 @@ const LoginPage = () => {
         </div>
 
         <p className="text-xs text-primary-foreground/50">
-          ICMC-USP, Av. Trabalhador São-Carlense, 400 - São Carlos, SP
+          ICMC-USP, Av. Trabalhador Sao-Carlense, 400 - Sao Carlos, SP
         </p>
       </div>
 
@@ -131,15 +131,15 @@ const LoginPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Label htmlFor="identifier">{t("auth.identifierLabel")}</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@usp.br"
+                  id="identifier"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="email@usp.br ou 12345678"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                 />
               </div>
               <div className="space-y-2">

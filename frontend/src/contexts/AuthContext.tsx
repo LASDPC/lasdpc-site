@@ -17,7 +17,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -45,9 +45,9 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(loadSession);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (identifier: string, password: string): Promise<boolean> => {
     try {
-      const res = await authService.login(email, password);
+      const res = await authService.login(identifier, password);
       setToken(res.access_token);
       const userData: User = {
         id: res.user.id,

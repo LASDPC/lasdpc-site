@@ -16,6 +16,8 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("aluno_ativo");
   const [observation, setObservation] = useState("");
+  const [uspNumber, setUspNumber] = useState("");
+  const [lgpdConsent, setLgpdConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -23,14 +25,28 @@ const RegisterPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!lgpdConsent) {
+      setError(t("auth.lgpdRequired"));
+      return;
+    }
     setLoading(true);
     try {
-      await authService.register({ name, email, password, role, observation });
+      await authService.register({
+        name,
+        email,
+        password,
+        role,
+        observation,
+        usp_number: uspNumber || undefined,
+        lgpd_consent: lgpdConsent,
+      });
       setSuccess(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("already registered")) {
         setError(t("auth.emailExists"));
+      } else if (msg.includes("USP number already")) {
+        setError(t("auth.uspNumberExists"));
       } else {
         setError(t("auth.registerError"));
       }
@@ -141,6 +157,16 @@ const RegisterPage = () => {
               </select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="uspNumber">{t("auth.uspNumber")}</Label>
+              <Input
+                id="uspNumber"
+                value={uspNumber}
+                onChange={(e) => setUspNumber(e.target.value)}
+                placeholder="12345678"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="observation">{t("auth.observation")}</Label>
               <textarea
                 id="observation"
@@ -149,6 +175,21 @@ const RegisterPage = () => {
                 placeholder={t("auth.observationPlaceholder")}
                 className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
               />
+            </div>
+            <div className="flex items-start gap-2">
+              <input
+                id="lgpdConsent"
+                type="checkbox"
+                checked={lgpdConsent}
+                onChange={(e) => setLgpdConsent(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-border"
+              />
+              <Label htmlFor="lgpdConsent" className="text-sm font-normal leading-snug">
+                {t("auth.lgpdConsent")}{" "}
+                <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                  {t("privacy.title")}
+                </Link>
+              </Label>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "..." : t("auth.registerButton")}
