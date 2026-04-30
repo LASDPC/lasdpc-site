@@ -5,6 +5,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRoomEvents, useCreateRoomEvent, useDeleteRoomEvent, useUpdateRoomEvent } from "@/hooks/useRoomEvents";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +67,8 @@ const RoomSchedulingPage = () => {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editParticipants, setEditParticipants] = useState<string[]>([]);
   const [editTitle, setEditTitle] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const weekEndExclusive = useMemo(() => addDays(weekStart, 7), [weekStart]);
   const weekEndInclusive = useMemo(() => addDays(weekStart, 6), [weekStart]);
@@ -143,7 +155,6 @@ const RoomSchedulingPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("rooms.deleteConfirm"))) return;
     try {
       await deleteMutation.mutateAsync(id);
     } catch (err: unknown) {
@@ -395,8 +406,8 @@ const RoomSchedulingPage = () => {
               aria-label="Delete event"
               data-testid="event-dialog-delete"
               onClick={async () => {
-                await handleDelete(editingEventId);
-                setEventDialogOpen(false);
+                setDeleteTargetId(editingEventId);
+                setDeleteConfirmOpen(true);
               }}
             >
               <Trash2 className="h-5 w-5" />
@@ -443,6 +454,36 @@ const RoomSchedulingPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation (replaces browser confirm) */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("rooms.deleteConfirm")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("rooms.deleteConfirm")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="delete-cancel">
+              {t("rooms.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="delete-confirm"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!deleteTargetId) return;
+                await handleDelete(deleteTargetId);
+                setDeleteConfirmOpen(false);
+                setEventDialogOpen(false);
+                setDeleteTargetId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

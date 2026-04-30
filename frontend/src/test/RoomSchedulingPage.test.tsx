@@ -101,7 +101,6 @@ describe("RoomSchedulingPage", () => {
     mockDelete.mockReset();
     mockUpdateParticipants.mockReset();
     toastSpy.mockReset();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
   it("renders page with toolbar, sidebar, and week grid", () => {
@@ -207,6 +206,7 @@ describe("RoomSchedulingPage", () => {
     fireEvent.click(screen.getByTestId("event-evt1"));
     expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("event-dialog-delete"));
+    fireEvent.click(await screen.findByTestId("delete-confirm"));
 
     await vi.waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith("evt1");
