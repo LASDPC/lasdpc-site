@@ -53,8 +53,9 @@ export default function HistoriaPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 mt-16">
-      <div className="flex items-center gap-3 mb-2">
+    <div className="py-10">
+    <div className="container mx-auto px-4">
+      <div className="flex items-center gap-3 mb-12">
         <Landmark className="h-8 w-8 text-primary" />
         <h1 className="font-display text-4xl font-bold text-foreground" data-testid="history-title">
           {t("history.title")}
@@ -160,6 +161,7 @@ export default function HistoriaPage() {
           })}
         </div>
       </div>
+    </div>
     </div>
   );
 }
