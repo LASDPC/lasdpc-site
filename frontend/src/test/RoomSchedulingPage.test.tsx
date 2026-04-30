@@ -39,8 +39,10 @@ vi.mock("@/contexts/LanguageContext", () => ({
         "rooms.title": "Room Scheduling",
         "rooms.heading": "Schedule lab rooms",
         "rooms.room": "Room",
+        "rooms.roomsLabel": "Rooms",
         "rooms.createEvent": "New Event",
         "rooms.eventTitle": "Title",
+        "rooms.date": "Date",
         "rooms.startTime": "Start",
         "rooms.endTime": "End",
         "rooms.submit": "Create",
@@ -49,6 +51,7 @@ vi.mock("@/contexts/LanguageContext", () => ({
         "rooms.overlapError": "Time conflict with another event.",
         "rooms.endAfterStart": "End time must be after start time.",
         "rooms.today": "Today",
+        "rooms.viewWeek": "Week",
         "infra.loginRequired": "Please log in to access infrastructure.",
       };
       return translations[key] || key;
@@ -93,25 +96,30 @@ describe("RoomSchedulingPage", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
-  it("renders page with room toggle, calendar, and create button", () => {
+  it("renders page with toolbar, sidebar, and week grid", () => {
     renderPage();
     expect(screen.getByText("Room Scheduling")).toBeInTheDocument();
-    expect(screen.getByTestId("room-toggle-1-009")).toBeInTheDocument();
-    expect(screen.getByTestId("room-toggle-1-007")).toBeInTheDocument();
-    expect(screen.getByTestId("create-event-btn")).toBeInTheDocument();
+    expect(screen.getByTestId("toolbar-today")).toBeInTheDocument();
+    expect(screen.getByTestId("toolbar-prev")).toBeInTheDocument();
+    expect(screen.getByTestId("toolbar-next")).toBeInTheDocument();
+    expect(screen.getByTestId("toolbar-period-label")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar-create")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar-mini-calendar")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar-room-1-009")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar-room-1-007")).toBeInTheDocument();
+    expect(screen.getByTestId("week-grid-anim")).toBeInTheDocument();
   });
 
-  it("room toggle switches active room", () => {
+  it("room selection switches active room", () => {
     renderPage();
-    const btn1007 = screen.getByTestId("room-toggle-1-007");
-    fireEvent.click(btn1007);
-    // After click the button should still be present (we can't check variant easily, but the click should work)
-    expect(btn1007).toBeInTheDocument();
+    const room1007 = screen.getByTestId("sidebar-room-1-007");
+    fireEvent.click(room1007);
+    expect(room1007).toBeInTheDocument();
   });
 
   it("create button opens dialog with form fields", () => {
     renderPage();
-    fireEvent.click(screen.getByTestId("create-event-btn"));
+    fireEvent.click(screen.getByTestId("sidebar-create"));
     expect(screen.getByTestId("event-title-input")).toBeInTheDocument();
     expect(screen.getByTestId("event-date-input")).toBeInTheDocument();
     expect(screen.getByTestId("event-start-input")).toBeInTheDocument();
@@ -122,7 +130,7 @@ describe("RoomSchedulingPage", () => {
   it("submitting form calls create with correct payload", async () => {
     mockCreate.mockResolvedValue({});
     renderPage();
-    fireEvent.click(screen.getByTestId("create-event-btn"));
+    fireEvent.click(screen.getByTestId("sidebar-create"));
 
     fireEvent.change(screen.getByTestId("event-title-input"), { target: { value: "My Meeting" } });
     fireEvent.change(screen.getByTestId("event-date-input"), { target: { value: "2026-05-01" } });
@@ -149,15 +157,22 @@ describe("RoomSchedulingPage", () => {
     expect(screen.getByText("Other Event")).toBeInTheDocument();
   });
 
-  it("delete button only shown for user's own events", () => {
+  it("delete button only shown for user's own events (in popover)", async () => {
     renderPage();
+    fireEvent.click(screen.getByTestId("event-evt1"));
+    expect(await screen.findByTestId("event-popover-evt1")).toBeInTheDocument();
     expect(screen.getByTestId("delete-event-evt1")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("event-evt2"));
+    expect(await screen.findByTestId("event-popover-evt2")).toBeInTheDocument();
     expect(screen.queryByTestId("delete-event-evt2")).not.toBeInTheDocument();
   });
 
   it("delete calls roomEventsService.delete", async () => {
     mockDelete.mockResolvedValue(undefined);
     renderPage();
+    fireEvent.click(screen.getByTestId("event-evt1"));
+    expect(await screen.findByTestId("event-popover-evt1")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("delete-event-evt1"));
 
     await vi.waitFor(() => {

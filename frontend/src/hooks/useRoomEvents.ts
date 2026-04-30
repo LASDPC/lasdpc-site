@@ -5,6 +5,8 @@ export function useRoomEvents(room: string, start: string, end: string) {
   return useQuery({
     queryKey: ["room-events", room, start, end],
     queryFn: () => roomEventsService.list(room, start, end),
+    // Avoid UI flicker during week navigation by keeping previous results while fetching new ones.
+    placeholderData: (prev) => prev,
     enabled: !!room && !!start && !!end,
   });
 }
