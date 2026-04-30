@@ -28,3 +28,5 @@ backend/.venv
 backend/.env
 backend/uploads
 frontend/.env
+
+*.pyc
