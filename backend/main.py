@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from core.config import settings
 from core.database import get_db
 from core.security import hash_password
-from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats, uploads, cluster_requests, notifications
+from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats, uploads, cluster_requests, notifications, room_events
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
 app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["uploads"])
 app.include_router(cluster_requests.router, prefix="/api/v1/cluster-requests", tags=["cluster-requests"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
+app.include_router(room_events.router, prefix="/api/v1/room-events", tags=["room-events"])
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)

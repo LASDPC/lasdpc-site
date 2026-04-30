@@ -23,6 +23,8 @@ import RegisterPage from "@/pages/RegisterPage";
 import PendingUsersPage from "@/pages/PendingUsersPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
+import ReservaPage from "@/pages/ReservaPage";
+import RoomSchedulingPage from "@/pages/RoomSchedulingPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const MAINTENANCE_MODE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
@@ -64,6 +66,8 @@ const AppRoutes = () => (
       <Route path="/" element={<HomePage />} />
       <Route path="/people" element={<PeoplePage />} />
       <Route path="/research" element={<ResearchPage />} />
+      <Route path="/reserva" element={<ReservaPage />} />
+      <Route path="/room-scheduling" element={<RoomSchedulingPage />} />
       <Route path="/infrastructure" element={<InfrastructurePage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:id" element={<BlogPostPage />} />

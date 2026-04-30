@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mongosh:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(source:*)",
+      "Bash(npm run:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)"
+    ]
+  }
+}

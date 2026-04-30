@@ -19,7 +19,7 @@ const publicNavKeys = [
 ];
 
 const authNavKeys = [
-  { key: "nav.infrastructure", path: "/infrastructure" },
+  { key: "nav.reserva", path: "/reserva" },
   { key: "nav.docs", path: "/docs" },
 ];
 
