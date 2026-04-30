@@ -1,18 +1,22 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUser } from "@/hooks/usePeople";
+import { useDocentes, useStudents, useUser } from "@/hooks/usePeople";
 import { peopleService } from "@/services/people";
-import { authService } from "@/services/auth";
+import type { User } from "@/services/auth";
 import { getToken } from "@/lib/api";
 import {
   Mail, ExternalLink, Camera, GraduationCap, BookOpen, User as UserIcon,
-  Linkedin, Github, Twitter, Trash2, Shield, Pencil, Save, XCircle,
+  Linkedin, Github, Twitter, Pencil, Save, XCircle, Plus,
+  X, Check, Link2, CalendarDays, Briefcase, Search, Sparkles, Settings,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -35,21 +39,223 @@ const EDITABLE_FIELDS = [
   "linkedin", "github", "twitter", "researchgate", "lattes", "orcid", "scholar", "page",
 ] as const;
 
+const DEFAULT_RESEARCH_AREAS = [
+  "Artificial Intelligence",
+  "Cloud Computing",
+  "Concurrent Programming",
+  "Distributed Systems",
+  "High-Performance Computing",
+  "Machine Learning",
+  "Observability",
+  "Operating Systems",
+  "Performance Evaluation",
+  "Resource Management",
+  "Scheduling",
+  "Software Testing",
+];
+
+const SOCIAL_LINKS = [
+  { key: "lattes", label: "Lattes", icon: ExternalLink },
+  { key: "orcid", label: "ORCID", icon: ExternalLink },
+  { key: "scholar", label: "Google Scholar", icon: ExternalLink },
+  { key: "linkedin", label: "LinkedIn", icon: Linkedin },
+  { key: "github", label: "GitHub", icon: Github },
+  { key: "twitter", label: "Twitter / X", icon: Twitter },
+  { key: "researchgate", label: "ResearchGate", icon: ExternalLink },
+  { key: "page", label: "Personal page", icon: Link2 },
+] as const;
+
+const uniqueSorted = (items: Array<string | null | undefined>) =>
+  Array.from(new Set(items.map((item) => item?.trim()).filter(Boolean) as string[])).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
+  );
+
+const normalize = (value: string) => value.trim().toLocaleLowerCase();
+
+const stringValue = (value: unknown) => (typeof value === "string" ? value : "");
+
+const listValue = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []);
+
 const ProfilePageSkeleton = () => (
   <div className="py-10">
-    <div className="container mx-auto px-4 max-w-2xl">
-      <div className="flex items-start gap-6">
-        <Skeleton className="w-24 h-24 rounded-full shrink-0" />
-        <div className="flex-1 space-y-3">
+    <div className="container mx-auto px-4 max-w-5xl">
+      <Skeleton className="h-44 rounded-lg" />
+      <div className="-mt-12 flex items-end gap-6 px-6">
+        <Skeleton className="w-28 h-28 rounded-full shrink-0" />
+        <div className="flex-1 space-y-3 pb-4">
           <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-40" />
           <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-4 w-32" />
         </div>
       </div>
     </div>
   </div>
 );
+
+type EditableTextProps = {
+  value?: string | null;
+  draftValue: string;
+  isEditing: boolean;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className?: string;
+  inputClassName?: string;
+  multiline?: boolean;
+};
+
+const EditableText = ({
+  value,
+  draftValue,
+  isEditing,
+  onChange,
+  placeholder,
+  className = "",
+  inputClassName = "",
+  multiline = false,
+}: EditableTextProps) => {
+  if (isEditing) {
+    if (multiline) {
+      return (
+        <Textarea
+          value={draftValue}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className={`min-h-[116px] resize-none ${inputClassName}`}
+        />
+      );
+    }
+
+    return (
+      <Input
+        value={draftValue}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={inputClassName}
+      />
+    );
+  }
+
+  if (!value) return null;
+  return <p className={className}>{value}</p>;
+};
+
+type ResearchAreaPickerProps = {
+  selected: string[];
+  options: string[];
+  isPt: boolean;
+  onChange: (areas: string[]) => void;
+};
+
+const ResearchAreaPicker = ({ selected, options, isPt, onChange }: ResearchAreaPickerProps) => {
+  const [query, setQuery] = useState("");
+  const [customArea, setCustomArea] = useState("");
+  const [addingCustom, setAddingCustom] = useState(false);
+
+  const selectedKeys = useMemo(() => new Set(selected.map(normalize)), [selected]);
+  const filteredOptions = useMemo(() => {
+    const q = normalize(query);
+    return options.filter((area) => !selectedKeys.has(normalize(area)) && (!q || normalize(area).includes(q))).slice(0, 12);
+  }, [options, query, selectedKeys]);
+
+  const addArea = (area: string) => {
+    const cleanArea = area.trim();
+    if (!cleanArea || selectedKeys.has(normalize(cleanArea))) return;
+    onChange([...selected, cleanArea]);
+    setQuery("");
+    setCustomArea("");
+    setAddingCustom(false);
+  };
+
+  const removeArea = (area: string) => {
+    onChange(selected.filter((item) => normalize(item) !== normalize(area)));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {selected.length > 0 ? (
+          selected.map((area) => (
+            <button
+              key={area}
+              type="button"
+              onClick={() => removeArea(area)}
+              className="inline-flex min-h-8 items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+            >
+              {area}
+              <X size={13} />
+            </button>
+          ))
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {isPt ? "Nenhuma area selecionada ainda." : "No areas selected yet."}
+          </span>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-border bg-secondary/35 p-3">
+        <div className="relative mb-3">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={isPt ? "Buscar area existente" : "Search existing area"}
+            className="pl-9"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {filteredOptions.map((area) => (
+            <button
+              key={area}
+              type="button"
+              onClick={() => addArea(area)}
+              className="inline-flex min-h-8 items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <Plus size={13} />
+              {area}
+            </button>
+          ))}
+          {filteredOptions.length === 0 && (
+            <span className="text-xs text-muted-foreground">
+              {isPt ? "Nenhuma sugestao encontrada." : "No matching suggestions."}
+            </span>
+          )}
+        </div>
+
+        <div className="mt-3 border-t border-border pt-3">
+          {addingCustom ? (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                value={customArea}
+                onChange={(event) => setCustomArea(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addArea(customArea);
+                  }
+                }}
+                placeholder={isPt ? "Nova area de pesquisa" : "New research area"}
+              />
+              <div className="flex gap-2">
+                <Button type="button" size="sm" onClick={() => addArea(customArea)} className="shrink-0">
+                  <Check size={14} className="mr-2" />
+                  {isPt ? "Adicionar" : "Add"}
+                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={() => setAddingCustom(false)} aria-label={isPt ? "Cancelar" : "Cancel"}>
+                  <X size={16} />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" size="sm" onClick={() => setAddingCustom(true)}>
+              <Plus size={14} className="mr-2" />
+              {isPt ? "Adicionar nova area" : "Add new area"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -57,17 +263,28 @@ const ProfilePage = () => {
   const { user: currentUser } = useAuth();
   const isPt = lang === "pt-BR";
   const { data: profile, isLoading } = useUser(userId || "");
+  const { data: docentes = [] } = useDocentes();
+  const { data: students = [] } = useStudents();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deletionReason, setDeletionReason] = useState("");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Inline editing state
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
+
+  const globalResearchAreas = useMemo(() => {
+    const people = [...docentes, ...students];
+    return uniqueSorted([
+      ...DEFAULT_RESEARCH_AREAS,
+      ...people.flatMap((person) => [
+        person.area,
+        person.areaPt,
+        ...(person.research_areas ?? []),
+      ]),
+    ]);
+  }, [docentes, students]);
 
   if (isLoading) return <ProfilePageSkeleton />;
   if (!profile) {
@@ -81,19 +298,29 @@ const ProfilePage = () => {
   const isOwnProfile = currentUser?.id === profile.id;
   const roleLabel = ROLE_LABELS[profile.role]?.[isPt ? "pt" : "en"] ?? profile.role;
   const roleIcon = ROLE_ICONS[profile.role];
+  const visibleTitle = isPt ? profile.titlePt || profile.title : profile.title || profile.titlePt;
+  const visibleArea = isPt ? profile.areaPt || profile.area : profile.area || profile.areaPt;
+  const visibleLevel = isPt ? profile.levelPt || profile.level : profile.level || profile.levelPt;
+  const visibleBio = isPt ? profile.bioPt || profile.bio : profile.bio || profile.bioPt;
+  const selectedResearchAreas = listValue(draft.research_areas);
+  const selectedSkills = listValue(draft.skills);
+  const hasBio = visibleBio || (isEditing && isOwnProfile);
+  const hasResearchAreas = (profile.research_areas && profile.research_areas.length > 0) || (isEditing && isOwnProfile);
+  const hasSkills = (profile.skills && profile.skills.length > 0) || (isEditing && isOwnProfile);
+  const pageTitlePlaceholder = isPt ? "Cargo ou titulo" : "Role or title";
+  const areaPlaceholder = isPt ? "Area principal" : "Main area";
+  const levelPlaceholder = isPt ? "Nivel academico" : "Academic level";
 
-  // Navigation helpers
   const navigateToPeopleFilter = (key: string, value: string) => {
     navigate(`/people?${key}=${encodeURIComponent(value)}`);
   };
 
-  // Editing helpers
   const startEditing = () => {
-    const d: Record<string, unknown> = {};
+    const nextDraft: Record<string, unknown> = {};
     for (const key of EDITABLE_FIELDS) {
-      d[key] = (profile as Record<string, unknown>)[key] ?? (key === "skills" || key === "research_areas" ? [] : "");
+      nextDraft[key] = (profile as Record<string, unknown>)[key] ?? (key === "skills" || key === "research_areas" ? [] : "");
     }
-    setDraft(d);
+    setDraft(nextDraft);
     setIsEditing(true);
   };
 
@@ -106,17 +333,35 @@ const ProfilePage = () => {
     setDraft((prev) => ({ ...prev, [key]: value }));
   };
 
+  const updateLocalizedDraft = (baseKey: "title" | "area" | "level" | "bio", value: string) => {
+    const ptKey = `${baseKey}Pt`;
+    if (isPt) {
+      setDraft((prev) => ({
+        ...prev,
+        [ptKey]: value,
+        [baseKey]: stringValue(prev[baseKey]) || value,
+      }));
+      return;
+    }
+
+    setDraft((prev) => ({
+      ...prev,
+      [baseKey]: value,
+      [ptKey]: stringValue(prev[ptKey]) || value,
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload: Record<string, any> = {};
+      const payload: Partial<User> = {};
       for (const key of EDITABLE_FIELDS) {
-        payload[key] = draft[key] ?? null;
+        (payload as Record<string, unknown>)[key] = draft[key] ?? null;
       }
-      // Convert empty strings for number fields to null
       if (payload.year_joined === "" || payload.year_joined === 0) payload.year_joined = null;
       if (payload.graduation_year === "" || payload.graduation_year === 0) payload.graduation_year = null;
+      payload.research_areas = uniqueSorted(listValue(payload.research_areas));
+      payload.skills = uniqueSorted(listValue(payload.skills));
 
       await peopleService.updateUser(profile.id, payload);
       queryClient.invalidateQueries({ queryKey: ["user", profile.id] });
@@ -132,8 +377,8 @@ const ProfilePage = () => {
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     if (!["image/jpeg", "image/png"].includes(file.type)) {
@@ -161,6 +406,7 @@ const ProfilePage = () => {
       await peopleService.updateUser(profile.id, { photo: url });
       queryClient.invalidateQueries({ queryKey: ["user", profile.id] });
       queryClient.invalidateQueries({ queryKey: ["docentes"] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
       toast.success(isPt ? "Foto atualizada!" : "Photo updated!");
     } catch {
       toast.error(isPt ? "Erro ao fazer upload" : "Upload failed");
@@ -170,428 +416,372 @@ const ProfilePage = () => {
     }
   };
 
-  const handleRequestDeletion = async () => {
-    try {
-      await authService.requestLgpdDeletion(deletionReason || undefined);
-      toast.success(isPt ? "Solicitacao de exclusao enviada!" : "Deletion request submitted!");
-      setShowDeleteDialog(false);
-      setDeletionReason("");
-    } catch {
-      toast.error(isPt ? "Erro ao solicitar exclusao" : "Failed to submit deletion request");
-    }
+  const addSkill = (value: string) => {
+    const cleanValue = value.trim();
+    if (!cleanValue || selectedSkills.some((skill) => normalize(skill) === normalize(cleanValue))) return;
+    updateDraft("skills", [...selectedSkills, cleanValue]);
   };
 
-  const bio = isPt ? profile.bioPt : profile.bio;
-  const hasBio = bio || (isEditing && isOwnProfile);
-  const hasResearchAreas = (profile.research_areas && profile.research_areas.length > 0) || (isEditing && isOwnProfile);
-  const hasSkills = (profile.skills && profile.skills.length > 0) || (isEditing && isOwnProfile);
-
-  // Clickable element wrapper
-  const ClickableFilter = ({ filterKey, value, children, className = "" }: {
-    filterKey: string;
-    value: string | undefined;
-    children: React.ReactNode;
-    className?: string;
-  }) => {
-    if (!value || isEditing) return <>{children}</>;
-    return (
-      <span
-        onClick={() => navigateToPeopleFilter(filterKey, value)}
-        className={`cursor-pointer hover:text-primary transition-colors ${className}`}
-        title={isPt ? `Ver todos com "${value}"` : `View all with "${value}"`}
-      >
-        {children}
-      </span>
-    );
+  const removeSkill = (value: string) => {
+    updateDraft("skills", selectedSkills.filter((skill) => normalize(skill) !== normalize(value)));
   };
+
+  const profileCompletion = [
+    Boolean(profile.photo),
+    Boolean(profile.bio || profile.bioPt),
+    Boolean(profile.research_areas?.length),
+    Boolean(profile.lattes || profile.orcid || profile.scholar || profile.linkedin || profile.github || profile.page),
+  ].filter(Boolean).length;
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4 max-w-2xl space-y-6">
-        {/* Header */}
-        <div className="flex items-start gap-6">
-          <div className="relative group shrink-0">
-            {profile.photo ? (
-              <img
-                src={profile.photo}
-                alt={profile.name}
-                className="w-24 h-24 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-3xl">
-                {profile.initials}
-              </div>
-            )}
-            {isOwnProfile && !isEditing && (
-              <>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                >
-                  <Camera size={20} className="text-white" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-              </>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            {isEditing ? (
-              <div className="space-y-3">
-                <Input
-                  value={(draft.name as string) ?? ""}
-                  onChange={(e) => updateDraft("name", e.target.value)}
-                  placeholder={isPt ? "Nome" : "Name"}
-                  className="font-display text-xl font-bold"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    value={(draft.title as string) ?? ""}
-                    onChange={(e) => updateDraft("title", e.target.value)}
-                    placeholder="Title (EN)"
+    <div className="py-8">
+      <div className="container mx-auto max-w-5xl px-4">
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="h-40 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.28),transparent_28%),linear-gradient(135deg,hsl(var(--primary)),hsl(var(--accent))_52%,hsl(var(--secondary)))] sm:h-48" />
+          <div className="px-4 pb-5 sm:px-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="relative -mt-14 w-fit shrink-0 sm:-mt-16">
+                {profile.photo ? (
+                  <img
+                    src={profile.photo}
+                    alt={profile.name}
+                    className="h-28 w-28 rounded-full border-4 border-card object-cover shadow-sm sm:h-32 sm:w-32"
                   />
-                  <Input
-                    value={(draft.titlePt as string) ?? ""}
-                    onChange={(e) => updateDraft("titlePt", e.target.value)}
-                    placeholder="Titulo (PT)"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    value={(draft.area as string) ?? ""}
-                    onChange={(e) => updateDraft("area", e.target.value)}
-                    placeholder="Area (EN)"
-                  />
-                  <Input
-                    value={(draft.areaPt as string) ?? ""}
-                    onChange={(e) => updateDraft("areaPt", e.target.value)}
-                    placeholder="Area (PT)"
-                  />
-                </div>
-                {profile.role !== "docente" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      value={(draft.level as string) ?? ""}
-                      onChange={(e) => updateDraft("level", e.target.value)}
-                      placeholder="Level (EN)"
-                    />
-                    <Input
-                      value={(draft.levelPt as string) ?? ""}
-                      onChange={(e) => updateDraft("levelPt", e.target.value)}
-                      placeholder="Nivel (PT)"
-                    />
+                ) : (
+                  <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-card bg-primary text-3xl font-bold text-primary-foreground shadow-sm sm:h-32 sm:w-32">
+                    {profile.initials}
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    type="number"
-                    value={(draft.year_joined as number) ?? ""}
-                    onChange={(e) => updateDraft("year_joined", e.target.value ? Number(e.target.value) : "")}
-                    placeholder={isPt ? "Ano de ingresso" : "Year joined"}
-                  />
-                  {profile.role === "alumni" && (
-                    <Input
-                      type="number"
-                      value={(draft.graduation_year as number) ?? ""}
-                      onChange={(e) => updateDraft("graduation_year", e.target.value ? Number(e.target.value) : "")}
-                      placeholder={isPt ? "Ano de formatura" : "Graduation year"}
-                    />
-                  )}
-                </div>
-              </div>
-            ) : (
-              <>
-                <h1 className="font-display text-2xl font-bold text-foreground">{profile.name}</h1>
-                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  {roleIcon}
-                  <span>{roleLabel}</span>
-                  {profile.is_admin && (
-                    <span className="ml-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full font-medium">Admin</span>
-                  )}
-                </div>
-                {(profile.title || profile.titlePt) && (
-                  <p className="text-sm text-foreground mt-2">{isPt ? profile.titlePt : profile.title}</p>
-                )}
-                {(profile.area || profile.areaPt) && (
-                  <ClickableFilter filterKey="area" value={isPt ? profile.areaPt : profile.area}>
-                    <p className="text-sm text-accent mt-1">{isPt ? profile.areaPt : profile.area}</p>
-                  </ClickableFilter>
-                )}
-                {(profile.level || profile.levelPt) && (
-                  <ClickableFilter filterKey="level" value={isPt ? profile.levelPt : profile.level}>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {isPt ? profile.levelPt : profile.level}
-                    </p>
-                  </ClickableFilter>
-                )}
-                {profile.year_joined && (
-                  <ClickableFilter filterKey="year" value={String(profile.year_joined)}>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {isPt ? `Desde ${profile.year_joined}` : `Since ${profile.year_joined}`}
-                    </p>
-                  </ClickableFilter>
-                )}
-                {profile.graduation_year && profile.role === "alumni" && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {isPt ? `Formado em ${profile.graduation_year}` : `Graduated ${profile.graduation_year}`}
-                  </p>
-                )}
-              </>
-            )}
-
-            {/* Edit / Save / Cancel buttons */}
-            {isOwnProfile && (
-              <div className="mt-3 flex gap-2">
-                {isEditing ? (
+                {isOwnProfile && !isEditing && (
                   <>
-                    <Button size="sm" onClick={handleSave} disabled={saving}>
-                      <Save size={14} className="mr-2" />
-                      {saving ? (isPt ? "Salvando..." : "Saving...") : t("profile.save")}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={cancelEditing} disabled={saving}>
-                      <XCircle size={14} className="mr-2" />
-                      {t("profile.cancel")}
-                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-secondary"
+                      aria-label={isPt ? "Alterar foto" : "Change photo"}
+                    >
+                      <Camera size={17} />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
                   </>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={startEditing}>
-                    <Pencil size={14} className="mr-2" />
-                    {t("profile.edit")}
-                  </Button>
                 )}
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Bio */}
-        {hasBio && (
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-display font-semibold text-foreground mb-2">{t("people.bio")}</h2>
-            {isEditing ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">English</label>
-                  <textarea
-                    value={(draft.bio as string) ?? ""}
-                    onChange={(e) => updateDraft("bio", e.target.value)}
-                    className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
-                    placeholder="Bio (English)"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Portugues</label>
-                  <textarea
-                    value={(draft.bioPt as string) ?? ""}
-                    onChange={(e) => updateDraft("bioPt", e.target.value)}
-                    className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
-                    placeholder="Bio (Portugues)"
-                  />
+              <div className="min-w-0 flex-1 pt-1 sm:pt-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 space-y-2">
+                    {isEditing ? (
+                      <Input
+                        value={stringValue(draft.name)}
+                        onChange={(event) => updateDraft("name", event.target.value)}
+                        placeholder={isPt ? "Nome" : "Name"}
+                        className="h-auto border-0 bg-secondary px-3 py-2 text-2xl font-bold shadow-none sm:text-3xl"
+                      />
+                    ) : (
+                      <h1 className="break-words text-2xl font-bold text-foreground sm:text-3xl">{profile.name}</h1>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-2">
+                        {roleIcon}
+                        {roleLabel}
+                      </span>
+                      {profile.is_admin && (
+                        <Badge variant="secondary" className="rounded-full">Admin</Badge>
+                      )}
+                    </div>
+
+                    <EditableText
+                      value={visibleTitle}
+                      draftValue={isPt ? stringValue(draft.titlePt) : stringValue(draft.title)}
+                      isEditing={isEditing}
+                      onChange={(value) => updateLocalizedDraft("title", value)}
+                      placeholder={pageTitlePlaceholder}
+                      className="text-sm font-medium text-foreground"
+                      inputClassName="max-w-xl"
+                    />
+
+                    {isEditing ? (
+                      <div className="flex max-w-xl flex-col gap-2 sm:flex-row">
+                        <Input
+                          list="profile-area-options"
+                          value={isPt ? stringValue(draft.areaPt) : stringValue(draft.area)}
+                          onChange={(event) => updateLocalizedDraft("area", event.target.value)}
+                          placeholder={areaPlaceholder}
+                        />
+                        <datalist id="profile-area-options">
+                          {globalResearchAreas.map((area) => (
+                            <option key={area} value={area} />
+                          ))}
+                        </datalist>
+                      </div>
+                    ) : visibleArea ? (
+                      <button
+                        type="button"
+                        onClick={() => navigateToPeopleFilter("area", visibleArea)}
+                        className="text-left text-sm font-medium text-accent transition-colors hover:text-primary"
+                        title={isPt ? `Ver todos com "${visibleArea}"` : `View all with "${visibleArea}"`}
+                      >
+                        {visibleArea}
+                      </button>
+                    ) : null}
+
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {isEditing && profile.role !== "docente" ? (
+                        <Input
+                          value={isPt ? stringValue(draft.levelPt) : stringValue(draft.level)}
+                          onChange={(event) => updateLocalizedDraft("level", event.target.value)}
+                          placeholder={levelPlaceholder}
+                          className="h-9 max-w-56"
+                        />
+                      ) : visibleLevel ? (
+                        <button
+                          type="button"
+                          onClick={() => navigateToPeopleFilter("level", visibleLevel)}
+                          className="inline-flex min-h-7 items-center gap-1 rounded-full border border-border px-2.5 py-1 transition-colors hover:text-primary"
+                        >
+                          <GraduationCap size={13} />
+                          {visibleLevel}
+                        </button>
+                      ) : null}
+
+                      {isEditing ? (
+                        <>
+                          <Input
+                            type="number"
+                            value={draft.year_joined === undefined ? "" : String(draft.year_joined)}
+                            onChange={(event) => updateDraft("year_joined", event.target.value ? Number(event.target.value) : "")}
+                            placeholder={isPt ? "Ano de ingresso" : "Year joined"}
+                            className="h-9 max-w-44"
+                          />
+                          {profile.role === "alumni" && (
+                            <Input
+                              type="number"
+                              value={draft.graduation_year === undefined ? "" : String(draft.graduation_year)}
+                              onChange={(event) => updateDraft("graduation_year", event.target.value ? Number(event.target.value) : "")}
+                              placeholder={isPt ? "Ano de formatura" : "Graduation year"}
+                              className="h-9 max-w-44"
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {profile.year_joined && (
+                            <button
+                              type="button"
+                              onClick={() => navigateToPeopleFilter("year", String(profile.year_joined))}
+                              className="inline-flex min-h-7 items-center gap-1 rounded-full border border-border px-2.5 py-1 transition-colors hover:text-primary"
+                            >
+                              <CalendarDays size={13} />
+                              {isPt ? `Desde ${profile.year_joined}` : `Since ${profile.year_joined}`}
+                            </button>
+                          )}
+                          {profile.graduation_year && profile.role === "alumni" && (
+                            <span className="inline-flex min-h-7 items-center gap-1 rounded-full border border-border px-2.5 py-1">
+                              <CalendarDays size={13} />
+                              {isPt ? `Formado em ${profile.graduation_year}` : `Graduated ${profile.graduation_year}`}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {isOwnProfile && (
+                    <div className="flex shrink-0 gap-2">
+                      {isEditing ? (
+                        <>
+                          <Button size="sm" onClick={handleSave} disabled={saving}>
+                            <Save size={14} className="mr-2" />
+                            {saving ? (isPt ? "Salvando..." : "Saving...") : t("profile.save")}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={cancelEditing} disabled={saving}>
+                            <XCircle size={14} className="mr-2" />
+                            {t("profile.cancel")}
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="outline" size="sm" onClick={startEditing}>
+                            <Pencil size={14} className="mr-2" />
+                            {t("profile.edit")}
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} aria-label={t("menu.settings")}>
+                            <Settings size={16} />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground whitespace-pre-line">{bio}</p>
-            )}
+            </div>
           </div>
-        )}
+        </section>
 
-        {/* Research Areas */}
-        {hasResearchAreas && (
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-display font-semibold text-foreground mb-3">{t("people.researchAreas")}</h2>
-            {isEditing ? (
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  {isPt ? "Uma por linha" : "One per line"}
-                </label>
-                <textarea
-                  value={((draft.research_areas as string[]) ?? []).join("\n")}
-                  onChange={(e) => updateDraft("research_areas", e.target.value.split("\n").filter(Boolean))}
-                  className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
-                  placeholder={isPt ? "Ex: HPC\nInteligencia Artificial" : "E.g.: HPC\nArtificial Intelligence"}
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <main className="space-y-6">
+            {hasBio && (
+              <section className="rounded-lg border border-border bg-card p-5">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2 className="font-semibold text-foreground">{t("people.bio")}</h2>
+                  {isEditing && <Badge variant="outline" className="rounded-full">{isPt ? "Editando no lugar" : "Inline edit"}</Badge>}
+                </div>
+                <EditableText
+                  value={visibleBio}
+                  draftValue={isPt ? stringValue(draft.bioPt) : stringValue(draft.bio)}
+                  isEditing={isEditing}
+                  onChange={(value) => updateLocalizedDraft("bio", value)}
+                  placeholder={isPt ? "Conte sua trajetoria, projeto atual e interesses." : "Share your background, current project, and interests."}
+                  className="whitespace-pre-line text-sm leading-6 text-muted-foreground"
+                  multiline
                 />
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {profile.research_areas!.map((area) => (
-                  <span
-                    key={area}
-                    onClick={() => navigateToPeopleFilter("area", area)}
-                    className="px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full cursor-pointer hover:bg-primary/20 transition-colors"
-                    title={isPt ? `Ver todos com "${area}"` : `View all with "${area}"`}
-                  >
-                    {area}
-                  </span>
-                ))}
-              </div>
+              </section>
             )}
-          </div>
-        )}
 
-        {/* Skills */}
-        {hasSkills && (
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-display font-semibold text-foreground mb-3">{t("people.skills")}</h2>
-            {isEditing ? (
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  {isPt ? "Uma por linha" : "One per line"}
-                </label>
-                <textarea
-                  value={((draft.skills as string[]) ?? []).join("\n")}
-                  onChange={(e) => updateDraft("skills", e.target.value.split("\n").filter(Boolean))}
-                  className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
-                  placeholder={isPt ? "Ex: Python\nDocker\nKubernetes" : "E.g.: Python\nDocker\nKubernetes"}
-                />
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {profile.skills!.map((skill) => (
-                  <span key={skill} className="px-3 py-1 text-xs font-medium bg-accent/10 text-accent-foreground rounded-full border border-border">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Contact & Links */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-          <h2 className="font-display font-semibold text-foreground">
-            {isPt ? "Contato e Links" : "Contact & Links"}
-          </h2>
-          {isEditing ? (
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail size={16} />
-                <span>{profile.email}</span>
-                <span className="text-xs text-muted-foreground/60">{isPt ? "(nao editavel)" : "(read-only)"}</span>
-              </div>
-              {([
-                { key: "lattes", label: "Lattes", icon: <ExternalLink size={16} /> },
-                { key: "orcid", label: "ORCID", icon: <ExternalLink size={16} /> },
-                { key: "scholar", label: "Google Scholar", icon: <ExternalLink size={16} /> },
-                { key: "linkedin", label: "LinkedIn", icon: <Linkedin size={16} /> },
-                { key: "github", label: "GitHub", icon: <Github size={16} /> },
-                { key: "twitter", label: "Twitter / X", icon: <Twitter size={16} /> },
-                { key: "researchgate", label: "ResearchGate", icon: <ExternalLink size={16} /> },
-                { key: "page", label: isPt ? "Pagina pessoal" : "Personal page", icon: <ExternalLink size={16} /> },
-              ] as const).map(({ key, label, icon }) => (
-                <div key={key} className="flex items-center gap-2">
-                  {icon}
-                  <Input
-                    value={(draft[key] as string) ?? ""}
-                    onChange={(e) => updateDraft(key, e.target.value)}
-                    placeholder={`${label} URL`}
-                    type="url"
-                    className="flex-1"
-                  />
+            {hasResearchAreas && (
+              <section className="rounded-lg border border-border bg-card p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <Sparkles size={18} className="text-primary" />
+                  <h2 className="font-semibold text-foreground">{t("people.researchAreas")}</h2>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3 text-sm">
-              <a href={`mailto:${profile.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                <Mail size={16} />
-                {profile.email}
-              </a>
-              {profile.lattes && (
-                <a href={profile.lattes} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <ExternalLink size={16} />
-                  Lattes
-                </a>
-              )}
-              {profile.orcid && (
-                <a href={profile.orcid} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <ExternalLink size={16} />
-                  ORCID
-                </a>
-              )}
-              {profile.scholar && (
-                <a href={profile.scholar} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <ExternalLink size={16} />
-                  Google Scholar
-                </a>
-              )}
-              {profile.linkedin && (
-                <a href={profile.linkedin} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Linkedin size={16} />
-                  LinkedIn
-                </a>
-              )}
-              {profile.github && (
-                <a href={profile.github} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Github size={16} />
-                  GitHub
-                </a>
-              )}
-              {profile.twitter && (
-                <a href={profile.twitter} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Twitter size={16} />
-                  Twitter / X
-                </a>
-              )}
-              {profile.researchgate && (
-                <a href={profile.researchgate} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <ExternalLink size={16} />
-                  ResearchGate
-                </a>
-              )}
-              {profile.page && (
-                <a href={profile.page} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                  <ExternalLink size={16} />
-                  {isPt ? "Pagina pessoal" : "Personal page"}
-                </a>
-              )}
-            </div>
-          )}
-        </div>
 
-        {/* LGPD Section - own profile only */}
-        {isOwnProfile && !isEditing && (
-          <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Shield size={18} className="text-primary" />
-              <h2 className="font-display font-semibold text-foreground">{t("profile.lgpd")}</h2>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
-                <Trash2 size={14} className="mr-2" />
-                {t("profile.requestDeletion")}
-              </Button>
-            </div>
-            {showDeleteDialog && (
-              <div className="border border-destructive/20 rounded-lg p-4 space-y-3 bg-destructive/5">
-                <p className="text-sm text-foreground font-medium">
-                  {isPt
-                    ? "Tem certeza? Sua conta sera anonimizada apos aprovacao do administrador."
-                    : "Are you sure? Your account will be anonymized after admin approval."}
+                {isEditing ? (
+                  <ResearchAreaPicker
+                    selected={selectedResearchAreas}
+                    options={globalResearchAreas}
+                    isPt={isPt}
+                    onChange={(areas) => updateDraft("research_areas", areas)}
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.research_areas!.map((area) => (
+                      <button
+                        key={area}
+                        type="button"
+                        onClick={() => navigateToPeopleFilter("area", area)}
+                        className="inline-flex min-h-8 items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+                        title={isPt ? `Ver todos com "${area}"` : `View all with "${area}"`}
+                      >
+                        {area}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {hasSkills && (
+              <section className="rounded-lg border border-border bg-card p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <Briefcase size={18} className="text-primary" />
+                  <h2 className="font-semibold text-foreground">{t("people.skills")}</h2>
+                </div>
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedSkills.map((skill) => (
+                        <button
+                          key={skill}
+                          type="button"
+                          onClick={() => removeSkill(skill)}
+                          className="inline-flex min-h-8 items-center gap-1 rounded-full border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+                        >
+                          {skill}
+                          <X size={13} />
+                        </button>
+                      ))}
+                    </div>
+                    <Input
+                      placeholder={isPt ? "Digite uma habilidade e pressione Enter" : "Type a skill and press Enter"}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addSkill(event.currentTarget.value);
+                          event.currentTarget.value = "";
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.skills!.map((skill) => (
+                      <span key={skill} className="inline-flex min-h-8 items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+          </main>
+
+          <aside className="space-y-6">
+            <section className="rounded-lg border border-border bg-card p-5">
+              <h2 className="mb-4 font-semibold text-foreground">{isPt ? "Contato e links" : "Contact & links"}</h2>
+              {isEditing ? (
+                <div className="space-y-3 text-sm">
+                  <div className="flex min-h-10 items-center gap-2 rounded-lg bg-secondary/60 px-3 text-muted-foreground">
+                    <Mail size={16} />
+                    <span className="min-w-0 truncate">{profile.email}</span>
+                  </div>
+                  {SOCIAL_LINKS.map(({ key, label, icon: Icon }) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <Icon size={16} className="shrink-0 text-muted-foreground" />
+                      <Input
+                        value={stringValue(draft[key])}
+                        onChange={(event) => updateDraft(key, event.target.value)}
+                        placeholder={`${label} URL`}
+                        type="url"
+                        className="flex-1"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3 text-sm">
+                  <a href={`mailto:${profile.email}`} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
+                    <Mail size={16} />
+                    <span className="min-w-0 truncate">{profile.email}</span>
+                  </a>
+                  {SOCIAL_LINKS.map(({ key, label, icon: Icon }) => {
+                    const value = profile[key];
+                    if (!value) return null;
+                    return (
+                      <a key={key} href={value} target="_blank" rel="noopener" className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
+                        <Icon size={16} />
+                        <span className="min-w-0 truncate">{label}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {isOwnProfile && !isEditing && (
+              <section className="rounded-lg border border-border bg-card p-5">
+                <h2 className="mb-3 font-semibold text-foreground">{isPt ? "Perfil" : "Profile"}</h2>
+                <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${profileCompletion * 25}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {isPt ? `${profileCompletion}/4 blocos preenchidos` : `${profileCompletion}/4 blocks filled`}
                 </p>
-                <textarea
-                  value={deletionReason}
-                  onChange={(e) => setDeletionReason(e.target.value)}
-                  placeholder={isPt ? "Motivo (opcional)" : "Reason (optional)"}
-                  className="w-full min-h-[60px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
-                />
-                <div className="flex gap-2">
-                  <Button variant="destructive" size="sm" onClick={handleRequestDeletion}>
-                    {isPt ? "Confirmar" : "Confirm"}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowDeleteDialog(false)}>
-                    {isPt ? "Cancelar" : "Cancel"}
-                  </Button>
-                </div>
-              </div>
+                <Button variant="outline" size="sm" className="mt-4 w-full justify-start" onClick={() => navigate("/settings")}>
+                  <Settings size={14} className="mr-2" />
+                  {t("menu.settings")}
+                </Button>
+              </section>
             )}
-          </div>
-        )}
+          </aside>
+        </div>
       </div>
     </div>
   );

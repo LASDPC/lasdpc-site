@@ -25,7 +25,10 @@ import RoomSchedulingToolbar from "@/components/room-scheduling/RoomSchedulingTo
 import RoomSchedulingSidebar from "@/components/room-scheduling/RoomSchedulingSidebar";
 import WeekGrid from "@/components/room-scheduling/WeekGrid";
 import ParticipantsInput from "@/components/room-scheduling/ParticipantsInput";
+import type { ParticipantDisplay } from "@/components/room-scheduling/ParticipantsInput";
 import { AnimatePresence, motion } from "framer-motion";
+import type { RoomEvent } from "@/services/roomEvents";
+import type { UserSuggestion } from "@/services/users";
 
 const ROOMS = ["1-009", "1-007"] as const;
 const ROOM_EVENTS_TTL_DAYS = 30;
@@ -39,6 +42,33 @@ function formatLocalDateYYYYMMDD(d: Date) {
   const m = pad2(d.getMonth() + 1);
   const day = pad2(d.getDate());
   return `${y}-${m}-${day}`;
+}
+
+function participantToken(participant: NonNullable<RoomEvent["participants"]>[number]) {
+  if (participant.user_id) return `user:${participant.user_id}`;
+  return participant.email || participant.name || "";
+}
+
+function participantDisplay(participant: NonNullable<RoomEvent["participants"]>[number]): ParticipantDisplay {
+  return {
+    token: participantToken(participant),
+    id: participant.user_id,
+    email: participant.email,
+    name: participant.name,
+    initials: participant.initials,
+    photo: participant.photo,
+    avatar: participant.avatar,
+    usp_number: participant.usp_number,
+  };
+}
+
+function eventMatchesUserFilter(event: RoomEvent, userFilter: UserSuggestion | null) {
+  if (!userFilter) return true;
+  const email = userFilter.email?.toLowerCase();
+  if (event.user_id === userFilter.id) return true;
+  return (event.participants || []).some((participant) => (
+    participant.user_id === userFilter.id || (!!email && participant.email?.toLowerCase() === email)
+  ));
 }
 
 const RoomSchedulingPage = () => {
@@ -61,12 +91,14 @@ const RoomSchedulingPage = () => {
   const [formStart, setFormStart] = useState("08:00");
   const [formEnd, setFormEnd] = useState("09:00");
   const [formParticipants, setFormParticipants] = useState<string[]>([]);
+  const [participantFilter, setParticipantFilter] = useState<UserSuggestion | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const editDateInputRef = useRef<HTMLInputElement | null>(null);
 
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editParticipants, setEditParticipants] = useState<string[]>([]);
+  const [editParticipantDetails, setEditParticipantDetails] = useState<Record<string, ParticipantDisplay>>({});
   const [editTitle, setEditTitle] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editStart, setEditStart] = useState("08:00");
@@ -86,6 +118,11 @@ const RoomSchedulingPage = () => {
   const createMutation = useCreateRoomEvent();
   const deleteMutation = useDeleteRoomEvent();
   const updateEventMutation = useUpdateRoomEvent();
+
+  const visibleEvents = useMemo(
+    () => events.filter((event) => eventMatchesUserFilter(event, participantFilter)),
+    [events, participantFilter]
+  );
 
   if (!user) {
     return (
@@ -135,11 +172,17 @@ const RoomSchedulingPage = () => {
 
   const openEditGuests = (eventId: string) => {
     const ev = events.find((e) => e.id === eventId);
+    const participantDetails: Record<string, ParticipantDisplay> = {};
     const initial = (ev?.participants || [])
-      .map((p) => p.email || p.name || "")
+      .map((p) => {
+        const token = participantToken(p);
+        if (token) participantDetails[token] = participantDisplay(p);
+        return token;
+      })
       .filter(Boolean) as string[];
     setEditingEventId(eventId);
     setEditParticipants(initial);
+    setEditParticipantDetails(participantDetails);
     setEditTitle(ev?.title || "");
     if (ev?.start_time) {
       setEditDate(ev.start_time.slice(0, 10));
@@ -247,6 +290,8 @@ const RoomSchedulingPage = () => {
             rooms={ROOMS}
             onSelectRoom={(r) => setRoom(r)}
             onCreateClick={() => setDialogOpen(true)}
+            participantFilter={participantFilter}
+            onParticipantFilterChange={setParticipantFilter}
           />
 
           {/* Mobile sidebar as a sheet */}
@@ -265,6 +310,8 @@ const RoomSchedulingPage = () => {
                   rooms={ROOMS}
                   onSelectRoom={(r) => setRoom(r)}
                   onCreateClick={() => setDialogOpen(true)}
+                  participantFilter={participantFilter}
+                  onParticipantFilterChange={setParticipantFilter}
                 />
               </SheetContent>
             </Sheet>
@@ -286,7 +333,7 @@ const RoomSchedulingPage = () => {
                   data-testid="week-grid-anim"
                 >
                   <WeekGrid
-                    events={events}
+                    events={visibleEvents}
                     weekStart={weekStart}
                     currentUserId={user.id}
                     onDelete={handleDelete}
@@ -444,6 +491,7 @@ const RoomSchedulingPage = () => {
               <ParticipantsInput
                 value={editParticipants}
                 onChange={setEditParticipants}
+                knownParticipants={editParticipantDetails}
                 placeholder={t("rooms.participantsPlaceholder")}
                 data-testid="edit-participants-field"
               />

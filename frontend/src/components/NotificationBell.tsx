@@ -10,13 +10,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Bell, CheckCircle, XCircle, X } from "lucide-react";
+import { Bell, CalendarDays, CheckCircle, XCircle, X } from "lucide-react";
 
 function formatMsg(n: Notification, template: string) {
   return template
-    .replace("{cluster}", n.cluster_name)
-    .replace("{start}", n.start_date)
-    .replace("{end}", n.end_date);
+    .replace("{cluster}", n.cluster_name || "")
+    .replace("{start}", n.start_date || "")
+    .replace("{end}", n.end_date || "");
+}
+
+function formatRoomEventMsg(n: Notification, template: string) {
+  const start = n.start_time ? new Date(n.start_time).toLocaleString() : "";
+  return template
+    .replace("{title}", n.event_title || "")
+    .replace("{room}", n.room || "")
+    .replace("{start}", start)
+    .replace("{actor}", n.actor_name || "");
 }
 
 const NotificationBell = () => {
@@ -65,12 +74,17 @@ const NotificationBell = () => {
         ) : (
           <div className="max-h-64 overflow-y-auto">
             {notifications.map((n) => {
+              const isRoomEvent = n.type === "room_event_invite";
               const isApproved = n.type === "cluster_approved";
-              const msg = formatMsg(n, t(isApproved ? "notif.approved" : "notif.rejected"));
+              const msg = isRoomEvent
+                ? formatRoomEventMsg(n, t("notif.roomEventInvite"))
+                : formatMsg(n, t(isApproved ? "notif.approved" : "notif.rejected"));
               return (
                 <div key={n.id} className="px-3 py-2.5 border-b border-border last:border-0 flex gap-2">
                   <div className="shrink-0 pt-0.5">
-                    {isApproved ? (
+                    {isRoomEvent ? (
+                      <CalendarDays size={16} className="text-primary" />
+                    ) : isApproved ? (
                       <CheckCircle size={16} className="text-green-500" />
                     ) : (
                       <XCircle size={16} className="text-red-500" />

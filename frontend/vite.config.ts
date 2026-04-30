@@ -5,8 +5,8 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const backendPort = env.VITE_BACKEND_PORT || "8001";
-  const backendTarget = `http://localhost:${backendPort}`;
+  const backendPort = env.VITE_BACKEND_PORT || "8000";
+  const backendTarget = `http://127.0.0.1:${backendPort}`;
 
   return {
     server: {

@@ -20,6 +20,10 @@ export interface User {
   photo?: string | null;
   level?: string | null;
   levelPt?: string | null;
+  advisor_id?: string | null;
+  advisor_name?: string | null;
+  registration_objective?: string | null;
+  observation?: string | null;
   // Enriched profile
   research_areas?: string[] | null;
   year_joined?: number | null;
@@ -63,6 +67,10 @@ export interface UserCreateData {
   photo?: string;
   level?: string;
   levelPt?: string;
+  advisor_id?: string;
+  advisor_name?: string;
+  registration_objective?: string;
+  observation?: string;
   research_areas?: string[];
   year_joined?: number;
   bio?: string;
@@ -81,6 +89,11 @@ export interface RegisterData {
   password: string;
   name: string;
   role: string;
+  advisor_id?: string;
+  advisor_name?: string;
+  level?: string;
+  levelPt?: string;
+  registration_objective: string;
   observation?: string;
   usp_number?: string;
   lgpd_consent: boolean;

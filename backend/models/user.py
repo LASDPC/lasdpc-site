@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class RegisterRequest(BaseModel):
@@ -7,7 +7,12 @@ class RegisterRequest(BaseModel):
     password: str
     name: str
     role: str = "aluno_ativo"  # docente | aluno_ativo | alumni
-    observation: str = ""
+    advisor_id: Optional[str] = None
+    advisor_name: Optional[str] = None
+    level: Optional[str] = None
+    levelPt: Optional[str] = None
+    registration_objective: str = Field(..., min_length=1, max_length=1000)
+    observation: str = Field(default="", max_length=150)
     usp_number: Optional[str] = None
     lgpd_consent: bool = False
 
@@ -34,6 +39,10 @@ class UserCreate(BaseModel):
     # Student-specific fields
     level: Optional[str] = None       # e.g. "PhD", "MSc"
     levelPt: Optional[str] = None
+    advisor_id: Optional[str] = None
+    advisor_name: Optional[str] = None
+    registration_objective: Optional[str] = None
+    observation: Optional[str] = Field(default=None, max_length=150)
     # Enriched profile
     research_areas: Optional[list[str]] = None
     year_joined: Optional[int] = None
@@ -67,6 +76,10 @@ class UserUpdate(BaseModel):
     photo: Optional[str] = None
     level: Optional[str] = None
     levelPt: Optional[str] = None
+    advisor_id: Optional[str] = None
+    advisor_name: Optional[str] = None
+    registration_objective: Optional[str] = None
+    observation: Optional[str] = Field(default=None, max_length=150)
     # Enriched profile
     research_areas: Optional[list[str]] = None
     year_joined: Optional[int] = None
@@ -107,6 +120,10 @@ class UserOut(BaseModel):
     photo: Optional[str] = None
     level: Optional[str] = None
     levelPt: Optional[str] = None
+    advisor_id: Optional[str] = None
+    advisor_name: Optional[str] = None
+    registration_objective: Optional[str] = None
+    observation: Optional[str] = None
     # Enriched profile
     research_areas: Optional[list[str]] = None
     year_joined: Optional[int] = None

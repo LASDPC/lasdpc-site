@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLang } from "@/contexts/LanguageContext";
@@ -12,10 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import PencilButton from "@/components/admin/PencilButton";
-import AddNewButton from "@/components/admin/AddNewButton";
 import { toast } from "sonner";
-import { Clock, CheckCircle, XCircle, Server } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Server, KeyRound, Ban } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -152,6 +150,8 @@ function StatusBadge({ status, t }: { status: string; t: (k: string) => string }
     pending: { cls: "bg-yellow-500/10 text-yellow-600", icon: <Clock size={12} /> },
     approved: { cls: "bg-green-500/10 text-green-600", icon: <CheckCircle size={12} /> },
     rejected: { cls: "bg-red-500/10 text-red-600", icon: <XCircle size={12} /> },
+    expired: { cls: "bg-muted text-muted-foreground", icon: <Clock size={12} /> },
+    revoked: { cls: "bg-destructive/10 text-destructive", icon: <Ban size={12} /> },
   };
   const s = map[status] ?? map.pending;
   return (
@@ -161,13 +161,19 @@ function StatusBadge({ status, t }: { status: string; t: (k: string) => string }
   );
 }
 
+function formatDateTime(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString([], { dateStyle: "short", timeStyle: "short" });
+}
+
 /* ========== MAIN PAGE ========== */
 const InfrastructurePage = () => {
   const { lang, t } = useLang();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const isPt = lang === "pt-BR";
   const { data: infra, isLoading } = useInfrastructure();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Request form state
@@ -204,8 +210,7 @@ const InfrastructurePage = () => {
   const selectedCluster: Cluster | undefined = clusters.find((c) => c.id === selectedClusterId);
   const customFields: CustomFieldDef[] = selectedCluster?.custom_fields ?? [];
   const duration = startDate && endDate ? formatDuration(startDate, endDate, t) : "";
-
-  const pendingRequests = myRequests.filter((r) => r.status === "pending");
+  const visibleRequests = myRequests.slice(0, 8);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,17 +227,13 @@ const InfrastructurePage = () => {
     <div className="py-10">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="font-display text-4xl font-bold text-foreground">{t("infra.title")}</h1>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Cluster" : "New Cluster"} onClick={() => navigate("/admin/edit/cluster")} />}
-        </div>
+        <h1 className="font-display text-4xl font-bold text-foreground mb-4">{t("infra.title")}</h1>
 
         {/* ---- Clusters display ---- */}
         <h2 className="font-display text-xl font-semibold text-foreground mb-6 mt-8">{t("infra.clusters")}</h2>
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {clusters.map((c, i) => (
             <div key={c.id} className="relative group">
-              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/cluster/${c.id}`)} />}
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-display text-lg font-semibold text-foreground">{c.name}</h3>
@@ -326,11 +327,11 @@ const InfrastructurePage = () => {
             <h2 className="font-display text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
               <Clock size={20} /> {t("infra.myRequests")}
             </h2>
-            {pendingRequests.length === 0 ? (
+            {visibleRequests.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("infra.noRequests")}</p>
             ) : (
               <div className="space-y-3">
-                {pendingRequests.map((req) => (
+                {visibleRequests.map((req) => (
                   <div key={req.id} className="bg-card border border-border rounded-xl p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-foreground">{req.cluster_name}</span>
@@ -343,6 +344,24 @@ const InfrastructurePage = () => {
                     </p>
                     {req.observation && (
                       <p className="text-xs text-muted-foreground italic">"{req.observation}"</p>
+                    )}
+                    {req.status === "pending" && req.pre_reservation_expires_at && (
+                      <p className="text-xs text-muted-foreground">
+                        {isPt ? "Pré-reserva válida até" : "Pre-reservation valid until"}{" "}
+                        <span className="font-medium text-foreground">{formatDateTime(req.pre_reservation_expires_at)}</span>
+                      </p>
+                    )}
+                    {req.status === "approved" && req.access_key && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs">
+                        <div className="flex items-center gap-2 font-medium text-foreground">
+                          <KeyRound size={14} />
+                          {isPt ? "Chave de acesso" : "Access key"}
+                        </div>
+                        <p className="mt-1 font-mono text-sm text-primary">{req.access_key}</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {isPt ? "Período" : "Period"}: {req.access_starts_at || req.start_date} → {req.access_ends_at || req.end_date}
+                        </p>
+                      </div>
                     )}
                   </div>
                 ))}

@@ -13,6 +13,10 @@ export interface RoomEvent {
     user_id?: string | null;
     name?: string | null;
     email?: string | null;
+    initials?: string | null;
+    photo?: string | null;
+    avatar?: string | null;
+    usp_number?: string | null;
   }>;
 }
 
@@ -34,6 +38,11 @@ export interface RoomEventUpdate {
 export const roomEventsService = {
   list: (room: string, start: string, end: string) =>
     api.get<RoomEvent[]>(`/api/v1/room-events?room=${encodeURIComponent(room)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
+  adminList: (start: string, end: string, room?: string) => {
+    const params = new URLSearchParams({ start, end });
+    if (room) params.set("room", room);
+    return api.get<RoomEvent[]>(`/api/v1/room-events/admin?${params.toString()}`);
+  },
   create: (data: RoomEventCreate) =>
     api.post<RoomEvent>("/api/v1/room-events", data),
   delete: (id: string) =>

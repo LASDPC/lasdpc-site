@@ -6,6 +6,8 @@ import { useLang } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import type { UserSuggestion } from "@/services/users";
+import UserEventFilter from "@/components/room-scheduling/UserEventFilter";
 
 const ROOM_COLORS: Record<string, string> = {
   "1-009": "bg-primary",
@@ -21,6 +23,8 @@ type Props = {
   rooms: readonly string[];
   onSelectRoom: (room: string) => void;
   onCreateClick: () => void;
+  participantFilter: UserSuggestion | null;
+  onParticipantFilterChange: (user: UserSuggestion | null) => void;
 };
 
 export default function RoomSchedulingSidebar(props: Props) {
@@ -92,6 +96,15 @@ export default function RoomSchedulingSidebar(props: Props) {
                 </label>
               ))}
             </div>
+          </div>
+        ) : null}
+
+        {props.open ? (
+          <div className="mt-4">
+            <UserEventFilter
+              value={props.participantFilter}
+              onChange={props.onParticipantFilterChange}
+            />
           </div>
         ) : null}
       </div>

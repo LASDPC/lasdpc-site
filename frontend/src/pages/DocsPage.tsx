@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
 import { useDocs } from "@/hooks/useDocs";
-import { FileText, BookOpen, Shield, GraduationCap, Plus, LogIn, LogOut } from "lucide-react";
+import { FileText, BookOpen, Shield, GraduationCap, LogIn, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -53,9 +53,8 @@ const DocsPageSkeleton = () => (
 
 const DocsPage = () => {
   const { lang } = useLang();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const isPt = lang === "pt-BR";
-  const navigate = useNavigate();
 
   const { data: docs = [], isLoading } = useDocs();
 
@@ -174,24 +173,6 @@ const DocsPage = () => {
                   {isPt ? "Atualizado em" : "Updated"} {activeDoc.updatedAt}
                 </p>
               </div>
-              {isAdmin && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => navigate(`/admin/edit/doc/${activeDoc.id}`)}
-                    className="inline-flex items-center gap-1.5 text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    <FileText size={14} />
-                    {isPt ? "Editar" : "Edit"}
-                  </button>
-                  <button
-                    onClick={() => navigate("/admin/edit/doc")}
-                    className="inline-flex items-center gap-1.5 text-sm bg-accent text-accent-foreground px-3 py-1.5 rounded-md hover:opacity-90 transition-opacity"
-                  >
-                    <Plus size={14} />
-                    {isPt ? "Novo" : "New"}
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Content */}

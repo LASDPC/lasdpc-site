@@ -1,11 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
-import PencilButton from "@/components/admin/PencilButton";
-import AddNewButton from "@/components/admin/AddNewButton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -32,10 +29,8 @@ const BlogPageSkeleton = () => (
 
 const BlogPage = () => {
   const { lang, t } = useLang();
-  const { isAdmin } = useAuth();
   const isPt = lang === "pt-BR";
   const { data: blog = [], isLoading } = useBlog();
-  const navigate = useNavigate();
 
   if (isLoading) return <BlogPageSkeleton />;
 
@@ -44,7 +39,6 @@ const BlogPage = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-display text-4xl font-bold text-foreground">{t("section.blog")}</h1>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Post" : "New Post"} onClick={() => navigate("/admin/edit/blog")} />}
         </div>
         <p className="text-xs text-muted-foreground mb-12 italic">
           {isPt ? "Nota: futura integração com LinkedIn/Instagram para publicação automática." : "Note: future LinkedIn/Instagram integration for auto-publishing."}
@@ -53,7 +47,6 @@ const BlogPage = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blog.map((post, i) => (
             <div key={post.id} className="relative group h-full">
-              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/blog/${post.id}`)} />}
               <Link to={`/blog/${post.id}`} className="h-full">
                 <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
                   <img

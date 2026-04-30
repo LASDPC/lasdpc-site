@@ -1,7 +1,9 @@
+import re
 import secrets
 from datetime import datetime, timezone
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
 from core.config import settings
@@ -21,6 +23,7 @@ router = APIRouter()
 
 # Fields that non-admins cannot modify
 ADMIN_ONLY_FIELDS = {"is_admin", "role", "usp_number", "lgpd_consent", "lgpd_consent_at", "lgpd_consent_version"}
+STUDENT_ROLES = {"aluno_ativo", "alumni"}
 
 
 def _user_out(doc: dict) -> UserOut:
@@ -63,10 +66,40 @@ async def create_user(body: UserCreate, _admin: dict = Depends(require_admin)):
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
     doc = body.model_dump()
+    if doc.get("role") in STUDENT_ROLES:
+        advisor_id = doc.get("advisor_id")
+        if not advisor_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Advisor is required for students")
+        try:
+            advisor_object_id = ObjectId(advisor_id)
+        except InvalidId:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid advisor")
+        advisor = await db.users.find_one({
+            "_id": advisor_object_id,
+            "role": "docente",
+            "status": {"$ne": "pending"},
+        })
+        if not advisor:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid advisor")
+        doc["advisor_id"] = str(advisor["_id"])
+        doc["advisor_name"] = advisor.get("name")
+        if not doc.get("level") or not doc.get("levelPt"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Academic category is required for students")
     doc["hashed_password"] = hash_password(doc.pop("password"))
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id
     return _user_out(doc)
+
+
+@router.get("", response_model=list[UserOut])
+async def list_users(
+    status_filter: str | None = Query(default=None, alias="status"),
+    _admin: dict = Depends(require_admin),
+):
+    db = get_db()
+    query = {"status": status_filter} if status_filter else {}
+    items = await db.users.find(query).sort("name", 1).to_list(1000)
+    return [_user_out(d) for d in items]
 
 
 @router.get("/pending")
@@ -120,20 +153,19 @@ async def suggest_users(
 ):
     """
     Suggest users for participant invites.
-    Prefix match on email or name, limited to 100 results.
+    Match on email, name, or USP number, limited to 100 results.
     Returns a minimal payload to power typeahead UI.
     """
     db = get_db()
     q = query.strip()
     if not q:
-        items = await db.users.find({"status": "active"}).limit(limit).to_list(limit)
+        items = await db.users.find({"status": {"$nin": ["pending", "rejected"]}}).limit(limit).to_list(limit)
     else:
-        # Prefix match (case-insensitive) on email or name.
-        regex = {"$regex": f"^{q}", "$options": "i"}
+        regex = {"$regex": re.escape(q), "$options": "i"}
         items = await db.users.find(
             {
-                "status": "active",
-                "$or": [{"email": regex}, {"name": regex}],
+                "status": {"$nin": ["pending", "rejected"]},
+                "$or": [{"email": regex}, {"name": regex}, {"usp_number": regex}],
             }
         ).limit(limit).to_list(limit)
     return [
@@ -142,6 +174,10 @@ async def suggest_users(
             "email": d.get("email"),
             "name": d.get("name"),
             "initials": d.get("initials"),
+            "photo": d.get("photo"),
+            "avatar": d.get("avatar"),
+            "usp_number": d.get("usp_number"),
+            "role": d.get("role"),
         }
         for d in items
     ]

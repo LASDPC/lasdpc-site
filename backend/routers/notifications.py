@@ -18,6 +18,12 @@ async def my_notifications(user: dict = Depends(get_current_user)):
             "cluster_name": n.get("cluster_name", ""),
             "start_date": n.get("start_date", ""),
             "end_date": n.get("end_date", ""),
+            "event_id": n.get("event_id", ""),
+            "room": n.get("room", ""),
+            "event_title": n.get("event_title", ""),
+            "start_time": n.get("start_time", ""),
+            "end_time": n.get("end_time", ""),
+            "actor_name": n.get("actor_name", ""),
             "created_at": n.get("created_at", ""),
         }
         for n in items

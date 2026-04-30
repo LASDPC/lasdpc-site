@@ -190,7 +190,12 @@ const PendingUsersPage = () => {
             <div className="space-y-4">
               {pendingUsers.map((user) => {
                 const roleLabel = ROLE_LABELS[user.role]?.[isPt ? "pt" : "en"] ?? user.role;
-                const observation = (user as Record<string, unknown>).observation as string | undefined;
+                const details = [
+                  user.advisor_name && { label: isPt ? "Orientador" : "Advisor", value: user.advisor_name },
+                  (user.levelPt || user.level) && { label: isPt ? "Categoria" : "Category", value: isPt ? user.levelPt || user.level : user.level || user.levelPt },
+                  user.registration_objective && { label: isPt ? "Objetivo" : "Objective", value: user.registration_objective },
+                  user.observation && { label: isPt ? "Observações" : "Observations", value: user.observation },
+                ].filter(Boolean) as Array<{ label: string; value: string }>;
                 return (
                   <div key={user.id} className="p-4 bg-card border border-border rounded-xl space-y-3">
                     <div className="flex items-center justify-between gap-4">
@@ -213,9 +218,13 @@ const PendingUsersPage = () => {
                         </Button>
                       </div>
                     </div>
-                    {observation && (
-                      <div className="bg-muted/50 rounded-lg px-3 py-2 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{isPt ? "Observacao:" : "Note:"}</span> {observation}
+                    {details.length > 0 && (
+                      <div className="bg-muted/50 rounded-lg px-3 py-2 text-sm text-muted-foreground space-y-1">
+                        {details.map((detail) => (
+                          <p key={detail.label}>
+                            <span className="font-medium text-foreground">{detail.label}:</span> {detail.value}
+                          </p>
+                        ))}
                       </div>
                     )}
                   </div>

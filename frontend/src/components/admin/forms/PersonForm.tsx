@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/services/auth";
+import { useDocentes } from "@/hooks/usePeople";
 
 const docenteSchema = z.object({
   name: z.string().min(1),
@@ -36,8 +37,9 @@ const docenteSchema = z.object({
 const studentSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  level: z.string().optional(),
-  levelPt: z.string().optional(),
+  level: z.string().min(1),
+  levelPt: z.string().min(1),
+  advisor_id: z.string().min(1),
   area: z.string().optional(),
   areaPt: z.string().optional(),
   password: z.string().optional(),
@@ -207,6 +209,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
 const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentFormProps, "type">) => {
   const isEdit = !!initial;
   const pt = lang === "pt";
+  const { data: docentes = [] } = useDocentes();
   const { register, handleSubmit, watch, formState: { errors } } = useForm<z.infer<typeof studentSchema>>({
     resolver: zodResolver(studentSchema),
     defaultValues: initial ? {
@@ -214,6 +217,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       email: initial.email,
       level: initial.level ?? "",
       levelPt: initial.levelPt ?? "",
+      advisor_id: initial.advisor_id ?? "",
       area: initial.area ?? "",
       areaPt: initial.areaPt ?? "",
       bio: initial.bio ?? "",
@@ -238,9 +242,12 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
 
   return (
     <form onSubmit={handleSubmit((v) => {
+      const advisor = docentes.find((docente) => docente.id === v.advisor_id);
       const data: Record<string, unknown> = {
         ...v,
         role: "aluno_ativo",
+        advisor_id: v.advisor_id,
+        advisor_name: advisor?.name ?? initial?.advisor_name ?? null,
         bio: v.bio || null,
         bioPt: v.bioPt || null,
         research_areas: splitCsv(v.research_areas),
@@ -268,8 +275,18 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
         <div><Label>E-mail</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">{pt ? "E-mail valido obrigatorio" : "Valid email required"}</p>}</div>
         {!isEdit && <div><Label>{pt ? "Senha" : "Password"}</Label><Input type="password" {...register("password")} placeholder={pt ? "Padrao: changeme123" : "Default: changeme123"} /></div>}
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Nivel (EN)" : "Level (EN)"}</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" /></div>
-          <div><Label>{pt ? "Nivel (PT)" : "Level (PT)"}</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" /></div>
+          <div><Label>{pt ? "Nivel (EN)" : "Level (EN)"}</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" />{errors.level && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatorio" : "Required"}</p>}</div>
+          <div><Label>{pt ? "Nivel (PT)" : "Level (PT)"}</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" />{errors.levelPt && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatorio" : "Required"}</p>}</div>
+        </div>
+        <div>
+          <Label>{pt ? "Orientador" : "Advisor"}</Label>
+          <select {...register("advisor_id")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm">
+            <option value="">{pt ? "Selecione um orientador" : "Select an advisor"}</option>
+            {docentes.map((docente) => (
+              <option key={docente.id} value={docente.id}>{docente.name}</option>
+            ))}
+          </select>
+          {errors.advisor_id && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatorio" : "Required"}</p>}
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>{pt ? "Area (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>

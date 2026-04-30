@@ -3,6 +3,7 @@ import { enUS, ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 
 import { useLang } from "@/contexts/LanguageContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { END_HOUR, PX_PER_HOUR, START_HOUR, eventOverlapsDayWindow, minutesFromWindowStart } from "@/components/room-scheduling/eventPositioning";
 import type { RoomEvent } from "@/services/roomEvents";
@@ -24,6 +25,12 @@ function tzLabel() {
   const hours = Math.round(Math.abs(mins) / 60);
   const sign = mins <= 0 ? "+" : "-";
   return `GMT${sign}${String(hours).padStart(2, "0")}`;
+}
+
+function fallbackInitials(label: string) {
+  const parts = label.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  return label.slice(0, 2).toUpperCase() || "?";
 }
 
 export default function WeekGrid(props: Props) {
@@ -139,7 +146,7 @@ export default function WeekGrid(props: Props) {
               {dayEvents.map(({ ev, s, e }) => {
                 const topMin = Math.max(0, minutesFromWindowStart(windowStart, s));
                 const endMin = Math.min((END_HOUR - START_HOUR) * 60, minutesFromWindowStart(windowStart, e));
-                const heightMin = Math.max(18, endMin - topMin); // minimum click target
+                const heightMin = Math.max(32, endMin - topMin); // minimum click target
                 const isOwner = ev.user_id === props.currentUserId;
 
                 return (
@@ -164,6 +171,20 @@ export default function WeekGrid(props: Props) {
                   >
                     <div className="text-xs font-semibold truncate text-foreground">{ev.title}</div>
                     <div className="text-[11px] truncate text-muted-foreground">{ev.user_name}</div>
+                    {ev.participants && ev.participants.length > 0 ? (
+                      <div className="mt-1 flex -space-x-1 overflow-hidden">
+                        {ev.participants.slice(0, 4).map((participant, index) => {
+                          const label = participant.name || participant.email || "";
+                          const image = participant.photo || participant.avatar || undefined;
+                          return (
+                            <Avatar key={participant.user_id || participant.email || `${ev.id}-${index}`} className="h-4 w-4 border border-background">
+                              {image && <AvatarImage src={image} alt={label} />}
+                              <AvatarFallback className="text-[8px]">{participant.initials || fallbackInitials(label)}</AvatarFallback>
+                            </Avatar>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                   </motion.button>
                 );
               })}

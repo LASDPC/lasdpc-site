@@ -2,14 +2,11 @@ import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { ExternalLink, Mail, Search, X, Linkedin, Github, Twitter } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import PencilButton from "@/components/admin/PencilButton";
-import AddNewButton from "@/components/admin/AddNewButton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -42,7 +39,6 @@ const PeoplePageSkeleton = () => (
 
 const PeoplePage = () => {
   const { lang, t } = useLang();
-  const { isAdmin } = useAuth();
   const isPt = lang === "pt-BR";
   const { data: docentes = [], isLoading: loadingDocentes } = useDocentes();
   const { data: students = [], isLoading: loadingStudents } = useStudents();
@@ -72,6 +68,7 @@ const PeoplePage = () => {
     [...docentes, ...students].forEach(p => {
       p.research_areas?.forEach(a => areas.add(a));
       if (p.area) areas.add(p.area);
+      if (p.areaPt) areas.add(p.areaPt);
     });
     return Array.from(areas).sort();
   }, [docentes, students]);
@@ -97,14 +94,14 @@ const PeoplePage = () => {
   // Filtered data
   const filteredDocentes = useMemo(() => docentes.filter(d => {
     if (nameSearch && !d.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-    if (areaFilter && !d.research_areas?.includes(areaFilter) && d.area !== areaFilter) return false;
+    if (areaFilter && !d.research_areas?.includes(areaFilter) && d.area !== areaFilter && d.areaPt !== areaFilter) return false;
     if (yearFilter && d.year_joined !== Number(yearFilter)) return false;
     return true;
   }), [docentes, nameSearch, areaFilter, yearFilter]);
 
   const filteredStudents = useMemo(() => students.filter(s => {
     if (nameSearch && !s.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-    if (areaFilter && !s.research_areas?.includes(areaFilter) && s.area !== areaFilter) return false;
+    if (areaFilter && !s.research_areas?.includes(areaFilter) && s.area !== areaFilter && s.areaPt !== areaFilter) return false;
     if (yearFilter && s.year_joined !== Number(yearFilter)) return false;
     if (levelFilter && s.level !== levelFilter) return false;
     return true;
@@ -173,7 +170,6 @@ const PeoplePage = () => {
         {/* Faculty section */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-display text-4xl font-bold text-foreground">{t("section.faculty")}</h1>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Docente" : "New Faculty"} onClick={() => navigate("/admin/edit/docente")} />}
         </div>
         <p className="text-muted-foreground mb-12 text-sm font-mono">{t("section.faculty")}</p>
 
@@ -183,7 +179,6 @@ const PeoplePage = () => {
           <div className="grid md:grid-cols-2 gap-6 mb-20">
             {filteredDocentes.map((d, i) => (
               <div key={d.id} className="relative group">
-                {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/docente/${d.id}`)} />}
                 <motion.div
                   initial="hidden"
                   whileInView="visible"
@@ -229,7 +224,6 @@ const PeoplePage = () => {
         {/* Students section */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-3xl font-bold text-foreground">{t("section.students")}</h2>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Aluno" : "New Student"} onClick={() => navigate("/admin/edit/student")} />}
         </div>
         <p className="text-muted-foreground mb-8 text-sm font-mono">{t("section.students")}</p>
 
@@ -239,7 +233,6 @@ const PeoplePage = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredStudents.map((s, i) => (
               <div key={s.id} className="relative group">
-                {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/student/${s.id}`)} />}
                 <motion.div
                   initial="hidden"
                   whileInView="visible"

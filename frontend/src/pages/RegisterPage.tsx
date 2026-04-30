@@ -1,34 +1,128 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
-import { authService } from "@/services/auth";
+import { authService, type User } from "@/services/auth";
+import { peopleService } from "@/services/people";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
 
+const ACADEMIC_LEVELS = [
+  { value: "undergrad", level: "Undergraduate", levelPt: "Graduação" },
+  { value: "masters", level: "MSc", levelPt: "Mestrado" },
+  { value: "phd", level: "PhD", levelPt: "Doutorado" },
+  { value: "other", level: "", levelPt: "" },
+];
+
 const RegisterPage = () => {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const [currentStep, setCurrentStep] = useState(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("aluno_ativo");
+  const [advisorId, setAdvisorId] = useState("");
+  const [academicLevel, setAcademicLevel] = useState("masters");
+  const [customAcademicLevel, setCustomAcademicLevel] = useState("");
+  const [registrationObjective, setRegistrationObjective] = useState("");
   const [observation, setObservation] = useState("");
   const [uspNumber, setUspNumber] = useState("");
   const [lgpdConsent, setLgpdConsent] = useState(false);
+  const [advisors, setAdvisors] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const isStudent = role === "aluno_ativo" || role === "alumni";
+  const isPt = lang === "pt-BR";
+  const steps = [
+    {
+      title: isPt ? "Conta" : "Account",
+      description: isPt ? "Dados de acesso" : "Access details",
+    },
+    {
+      title: isPt ? "Perfil" : "Profile",
+      description: isPt ? "Vínculo acadêmico" : "Academic link",
+    },
+    {
+      title: isPt ? "Solicitação" : "Request",
+      description: isPt ? "Finalização" : "Final details",
+    },
+  ];
+
+  useEffect(() => {
+    peopleService.listDocentes()
+      .then(setAdvisors)
+      .catch(() => setAdvisors([]));
+  }, []);
+
+  const validateStep = (step: number) => {
+    setError("");
+
+    if (step === 0) {
+      if (!name.trim() || !email.trim() || !password) {
+        setError(isPt ? "Preencha nome, e-mail e senha para continuar." : "Fill in name, email, and password to continue.");
+        return false;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        setError(isPt ? "Informe um e-mail válido para continuar." : "Enter a valid email to continue.");
+        return false;
+      }
+      if (password.length < 6) {
+        setError(isPt ? "A senha deve ter pelo menos 6 caracteres." : "Password must be at least 6 characters.");
+        return false;
+      }
+    }
+
+    if (step === 1) {
+      const selectedLevel = ACADEMIC_LEVELS.find((item) => item.value === academicLevel);
+      const resolvedLevel = academicLevel === "other" ? customAcademicLevel.trim() : selectedLevel?.level;
+      const resolvedLevelPt = academicLevel === "other" ? customAcademicLevel.trim() : selectedLevel?.levelPt;
+      const selectedAdvisor = advisors.find((advisor) => advisor.id === advisorId);
+      if (isStudent && (!selectedAdvisor || !resolvedLevel || !resolvedLevelPt)) {
+        setError(t("auth.requiredStudentFields"));
+        return false;
+      }
+    }
+
+    if (step === 2) {
+      if (!registrationObjective.trim()) {
+        setError(isPt ? "Descreva o objetivo do cadastro." : "Describe the registration objective.");
+        return false;
+      }
+      if (!lgpdConsent) {
+        setError(t("auth.lgpdRequired"));
+        return false;
+      }
+      if (observation.length > 150) {
+        setError(t("auth.observationTooLong"));
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!validateStep(currentStep)) return;
+    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
+  };
+
+  const handleBack = () => {
+    setError("");
+    setCurrentStep((step) => Math.max(step - 1, 0));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    if (!lgpdConsent) {
-      setError(t("auth.lgpdRequired"));
-      return;
-    }
+    if (!validateStep(2)) return;
+
+    const selectedLevel = ACADEMIC_LEVELS.find((item) => item.value === academicLevel);
+    const resolvedLevel = academicLevel === "other" ? customAcademicLevel.trim() : selectedLevel?.level;
+    const resolvedLevelPt = academicLevel === "other" ? customAcademicLevel.trim() : selectedLevel?.levelPt;
+    const selectedAdvisor = advisors.find((advisor) => advisor.id === advisorId);
     setLoading(true);
     try {
       await authService.register({
@@ -36,7 +130,12 @@ const RegisterPage = () => {
         email,
         password,
         role,
-        observation,
+        advisor_id: isStudent ? advisorId : undefined,
+        advisor_name: isStudent ? selectedAdvisor?.name : undefined,
+        level: isStudent ? resolvedLevel : undefined,
+        levelPt: isStudent ? resolvedLevelPt : undefined,
+        registration_objective: registrationObjective.trim(),
+        observation: observation.trim() || undefined,
         usp_number: uspNumber || undefined,
         lgpd_consent: lgpdConsent,
       });
@@ -87,9 +186,9 @@ const RegisterPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-md"
+        className="w-full max-w-2xl"
       >
-        <div className="glass-surface rounded-2xl border border-border p-8 shadow-xl">
+        <div className="glass-surface rounded-2xl border border-border p-6 sm:p-8 shadow-xl">
           <div className="flex items-center gap-3 mb-6">
             <img src={logo} alt="LASDPC" className="h-10 w-10" />
             <span className="font-display font-bold text-lg text-foreground">LASDPC</span>
@@ -102,98 +201,248 @@ const RegisterPage = () => {
             {t("auth.registerSubtitle")}
           </p>
 
+          <div className="mb-8">
+            <div className="flex items-start justify-between gap-2">
+              {steps.map((step, index) => {
+                const isActive = index === currentStep;
+                const isComplete = index < currentStep;
+
+                return (
+                  <div key={step.title} className="flex flex-1 items-start gap-2">
+                    <div className="flex flex-1 flex-col items-center text-center">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors ${
+                          isComplete
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : isActive
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-secondary text-muted-foreground"
+                        }`}
+                        aria-current={isActive ? "step" : undefined}
+                      >
+                        {isComplete ? <Check size={16} /> : index + 1}
+                      </div>
+                      <span className={`mt-2 text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                        {step.title}
+                      </span>
+                      <span className="hidden text-xs text-muted-foreground sm:block">
+                        {step.description}
+                      </span>
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div className={`mt-4 h-px flex-1 ${index < currentStep ? "bg-primary" : "bg-border"}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              {isPt ? `Etapa ${currentStep + 1} de ${steps.length}` : `Step ${currentStep + 1} of ${steps.length}`}
+            </p>
+          </div>
+
           {error && (
             <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-3">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t("auth.name")}</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoComplete="name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">{t("auth.email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@usp.br"
-                required
-                autoComplete="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t("auth.password")}</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">{t("auth.role")}</Label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="space-y-4"
+            >
+              {currentStep === 0 && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">{t("auth.name")}</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      autoComplete="name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t("auth.email")}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@usp.br"
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t("auth.password")}</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">{t("auth.role")}</Label>
+                    <select
+                      id="role"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                    >
+                      <option value="aluno_ativo">{t("auth.role.aluno")}</option>
+                      <option value="docente">{t("auth.role.docente")}</option>
+                      <option value="alumni">{t("auth.role.alumni")}</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {currentStep === 1 && (
+                <>
+                  {isStudent ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="advisor">{t("auth.advisor")}</Label>
+                        <select
+                          id="advisor"
+                          value={advisorId}
+                          onChange={(e) => setAdvisorId(e.target.value)}
+                          className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                          required
+                        >
+                          <option value="">{t("auth.advisorPlaceholder")}</option>
+                          {advisors.map((advisor) => (
+                            <option key={advisor.id} value={advisor.id}>{advisor.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="academicLevel">{t("auth.academicLevel")}</Label>
+                        <select
+                          id="academicLevel"
+                          value={academicLevel}
+                          onChange={(e) => setAcademicLevel(e.target.value)}
+                          className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                          required
+                        >
+                          {ACADEMIC_LEVELS.map((item) => (
+                            <option key={item.value} value={item.value}>
+                              {item.value === "other" ? t("auth.academicLevel.other") : (isPt ? item.levelPt : item.level)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {academicLevel === "other" && (
+                        <div className="space-y-2">
+                          <Label htmlFor="customAcademicLevel">{t("auth.academicLevelCustom")}</Label>
+                          <Input
+                            id="customAcademicLevel"
+                            value={customAcademicLevel}
+                            onChange={(e) => setCustomAcademicLevel(e.target.value)}
+                            required
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
+                      {isPt
+                        ? "Como docente, você pode seguir sem informar orientador ou categoria acadêmica."
+                        : "As faculty, you can continue without an advisor or academic category."}
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="uspNumber">{t("auth.uspNumber")}</Label>
+                    <Input
+                      id="uspNumber"
+                      value={uspNumber}
+                      onChange={(e) => setUspNumber(e.target.value)}
+                      placeholder="12345678"
+                      autoComplete="off"
+                    />
+                  </div>
+                </>
+              )}
+
+              {currentStep === 2 && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="registrationObjective">{t("auth.registrationObjective")}</Label>
+                    <textarea
+                      id="registrationObjective"
+                      value={registrationObjective}
+                      onChange={(e) => setRegistrationObjective(e.target.value)}
+                      placeholder={t("auth.registrationObjectivePlaceholder")}
+                      className="w-full min-h-[90px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="observation">{t("auth.observation")}</Label>
+                      <span className="text-xs text-muted-foreground">{observation.length}/150</span>
+                    </div>
+                    <textarea
+                      id="observation"
+                      value={observation}
+                      onChange={(e) => setObservation(e.target.value)}
+                      placeholder={t("auth.observationPlaceholder")}
+                      maxLength={150}
+                      className="w-full min-h-[70px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <input
+                      id="lgpdConsent"
+                      type="checkbox"
+                      checked={lgpdConsent}
+                      onChange={(e) => setLgpdConsent(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-border"
+                    />
+                    <Label htmlFor="lgpdConsent" className="text-sm font-normal leading-snug">
+                      {t("auth.lgpdConsent")}{" "}
+                      <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                        {t("privacy.title")}
+                      </Link>
+                    </Label>
+                  </div>
+                </>
+              )}
+            </motion.div>
+
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 0 || loading}
+                className="min-w-28"
               >
-                <option value="aluno_ativo">{t("auth.role.aluno")}</option>
-                <option value="docente">{t("auth.role.docente")}</option>
-                <option value="alumni">{t("auth.role.alumni")}</option>
-              </select>
+                <ChevronLeft size={16} />
+                {isPt ? "Voltar" : "Back"}
+              </Button>
+
+              {currentStep < steps.length - 1 ? (
+                <Button type="button" onClick={handleNext} className="min-w-32">
+                  {isPt ? "Continuar" : "Continue"}
+                  <ChevronRight size={16} />
+                </Button>
+              ) : (
+                <Button type="submit" disabled={loading} className="min-w-40">
+                  {loading ? "..." : t("auth.registerButton")}
+                </Button>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="uspNumber">{t("auth.uspNumber")}</Label>
-              <Input
-                id="uspNumber"
-                value={uspNumber}
-                onChange={(e) => setUspNumber(e.target.value)}
-                placeholder="12345678"
-                autoComplete="off"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="observation">{t("auth.observation")}</Label>
-              <textarea
-                id="observation"
-                value={observation}
-                onChange={(e) => setObservation(e.target.value)}
-                placeholder={t("auth.observationPlaceholder")}
-                className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="flex items-start gap-2">
-              <input
-                id="lgpdConsent"
-                type="checkbox"
-                checked={lgpdConsent}
-                onChange={(e) => setLgpdConsent(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-border"
-              />
-              <Label htmlFor="lgpdConsent" className="text-sm font-normal leading-snug">
-                {t("auth.lgpdConsent")}{" "}
-                <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
-                  {t("privacy.title")}
-                </Link>
-              </Label>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "..." : t("auth.registerButton")}
-            </Button>
           </form>
 
           <p className="text-xs text-muted-foreground mt-6">

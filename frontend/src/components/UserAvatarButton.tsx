@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -12,14 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, UserPlus, Settings, LogOut, Clock } from "lucide-react";
-import UserCreateModal from "@/components/admin/UserCreateModal";
+import { User, Settings, LogOut, LayoutDashboard } from "lucide-react";
 
 const UserAvatarButton = () => {
   const { user, isAdmin, logout } = useAuth();
   const { t } = useLang();
   const navigate = useNavigate();
-  const [showCreateUser, setShowCreateUser] = useState(false);
 
   if (!user) {
     return (
@@ -38,8 +35,7 @@ const UserAvatarButton = () => {
   }
 
   return (
-    <>
-      <DropdownMenu>
+    <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
             className="focus:outline-none focus:ring-2 focus:ring-ring rounded-full"
@@ -75,18 +71,11 @@ const UserAvatarButton = () => {
           {isAdmin && (
             <>
               <DropdownMenuItem
-                onClick={() => setShowCreateUser(true)}
+                onClick={() => navigate("/admin")}
                 className="text-primary font-semibold cursor-pointer"
               >
-                <UserPlus className="mr-2 h-4 w-4" />
-                {t("menu.addUser")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate("/admin/pending")}
-                className="cursor-pointer"
-              >
-                <Clock className="mr-2 h-4 w-4" />
-                {t("admin.pendingUsers")}
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                {t("menu.adminPanel")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
@@ -100,7 +89,7 @@ const UserAvatarButton = () => {
             {t("menu.profile")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => navigate(`/profile/${user.id}`)}
+            onClick={() => navigate("/settings")}
             className="cursor-pointer"
           >
             <Settings className="mr-2 h-4 w-4" />
@@ -119,8 +108,6 @@ const UserAvatarButton = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <UserCreateModal open={showCreateUser} onClose={() => setShowCreateUser(false)} />
-    </>
   );
 };
 

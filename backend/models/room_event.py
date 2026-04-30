@@ -12,6 +12,10 @@ class RoomEventParticipant(BaseModel):
     user_id: Optional[str] = None
     name: Optional[str] = None
     email: Optional[str] = None
+    initials: Optional[str] = None
+    photo: Optional[str] = None
+    avatar: Optional[str] = None
+    usp_number: Optional[str] = None
 
 
 class RoomEventCreate(BaseModel):

@@ -1,12 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
 import { Skeleton } from "@/components/ui/skeleton";
-import PencilButton from "@/components/admin/PencilButton";
-import AddNewButton from "@/components/admin/AddNewButton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -38,11 +35,9 @@ const ResearchPageSkeleton = () => (
 
 const ResearchPage = () => {
   const { lang, t } = useLang();
-  const { isAdmin } = useAuth();
   const isPt = lang === "pt-BR";
   const { data: projects = [], isLoading: loadingProjects } = useProjects();
   const { data: publications = [], isLoading: loadingPubs } = usePublications();
-  const navigate = useNavigate();
 
   if (loadingProjects || loadingPubs) return <ResearchPageSkeleton />;
 
@@ -53,12 +48,10 @@ const ResearchPage = () => {
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-2xl font-bold text-foreground">{t("section.projects")}</h2>
-          {isAdmin && <AddNewButton label={isPt ? "Novo Projeto" : "New Project"} onClick={() => navigate("/admin/edit/project")} />}
         </div>
         <div className="grid md:grid-cols-2 gap-6 mb-20">
           {projects.map((p, i) => (
             <div key={p.id} className="relative group">
-              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/project/${p.id}`)} />}
               <Link to={`/research/${p.id}`}>
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border hover:border-primary/30 transition-colors cursor-pointer">
                   <div className="flex items-center justify-between mb-3">
@@ -83,12 +76,10 @@ const ResearchPage = () => {
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-2xl font-bold text-foreground">{t("section.publications")}</h2>
-          {isAdmin && <AddNewButton label={isPt ? "Nova Publicação" : "New Publication"} onClick={() => navigate("/admin/edit/publication")} />}
         </div>
         <div className="space-y-4">
           {publications.map((pub, i) => (
             <div key={pub.id} className="relative group">
-              {isAdmin && <PencilButton onClick={() => navigate(`/admin/edit/publication/${pub.id}`)} />}
               <motion.a href={pub.doi} target="_blank" rel="noopener noreferrer" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="block bg-card rounded-lg p-5 border border-border hover:border-primary/50 transition-colors">
                 <p className="font-semibold text-foreground">{isPt ? pub.titlePt : pub.title}</p>
                 <p className="text-sm text-muted-foreground mt-1">{pub.authors} - <em>{pub.venue}</em>, {pub.year}</p>

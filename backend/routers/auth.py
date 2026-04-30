@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException, status
 
 from core.database import get_db
@@ -7,6 +9,8 @@ from core.security import verify_password, create_access_token, hash_password
 from models.user import LoginRequest, LoginResponse, RegisterRequest, UserOut
 
 router = APIRouter()
+
+STUDENT_ROLES = {"aluno_ativo", "alumni"}
 
 
 def _initials(name: str) -> str:
@@ -55,6 +59,28 @@ async def register(body: RegisterRequest):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="USP number already registered")
     if body.role not in ("docente", "aluno_ativo", "alumni"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
+    registration_objective = body.registration_objective.strip()
+    if not registration_objective:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Registration objective is required")
+    advisor = None
+    level = (body.level or "").strip()
+    level_pt = (body.levelPt or "").strip()
+    if body.role in STUDENT_ROLES:
+        if not body.advisor_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Advisor is required for students")
+        try:
+            advisor_object_id = ObjectId(body.advisor_id)
+        except InvalidId:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid advisor")
+        advisor = await db.users.find_one({
+            "_id": advisor_object_id,
+            "role": "docente",
+            "status": {"$ne": "pending"},
+        })
+        if not advisor:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid advisor")
+        if not level or not level_pt:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Academic category is required for students")
     doc = {
         "email": body.email,
         "hashed_password": hash_password(body.password),
@@ -64,7 +90,12 @@ async def register(body: RegisterRequest):
         "avatar": None,
         "initials": _initials(body.name),
         "status": "pending",
-        "observation": body.observation,
+        "advisor_id": str(advisor["_id"]) if advisor else None,
+        "advisor_name": advisor.get("name") if advisor else None,
+        "level": level or None,
+        "levelPt": level_pt or None,
+        "registration_objective": registration_objective,
+        "observation": body.observation.strip(),
         "usp_number": body.usp_number,
         "lgpd_consent": True,
         "lgpd_consent_at": datetime.now(timezone.utc).isoformat(),

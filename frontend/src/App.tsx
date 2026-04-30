@@ -19,6 +19,7 @@ import LoginPage from "@/pages/LoginPage";
 import ProjectPage from "@/pages/ProjectPage";
 import AdminEditPage from "@/pages/AdminEditPage";
 import ProfilePage from "@/pages/ProfilePage";
+import SettingsPage from "@/pages/SettingsPage";
 import RegisterPage from "@/pages/RegisterPage";
 import PendingUsersPage from "@/pages/PendingUsersPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
@@ -77,6 +78,7 @@ const AppRoutes = () => (
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile/:userId" element={<ProfilePage />} />
+      <Route path="/settings" element={<SettingsPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/admin/pending" element={<PendingUsersPage />} />
       <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
