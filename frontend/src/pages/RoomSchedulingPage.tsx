@@ -62,11 +62,15 @@ const RoomSchedulingPage = () => {
   const [formEnd, setFormEnd] = useState("09:00");
   const [formParticipants, setFormParticipants] = useState<string[]>([]);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const editDateInputRef = useRef<HTMLInputElement | null>(null);
 
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editParticipants, setEditParticipants] = useState<string[]>([]);
   const [editTitle, setEditTitle] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editStart, setEditStart] = useState("08:00");
+  const [editEnd, setEditEnd] = useState("09:00");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -137,15 +141,35 @@ const RoomSchedulingPage = () => {
     setEditingEventId(eventId);
     setEditParticipants(initial);
     setEditTitle(ev?.title || "");
+    if (ev?.start_time) {
+      setEditDate(ev.start_time.slice(0, 10));
+      setEditStart(ev.start_time.slice(11, 16));
+    }
+    if (ev?.end_time) {
+      setEditEnd(ev.end_time.slice(11, 16));
+    }
     setEventDialogOpen(true);
   };
 
   const saveGuests = async () => {
     if (!editingEventId) return;
     try {
+      const start_time = `${editDate}T${editStart}:00`;
+      const end_time = `${editDate}T${editEnd}:00`;
+      if (end_time <= start_time) {
+        toast({ title: "Error", description: t("rooms.endAfterStart"), variant: "destructive" });
+        return;
+      }
+      const endDt = new Date(end_time);
+      const expiresAt = new Date(endDt);
+      expiresAt.setDate(expiresAt.getDate() + ROOM_EVENTS_TTL_DAYS);
+      if (expiresAt <= new Date()) {
+        toast({ title: "Warning", description: t("rooms.ttlTooOld") });
+        return;
+      }
       await updateEventMutation.mutateAsync({
         id: editingEventId,
-        data: { title: editTitle, participants: editParticipants },
+        data: { title: editTitle, participants: editParticipants, start_time, end_time },
       });
       setEventDialogOpen(false);
     } catch (err: unknown) {
@@ -435,13 +459,54 @@ const RoomSchedulingPage = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("rooms.startTime")}</Label>
-                <Input disabled value="" placeholder="(mock)" data-testid="mock-edit-start" />
+                <Label>{t("rooms.date")}</Label>
+                <div className="relative">
+                  <Input
+                    ref={editDateInputRef}
+                    type="date"
+                    className="pr-10 hide-native-picker"
+                    data-testid="edit-date-input"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Open date picker"
+                    onClick={() => {
+                      const el = editDateInputRef.current;
+                      if (!el) return;
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const anyEl = el as any;
+                      if (typeof anyEl.showPicker === "function") anyEl.showPicker();
+                      else {
+                        el.focus();
+                        el.click();
+                      }
+                    }}
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <div>
-                <Label>{t("rooms.endTime")}</Label>
-                <Input disabled value="" placeholder="(mock)" data-testid="mock-edit-end" />
+                <Label>{t("rooms.startTime")}</Label>
+                <Input
+                  type="time"
+                  data-testid="edit-start-input"
+                  value={editStart}
+                  onChange={(e) => setEditStart(e.target.value)}
+                />
               </div>
+            </div>
+            <div>
+              <Label>{t("rooms.endTime")}</Label>
+              <Input
+                type="time"
+                data-testid="edit-end-input"
+                value={editEnd}
+                onChange={(e) => setEditEnd(e.target.value)}
+              />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEventDialogOpen(false)}>

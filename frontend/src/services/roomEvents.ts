@@ -27,6 +27,8 @@ export interface RoomEventCreate {
 export interface RoomEventUpdate {
   title?: string;
   participants?: string[];
+  start_time?: string;
+  end_time?: string;
 }
 
 export const roomEventsService = {

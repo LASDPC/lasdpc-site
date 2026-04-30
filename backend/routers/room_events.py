@@ -203,6 +203,13 @@ async def update_event(event_id: str, body: RoomEventUpdate, user: dict = Depend
 
     update: dict = {}
 
+    # Time updates are validated together (end > start, no overlap) and update TTL expiration.
+    doc_start = doc.get("start_time")
+    doc_end = doc.get("end_time")
+    new_start = body.start_time if body.start_time is not None else doc_start
+    new_end = body.end_time if body.end_time is not None else doc_end
+    time_changed = body.start_time is not None or body.end_time is not None
+
     if body.title is not None:
         title = body.title.strip()
         if not title:
@@ -214,6 +221,37 @@ async def update_event(event_id: str, body: RoomEventUpdate, user: dict = Depend
         participants = await _resolve_participants(db, body.participants)
         update["participants"] = participants
         doc["participants"] = participants
+
+    if time_changed:
+        if new_start is None or new_end is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="start_time and end_time are required")
+        if new_end <= new_start:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="end_time must be after start_time")
+
+        overlap = await db.room_events.find_one(
+            {
+                "_id": {"$ne": oid},
+                "room": doc.get("room"),
+                "start_time": {"$lt": new_end},
+                "end_time": {"$gt": new_start},
+            }
+        )
+        if overlap:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Time conflict with another event.")
+
+        expires_at = new_end + timedelta(days=ROOM_EVENTS_TTL_DAYS)
+        if expires_at <= datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Event would be expired by retention policy",
+            )
+
+        update["start_time"] = new_start
+        update["end_time"] = new_end
+        update["expires_at"] = expires_at
+        doc["start_time"] = new_start
+        doc["end_time"] = new_end
+        doc["expires_at"] = expires_at
 
     if not update:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to update")

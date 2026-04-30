@@ -216,3 +216,89 @@ async def test_patch_event_empty_title_rejected(client):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         resp = await ac.patch(f"/api/v1/room-events/{str(oid)}", json={"title": "   "})
     assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_patch_event_updates_time_and_expires_at(client):
+    mock_db = client
+    oid = ObjectId()
+    mock_db.room_events.find_one.side_effect = [
+        {
+            "_id": oid,
+            "user_id": "user1",
+            "room": "1-009",
+            "title": "Old",
+            "start_time": NOW,
+            "end_time": NOW + timedelta(hours=1),
+            "user_name": "Test User",
+            "created_at": NOW,
+            "participants": [],
+        },
+        None,  # overlap check
+    ]
+    mock_db.room_events.update_one = AsyncMock()
+
+    new_start = NOW + timedelta(hours=2)
+    new_end = NOW + timedelta(hours=3)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch(
+            f"/api/v1/room-events/{str(oid)}",
+            json={"start_time": new_start.isoformat(), "end_time": new_end.isoformat()},
+        )
+    assert resp.status_code == 200
+    args, _kwargs = mock_db.room_events.update_one.call_args
+    assert args[0] == {"_id": oid}
+    assert args[1]["$set"]["start_time"] == new_start
+    assert args[1]["$set"]["end_time"] == new_end
+    assert args[1]["$set"]["expires_at"] == new_end + timedelta(days=30)
+
+
+@pytest.mark.asyncio
+async def test_patch_event_time_overlap_rejected(client):
+    mock_db = client
+    oid = ObjectId()
+    mock_db.room_events.find_one.side_effect = [
+        {
+            "_id": oid,
+            "user_id": "user1",
+            "room": "1-009",
+            "title": "Old",
+            "start_time": NOW,
+            "end_time": NOW + timedelta(hours=1),
+            "user_name": "Test User",
+            "created_at": NOW,
+            "participants": [],
+        },
+        {"_id": ObjectId(), "room": "1-009"},  # overlap
+    ]
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch(
+            f"/api/v1/room-events/{str(oid)}",
+            json={"start_time": (NOW + timedelta(minutes=30)).isoformat(), "end_time": (NOW + timedelta(hours=2)).isoformat()},
+        )
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_patch_event_time_invalid_rejected(client):
+    mock_db = client
+    oid = ObjectId()
+    mock_db.room_events.find_one.return_value = {
+        "_id": oid,
+        "user_id": "user1",
+        "room": "1-009",
+        "title": "Old",
+        "start_time": NOW,
+        "end_time": NOW + timedelta(hours=1),
+        "user_name": "Test User",
+        "created_at": NOW,
+        "participants": [],
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch(
+            f"/api/v1/room-events/{str(oid)}",
+            json={"start_time": (NOW + timedelta(hours=2)).isoformat(), "end_time": (NOW + timedelta(hours=2)).isoformat()},
+        )
+    assert resp.status_code == 400

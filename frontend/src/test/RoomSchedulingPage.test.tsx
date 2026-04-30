@@ -57,6 +57,8 @@ vi.mock("@/contexts/LanguageContext", () => ({
         "rooms.today": "Today",
         "rooms.viewWeek": "Week",
         "rooms.editGuests": "Edit guests",
+        "rooms.date": "Date",
+        "rooms.ttlTooOld": "Too old",
         "infra.loginRequired": "Please log in to access infrastructure.",
       };
       return translations[key] || key;
@@ -219,9 +221,15 @@ describe("RoomSchedulingPage", () => {
     fireEvent.click(screen.getByTestId("event-evt1"));
     expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
     expect(screen.getByTestId("edit-title-input")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-date-input")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-start-input")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-end-input")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("save-guests-btn"));
     await vi.waitFor(() => {
-      expect(mockUpdateParticipants).toHaveBeenCalledWith({ id: "evt1", data: { title: "My Event", participants: [] } });
+      expect(mockUpdateParticipants).toHaveBeenCalledWith({
+        id: "evt1",
+        data: { title: "My Event", participants: [], start_time: "2026-04-27T10:00:00", end_time: "2026-04-27T11:00:00" },
+      });
     });
   });
 

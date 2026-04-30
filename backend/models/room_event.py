@@ -29,6 +29,8 @@ class RoomEventParticipantsUpdate(BaseModel):
 class RoomEventUpdate(BaseModel):
     title: Optional[str] = None
     participants: Optional[list[str]] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
 
 
 class RoomEventOut(BaseModel):
