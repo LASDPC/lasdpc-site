@@ -13,6 +13,7 @@ type Props = {
   currentUserId: string;
   onDelete: (id: string) => void;
   onEditGuests: (eventId: string) => void;
+  onCreateAt: (args: { dayStart: Date; startHour: number }) => void;
 };
 
 const WEEKDAYS_PT = ["SEG.", "TER.", "QUA.", "QUI.", "SEX.", "SAB.", "DOM."] as const;
@@ -110,6 +111,20 @@ export default function WeekGrid(props: Props) {
               className="relative border-l border-border/60"
               style={{ height: gridHeight }}
               data-testid={`day-col-${dayIndex}`}
+              onClick={(e) => {
+                const el = e.currentTarget;
+                const rect = el.getBoundingClientRect();
+                const y = Math.min(Math.max(0, e.clientY - rect.top), rect.height - 1);
+                const totalMinutes = (END_HOUR - START_HOUR) * 60;
+                const minute = Math.min(
+                  totalMinutes - 1,
+                  Math.max(0, Math.floor((y / rect.height) * totalMinutes))
+                );
+                let startHour = START_HOUR + Math.floor(minute / 60);
+                if (startHour < START_HOUR) startHour = START_HOUR;
+                if (startHour >= END_HOUR) startHour = END_HOUR - 1;
+                props.onCreateAt({ dayStart, startHour });
+              }}
             >
               {/* Hour lines */}
               {hours.map((h) => (
@@ -141,7 +156,8 @@ export default function WeekGrid(props: Props) {
                     }}
                     data-testid={`event-${ev.id}`}
                     aria-label={`Event ${ev.title}`}
-                    onClick={() => {
+                    onClick={(evt) => {
+                      evt.stopPropagation();
                       if (!isOwner) return;
                       props.onEditGuests(ev.id);
                     }}

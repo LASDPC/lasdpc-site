@@ -225,6 +225,32 @@ describe("RoomSchedulingPage", () => {
     });
   });
 
+  it("clicking an empty day column opens create dialog with 1h slot", async () => {
+    renderPage();
+    const col = screen.getByTestId("day-col-0");
+
+    // Mock layout so click position can be interpreted deterministically.
+    vi.spyOn(col, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 100,
+      bottom: 600,
+      width: 100,
+      height: 600,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    // 600px tall grid for 14h => ~42.85px/hour; click ~2.2h down => around 10:00.
+    fireEvent.click(col, { clientY: 95 });
+
+    expect(await screen.findByTestId("event-title-input")).toBeInTheDocument();
+    expect(screen.getByTestId("event-date-input")).toBeInTheDocument();
+    expect(screen.getByTestId("event-start-input")).toBeInTheDocument();
+    expect(screen.getByTestId("event-end-input")).toBeInTheDocument();
+  });
+
   it("shows login required when not logged in", () => {
     currentUser = null;
     renderPage();

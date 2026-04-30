@@ -20,6 +20,17 @@ import { AnimatePresence, motion } from "framer-motion";
 const ROOMS = ["1-009", "1-007"] as const;
 const ROOM_EVENTS_TTL_DAYS = 30;
 
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function formatLocalDateYYYYMMDD(d: Date) {
+  const y = d.getFullYear();
+  const m = pad2(d.getMonth() + 1);
+  const day = pad2(d.getDate());
+  return `${y}-${m}-${day}`;
+}
+
 const RoomSchedulingPage = () => {
   // Keep page palette consistent with site; structure mimics Google Calendar.
   // (Language strings come from i18n; avoid hardcoding labels.)
@@ -146,6 +157,15 @@ const RoomSchedulingPage = () => {
     setWeekStart(startOfWeek(d, { weekStartsOn: 1 }));
   };
 
+  const openCreateAt = (dayStart: Date, startHour: number) => {
+    const clampedStart = Math.min(Math.max(startHour, 8), 21);
+    const endHour = Math.min(clampedStart + 1, 22);
+    setFormDate(formatLocalDateYYYYMMDD(dayStart));
+    setFormStart(`${pad2(clampedStart)}:00`);
+    setFormEnd(`${pad2(endHour)}:00`);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="mt-16 min-h-[calc(100vh-4rem)]">
       <RoomSchedulingToolbar
@@ -236,6 +256,7 @@ const RoomSchedulingPage = () => {
                     currentUserId={user.id}
                     onDelete={handleDelete}
                     onEditGuests={openEditGuests}
+                    onCreateAt={({ dayStart, startHour }) => openCreateAt(dayStart, startHour)}
                   />
                 </motion.div>
               </AnimatePresence>
