@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -106,7 +107,7 @@ async def create_request(body: ClusterRequestCreate, user: dict = Depends(get_cu
 
 @router.get("", response_model=list[ClusterRequestOut])
 async def list_requests(
-    status_filter: str | None = Query(default=None, alias="status"),
+    status_filter: Optional[str] = Query(default=None, alias="status"),
     _admin: dict = Depends(require_admin),
 ):
     db = get_db()
@@ -126,8 +127,8 @@ async def my_requests(user: dict = Depends(get_current_user)):
 
 @router.get("/calendar", response_model=list[ClusterUsageOut])
 async def cluster_usage_calendar(
-    start: str | None = Query(default=None),
-    end: str | None = Query(default=None),
+    start: Optional[str] = Query(default=None),
+    end: Optional[str] = Query(default=None),
     _user: dict = Depends(get_current_user),
 ):
     db = get_db()
@@ -151,7 +152,7 @@ async def list_pending(_admin: dict = Depends(require_admin)):
 @router.put("/{request_id}/approve", response_model=ClusterRequestOut)
 async def approve_request(
     request_id: str,
-    body: ClusterRequestApprove | None = None,
+    body: Optional[ClusterRequestApprove] = None,
     _admin: dict = Depends(require_admin),
 ):
     db = get_db()

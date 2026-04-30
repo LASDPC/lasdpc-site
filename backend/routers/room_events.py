@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timedelta
+from typing import Optional
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -118,7 +119,7 @@ async def _notify_registered_participants(
     db,
     event_doc: dict,
     actor_user_id: str,
-    previous_user_ids: set[str] | None = None,
+    previous_user_ids: Optional[set[str]] = None,
 ) -> None:
     previous_user_ids = previous_user_ids or set()
     now = datetime.utcnow()
@@ -171,7 +172,7 @@ async def list_events(
 async def list_admin_events(
     start: datetime = Query(...),
     end: datetime = Query(...),
-    room: str | None = Query(default=None),
+    room: Optional[str] = Query(default=None),
     _admin: dict = Depends(require_admin),
 ):
     db = get_db()

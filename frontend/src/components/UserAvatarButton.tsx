@@ -36,78 +36,78 @@ const UserAvatarButton = () => {
 
   return (
     <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className="focus:outline-none focus:ring-2 focus:ring-ring rounded-full"
-            aria-label={user.name}
-          >
-            <Avatar className="h-8 w-8 cursor-pointer">
-              {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-                {user.initials}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.name}</p>
-              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-              <div className="flex gap-1 mt-1">
-                <Badge variant="secondary" className="w-fit text-[10px] capitalize">
-                  {user.role.replace("_", " ")}
+      <DropdownMenuTrigger asChild>
+        <button
+          className="focus:outline-none focus:ring-2 focus:ring-ring rounded-full"
+          aria-label={user.name}
+        >
+          <Avatar className="h-8 w-8 cursor-pointer">
+            {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+              {user.initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <div className="flex gap-1 mt-1">
+              <Badge variant="secondary" className="w-fit text-[10px] capitalize">
+                {user.role.replace("_", " ")}
+              </Badge>
+              {isAdmin && (
+                <Badge variant="default" className="w-fit text-[10px]">
+                  Admin
                 </Badge>
-                {isAdmin && (
-                  <Badge variant="default" className="w-fit text-[10px]">
-                    Admin
-                  </Badge>
-                )}
-              </div>
+              )}
             </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
 
-          {isAdmin && (
-            <>
-              <DropdownMenuItem
-                onClick={() => navigate("/admin")}
-                className="text-primary font-semibold cursor-pointer"
-              >
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                {t("menu.adminPanel")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
+        {isAdmin && (
+          <>
+            <DropdownMenuItem
+              onClick={() => navigate("/admin")}
+              className="text-primary font-semibold cursor-pointer"
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              {t("menu.adminPanel")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
 
-          <DropdownMenuItem
-            onClick={() => navigate(`/profile/${user.id}`)}
-            className="cursor-pointer"
-          >
-            <User className="mr-2 h-4 w-4" />
-            {t("menu.profile")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => navigate("/settings")}
-            className="cursor-pointer"
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            {t("menu.settings")}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-            className="text-destructive cursor-pointer"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("menu.logout")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <DropdownMenuItem
+          onClick={() => navigate(`/profile/${user.id}`)}
+          className="cursor-pointer"
+        >
+          <User className="mr-2 h-4 w-4" />
+          {t("menu.profile")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate("/settings")}
+          className="cursor-pointer"
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          {t("menu.settings")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            logout();
+            navigate("/");
+          }}
+          className="text-destructive cursor-pointer"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {t("menu.logout")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

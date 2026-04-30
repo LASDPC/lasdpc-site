@@ -40,17 +40,24 @@ const RegisterPage = () => {
   const steps = [
     {
       title: isPt ? "Conta" : "Account",
-      description: isPt ? "Dados de acesso" : "Access details",
+      helper: isPt
+        ? "Informe seus dados principais e escolha o tipo de vínculo com o laboratório."
+        : "Enter your main details and choose your link to the lab.",
     },
     {
       title: isPt ? "Perfil" : "Profile",
-      description: isPt ? "Vínculo acadêmico" : "Academic link",
+      helper: isPt
+        ? "Complete as informações acadêmicas necessárias para análise da solicitação."
+        : "Complete the academic details needed to review your request.",
     },
     {
       title: isPt ? "Solicitação" : "Request",
-      description: isPt ? "Finalização" : "Final details",
+      helper: isPt
+        ? "Conte brevemente o objetivo do cadastro e confirme o aceite da política."
+        : "Briefly describe the request objective and confirm the policy consent.",
     },
   ];
+  const progressPercent = (currentStep / (steps.length - 1)) * 100;
 
   useEffect(() => {
     peopleService.listDocentes()
@@ -117,6 +124,10 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentStep < steps.length - 1) {
+      handleNext();
+      return;
+    }
     if (!validateStep(2)) return;
 
     const selectedLevel = ACADEMIC_LEVELS.find((item) => item.value === academicLevel);
@@ -201,22 +212,29 @@ const RegisterPage = () => {
             {t("auth.registerSubtitle")}
           </p>
 
-          <div className="mb-8">
-            <div className="flex items-start justify-between gap-2">
-              {steps.map((step, index) => {
-                const isActive = index === currentStep;
-                const isComplete = index < currentStep;
+          <div className="mb-7">
+            <div className="relative px-2 sm:px-8" aria-label={isPt ? "Progresso do cadastro" : "Registration progress"}>
+              <div className="absolute left-10 right-10 top-5 h-0.5 bg-border sm:left-16 sm:right-16">
+                <div
+                  className="h-full bg-primary transition-all duration-300 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
 
-                return (
-                  <div key={step.title} className="flex flex-1 items-start gap-2">
-                    <div className="flex flex-1 flex-col items-center text-center">
+              <div className="relative grid grid-cols-3">
+                {steps.map((step, index) => {
+                  const isActive = index === currentStep;
+                  const isComplete = index < currentStep;
+
+                  return (
+                    <div key={step.title} className="flex flex-col items-center text-center">
                       <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold shadow-sm transition-colors ${
                           isComplete
                             ? "border-primary bg-primary text-primary-foreground"
                             : isActive
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border bg-secondary text-muted-foreground"
+                              ? "border-primary bg-background text-primary"
+                              : "border-border bg-background text-muted-foreground"
                         }`}
                         aria-current={isActive ? "step" : undefined}
                       >
@@ -225,20 +243,19 @@ const RegisterPage = () => {
                       <span className={`mt-2 text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
                         {step.title}
                       </span>
-                      <span className="hidden text-xs text-muted-foreground sm:block">
-                        {step.description}
-                      </span>
                     </div>
-                    {index < steps.length - 1 && (
-                      <div className={`mt-4 h-px flex-1 ${index < currentStep ? "bg-primary" : "bg-border"}`} />
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-            <p className="mt-4 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              {isPt ? `Etapa ${currentStep + 1} de ${steps.length}` : `Step ${currentStep + 1} of ${steps.length}`}
-            </p>
+
+            <div className="mt-5 border-l-2 border-primary bg-primary/5 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                {isPt ? `Etapa ${currentStep + 1} de ${steps.length}` : `Step ${currentStep + 1} of ${steps.length}`}
+              </p>
+              <p className="mt-1 text-sm font-medium text-foreground">{steps[currentStep].title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{steps[currentStep].helper}</p>
+            </div>
           </div>
 
           {error && (

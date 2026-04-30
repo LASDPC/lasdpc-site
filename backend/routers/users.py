@@ -1,6 +1,7 @@
 import re
 import secrets
 from datetime import datetime, timezone
+from typing import Optional
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -93,7 +94,7 @@ async def create_user(body: UserCreate, _admin: dict = Depends(require_admin)):
 
 @router.get("", response_model=list[UserOut])
 async def list_users(
-    status_filter: str | None = Query(default=None, alias="status"),
+    status_filter: Optional[str] = Query(default=None, alias="status"),
     _admin: dict = Depends(require_admin),
 ):
     db = get_db()

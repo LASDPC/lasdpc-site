@@ -18,14 +18,15 @@ import DocsPage from "@/pages/DocsPage";
 import LoginPage from "@/pages/LoginPage";
 import ProjectPage from "@/pages/ProjectPage";
 import AdminEditPage from "@/pages/AdminEditPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import ProfilePage from "@/pages/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
 import RegisterPage from "@/pages/RegisterPage";
-import PendingUsersPage from "@/pages/PendingUsersPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
 import ReservaPage from "@/pages/ReservaPage";
 import RoomSchedulingPage from "@/pages/RoomSchedulingPage";
+import ClusterCalendarPage from "@/pages/ClusterCalendarPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const MAINTENANCE_MODE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
@@ -69,6 +70,7 @@ const AppRoutes = () => (
       <Route path="/research" element={<ResearchPage />} />
       <Route path="/reserva" element={<ReservaPage />} />
       <Route path="/room-scheduling" element={<RoomSchedulingPage />} />
+      <Route path="/cluster-calendar" element={<ClusterCalendarPage />} />
       <Route path="/infrastructure" element={<InfrastructurePage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:id" element={<BlogPostPage />} />
@@ -80,7 +82,8 @@ const AppRoutes = () => (
       <Route path="/profile/:userId" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-      <Route path="/admin/pending" element={<PendingUsersPage />} />
+      <Route path="/admin" element={<AdminDashboardPage />} />
+      <Route path="/admin/pending" element={<AdminDashboardPage />} />
       <Route path="/admin/edit/:resource" element={<AdminEditPage />} />
       <Route path="/admin/edit/:resource/:id" element={<AdminEditPage />} />
       <Route path="*" element={<NotFound />} />

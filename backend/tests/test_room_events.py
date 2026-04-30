@@ -6,7 +6,7 @@ from bson import ObjectId
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from routers.room_events import router
+from routers.room_events import get_current_user, router
 
 app = FastAPI()
 app.include_router(router, prefix="/api/v1/room-events")
@@ -31,9 +31,10 @@ def mock_db():
 
 @pytest.fixture
 def client(mock_db):
-    with patch("routers.room_events.get_db", return_value=mock_db), \
-         patch("routers.room_events.get_current_user", return_value=FAKE_USER):
+    app.dependency_overrides[get_current_user] = lambda: FAKE_USER
+    with patch("routers.room_events.get_db", return_value=mock_db):
         yield mock_db
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio

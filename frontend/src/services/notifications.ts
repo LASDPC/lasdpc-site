@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 
 export interface Notification {
   id: string;
-  type: "cluster_approved" | "cluster_rejected" | "room_event_invite";
+  type: "cluster_approved" | "cluster_rejected" | "cluster_revoked" | "room_event_invite";
   cluster_name?: string;
   start_date?: string;
   end_date?: string;

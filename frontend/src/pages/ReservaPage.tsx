@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Server, CalendarDays } from "lucide-react";
+import { Server, CalendarDays, CalendarClock } from "lucide-react";
 
 const ReservaPage = () => {
   const { t } = useLang();
@@ -39,6 +39,16 @@ const ReservaPage = () => {
           <CalendarDays className="mx-auto mb-4 h-12 w-12 text-primary group-hover:scale-110 transition-transform" />
           <span className="text-xl font-semibold text-foreground">
             {t("reserva.roomButton")}
+          </span>
+        </Link>
+
+        <Link
+          to="/cluster-calendar"
+          className="group block rounded-xl bg-secondary p-8 text-center shadow-sm border border-border hover:border-primary hover:shadow-md transition-all duration-200"
+        >
+          <CalendarClock className="mx-auto mb-4 h-12 w-12 text-primary group-hover:scale-110 transition-transform" />
+          <span className="text-xl font-semibold text-foreground">
+            {t("reserva.clusterCalendarButton")}
           </span>
         </Link>
       </div>

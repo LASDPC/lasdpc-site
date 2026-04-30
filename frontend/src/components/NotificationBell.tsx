@@ -76,9 +76,10 @@ const NotificationBell = () => {
             {notifications.map((n) => {
               const isRoomEvent = n.type === "room_event_invite";
               const isApproved = n.type === "cluster_approved";
+              const isRevoked = n.type === "cluster_revoked";
               const msg = isRoomEvent
                 ? formatRoomEventMsg(n, t("notif.roomEventInvite"))
-                : formatMsg(n, t(isApproved ? "notif.approved" : "notif.rejected"));
+                : formatMsg(n, t(isApproved ? "notif.approved" : isRevoked ? "notif.revoked" : "notif.rejected"));
               return (
                 <div key={n.id} className="px-3 py-2.5 border-b border-border last:border-0 flex gap-2">
                   <div className="shrink-0 pt-0.5">
