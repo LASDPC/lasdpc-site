@@ -135,12 +135,30 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0.75;
 }
 
+.hide-native-picker::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+.hide-native-picker::-webkit-inner-spin-button,
+.hide-native-picker::-webkit-clear-button {
+  display: none;
+}
+
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
 .dark input[type="time"]::-webkit-calendar-picker-indicator,
 .high-contrast input[type="date"]::-webkit-calendar-picker-indicator,
 .high-contrast input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.9;
+  /* WebKit tends to keep this icon dark; force an inverted icon for dark surfaces. */
+  filter: invert(1) brightness(1.15) contrast(1.1) !important;
+  opacity: 0.95;
+}
+
+/* Some WebKit builds ignore the indicator filter; this helps in those cases. */
+.dark input[type="date"],
+.dark input[type="time"],
+.high-contrast input[type="date"],
+.high-contrast input[type="time"] {
+  color-scheme: dark !important;
 }
 
 /* Global blur overlay for modals/dialogs */

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { addDays, startOfWeek } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Trash2 } from "lucide-react";
+import { CalendarDays, Trash2 } from "lucide-react";
 
 import RoomSchedulingToolbar from "@/components/room-scheduling/RoomSchedulingToolbar";
 import RoomSchedulingSidebar from "@/components/room-scheduling/RoomSchedulingSidebar";
@@ -40,6 +40,7 @@ const RoomSchedulingPage = () => {
   const [formStart, setFormStart] = useState("08:00");
   const [formEnd, setFormEnd] = useState("09:00");
   const [formParticipants, setFormParticipants] = useState<string[]>([]);
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
 
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -274,7 +275,7 @@ const RoomSchedulingPage = () => {
               <ParticipantsInput
                 value={formParticipants}
                 onChange={setFormParticipants}
-                placeholder="email or name..."
+                placeholder={t("rooms.participantsPlaceholder")}
                 data-testid="participants-field"
               />
             </div>
@@ -293,12 +294,36 @@ const RoomSchedulingPage = () => {
             </div>
             <div>
               <Label>{t("rooms.date")}</Label>
-              <Input
-                type="date"
-                data-testid="event-date-input"
-                value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  ref={dateInputRef}
+                  type="date"
+                  className="pr-10 hide-native-picker"
+                  data-testid="event-date-input"
+                  value={formDate}
+                  onChange={(e) => setFormDate(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Open date picker"
+                  onClick={() => {
+                    const el = dateInputRef.current;
+                    if (!el) return;
+                    // Prefer the native picker when available.
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const anyEl = el as any;
+                    if (typeof anyEl.showPicker === "function") anyEl.showPicker();
+                    else {
+                      el.focus();
+                      el.click();
+                    }
+                  }}
+                  data-testid="event-date-icon"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -363,7 +388,7 @@ const RoomSchedulingPage = () => {
               <ParticipantsInput
                 value={editParticipants}
                 onChange={setEditParticipants}
-                placeholder="email or name..."
+                placeholder={t("rooms.participantsPlaceholder")}
                 data-testid="edit-participants-field"
               />
             </div>

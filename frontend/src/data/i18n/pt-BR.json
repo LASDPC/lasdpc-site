@@ -27,6 +27,7 @@
   "rooms.editGuests": "Editar convidados",
   "rooms.save": "Salvar",
   "rooms.ttlTooOld": "Este evento é muito antigo e seria expirado automaticamente. Escolha um horário mais recente.",
+  "rooms.participantsPlaceholder": "email ou nome...",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
   "nav.contact": "Contato",
