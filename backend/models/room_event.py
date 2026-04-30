@@ -1,7 +1,17 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
+
+
+class RoomEventParticipant(BaseModel):
+    """
+    Participant can be a matched platform user (user_id present) and/or an external email.
+    """
+
+    user_id: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
 
 
 class RoomEventCreate(BaseModel):
@@ -9,6 +19,11 @@ class RoomEventCreate(BaseModel):
     title: str
     start_time: datetime
     end_time: datetime
+    participants: list[str] = []
+
+
+class RoomEventParticipantsUpdate(BaseModel):
+    participants: list[str] = []
 
 
 class RoomEventOut(BaseModel):
@@ -20,3 +35,4 @@ class RoomEventOut(BaseModel):
     user_id: str
     user_name: str
     created_at: datetime
+    participants: list[RoomEventParticipant] = []

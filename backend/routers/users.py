@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
 from core.config import settings
 from core.database import get_db
@@ -110,6 +110,41 @@ async def reject_user(user_id: str, _admin: dict = Depends(require_admin)):
 @router.get("/me", response_model=UserOut)
 async def me(user: dict = Depends(get_current_user)):
     return _user_out(user)
+
+
+@router.get("/suggest")
+async def suggest_users(
+    query: str = Query("", min_length=0, max_length=100),
+    limit: int = Query(100, ge=1, le=100),
+    _user: dict = Depends(get_current_user),
+):
+    """
+    Suggest users for participant invites.
+    Prefix match on email or name, limited to 100 results.
+    Returns a minimal payload to power typeahead UI.
+    """
+    db = get_db()
+    q = query.strip()
+    if not q:
+        items = await db.users.find({"status": "active"}).limit(limit).to_list(limit)
+    else:
+        # Prefix match (case-insensitive) on email or name.
+        regex = {"$regex": f"^{q}", "$options": "i"}
+        items = await db.users.find(
+            {
+                "status": "active",
+                "$or": [{"email": regex}, {"name": regex}],
+            }
+        ).limit(limit).to_list(limit)
+    return [
+        {
+            "id": str(d["_id"]),
+            "email": d.get("email"),
+            "name": d.get("name"),
+            "initials": d.get("initials"),
+        }
+        for d in items
+    ]
 
 
 # ---- LGPD self-service endpoints ---- #

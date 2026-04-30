@@ -26,3 +26,12 @@ export function useDeleteRoomEvent() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["room-events"] }),
   });
 }
+
+export function useUpdateRoomEventParticipants() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, participants }: { id: string; participants: string[] }) =>
+      roomEventsService.updateParticipants(id, participants),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["room-events"] }),
+  });
+}

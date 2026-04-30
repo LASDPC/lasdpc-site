@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { addDays, startOfWeek } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRoomEvents, useCreateRoomEvent, useDeleteRoomEvent } from "@/hooks/useRoomEvents";
+import { useRoomEvents, useCreateRoomEvent, useDeleteRoomEvent, useUpdateRoomEventParticipants } from "@/hooks/useRoomEvents";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import RoomSchedulingToolbar from "@/components/room-scheduling/RoomSchedulingToolbar";
 import RoomSchedulingSidebar from "@/components/room-scheduling/RoomSchedulingSidebar";
 import WeekGrid from "@/components/room-scheduling/WeekGrid";
+import ParticipantsInput from "@/components/room-scheduling/ParticipantsInput";
 import { AnimatePresence, motion } from "framer-motion";
 
 const ROOMS = ["1-009", "1-007"] as const;
@@ -36,6 +37,11 @@ const RoomSchedulingPage = () => {
   const [formDate, setFormDate] = useState("");
   const [formStart, setFormStart] = useState("08:00");
   const [formEnd, setFormEnd] = useState("09:00");
+  const [formParticipants, setFormParticipants] = useState<string[]>([]);
+
+  const [editGuestsOpen, setEditGuestsOpen] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editParticipants, setEditParticipants] = useState<string[]>([]);
 
   const weekEndExclusive = useMemo(() => addDays(weekStart, 7), [weekStart]);
   const weekEndInclusive = useMemo(() => addDays(weekStart, 6), [weekStart]);
@@ -48,6 +54,7 @@ const RoomSchedulingPage = () => {
 
   const createMutation = useCreateRoomEvent();
   const deleteMutation = useDeleteRoomEvent();
+  const updateParticipantsMutation = useUpdateRoomEventParticipants();
 
   if (!user) {
     return (
@@ -69,12 +76,13 @@ const RoomSchedulingPage = () => {
     }
 
     try {
-      await createMutation.mutateAsync({ room, title: formTitle, start_time, end_time });
+      await createMutation.mutateAsync({ room, title: formTitle, start_time, end_time, participants: formParticipants });
       setDialogOpen(false);
       setFormTitle("");
       setFormDate("");
       setFormStart("08:00");
       setFormEnd("09:00");
+      setFormParticipants([]);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("conflict") || message.includes("409")) {
@@ -82,6 +90,27 @@ const RoomSchedulingPage = () => {
       } else {
         toast({ title: "Error", description: message, variant: "destructive" });
       }
+    }
+  };
+
+  const openEditGuests = (eventId: string) => {
+    const ev = events.find((e) => e.id === eventId);
+    const initial = (ev?.participants || [])
+      .map((p) => p.email || p.name || "")
+      .filter(Boolean) as string[];
+    setEditingEventId(eventId);
+    setEditParticipants(initial);
+    setEditGuestsOpen(true);
+  };
+
+  const saveGuests = async () => {
+    if (!editingEventId) return;
+    try {
+      await updateParticipantsMutation.mutateAsync({ id: editingEventId, participants: editParticipants });
+      setEditGuestsOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error";
+      toast({ title: "Error", description: message, variant: "destructive" });
     }
   };
 
@@ -181,13 +210,19 @@ const RoomSchedulingPage = () => {
                     initial={{ opacity: 0, x: navDirection * 24 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -navDirection * 24 }}
-                    transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                    data-testid="week-grid-anim"
-                  >
-                    <WeekGrid events={events} weekStart={weekStart} currentUserId={user.id} onDelete={handleDelete} />
-                  </motion.div>
-                </AnimatePresence>
-              )}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  data-testid="week-grid-anim"
+                >
+                  <WeekGrid
+                    events={events}
+                    weekStart={weekStart}
+                    currentUserId={user.id}
+                    onDelete={handleDelete}
+                    onEditGuests={openEditGuests}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            )}
 
               {isFetching ? (
                 <div
@@ -216,6 +251,15 @@ const RoomSchedulingPage = () => {
                 data-testid="event-title-input"
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>{t("rooms.participants")}</Label>
+              <ParticipantsInput
+                value={formParticipants}
+                onChange={setFormParticipants}
+                placeholder="email or name..."
+                data-testid="participants-field"
               />
             </div>
             <div>
@@ -266,6 +310,37 @@ const RoomSchedulingPage = () => {
               </Button>
               <Button onClick={handleCreate} disabled={createMutation.isPending} data-testid="submit-event-btn">
                 {t("rooms.submit")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit guests dialog */}
+      <Dialog open={editGuestsOpen} onOpenChange={setEditGuestsOpen}>
+        <DialogTrigger asChild>
+          <span />
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("rooms.editGuests")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>{t("rooms.participants")}</Label>
+              <ParticipantsInput
+                value={editParticipants}
+                onChange={setEditParticipants}
+                placeholder="email or name..."
+                data-testid="edit-participants-field"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditGuestsOpen(false)}>
+                {t("rooms.cancel")}
+              </Button>
+              <Button onClick={saveGuests} disabled={updateParticipantsMutation.isPending} data-testid="save-guests-btn">
+                {t("rooms.save")}
               </Button>
             </div>
           </div>

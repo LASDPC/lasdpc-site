@@ -9,6 +9,11 @@ export interface RoomEvent {
   user_id: string;
   user_name: string;
   created_at: string;
+  participants?: Array<{
+    user_id?: string | null;
+    name?: string | null;
+    email?: string | null;
+  }>;
 }
 
 export interface RoomEventCreate {
@@ -16,6 +21,7 @@ export interface RoomEventCreate {
   title: string;
   start_time: string;
   end_time: string;
+  participants?: string[];
 }
 
 export const roomEventsService = {
@@ -25,4 +31,6 @@ export const roomEventsService = {
     api.post<RoomEvent>("/api/v1/room-events", data),
   delete: (id: string) =>
     api.delete<void>(`/api/v1/room-events/${id}`),
+  updateParticipants: (id: string, participants: string[]) =>
+    api.patch<RoomEvent>(`/api/v1/room-events/${id}/participants`, { participants }),
 };

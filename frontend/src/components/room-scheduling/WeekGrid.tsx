@@ -14,6 +14,7 @@ type Props = {
   events: RoomEvent[];
   currentUserId: string;
   onDelete: (id: string) => void;
+  onEditGuests: (eventId: string) => void;
 };
 
 const WEEKDAYS_PT = ["SEG.", "TER.", "QUA.", "QUI.", "SEX.", "SAB.", "DOM."] as const;
@@ -27,7 +28,7 @@ function tzLabel() {
 }
 
 export default function WeekGrid(props: Props) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const locale = lang === "pt-BR" ? ptBR : enUS;
   const weekdays = lang === "pt-BR" ? WEEKDAYS_PT : WEEKDAYS_EN;
   const today = new Date();
@@ -155,7 +156,15 @@ export default function WeekGrid(props: Props) {
                         {format(s, "PPPP", { locale })} · {format(s, "HH:mm", { locale })}–{format(e, "HH:mm", { locale })}
                       </div>
                       {isOwner ? (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => props.onEditGuests(ev.id)}
+                            data-testid={`edit-guests-${ev.id}`}
+                          >
+                            {t("rooms.editGuests")}
+                          </Button>
                           <Button
                             variant="destructive"
                             size="sm"

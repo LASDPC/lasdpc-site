@@ -31,6 +31,7 @@ const mockEvents = [
 
 const mockCreate = vi.fn();
 const mockDelete = vi.fn();
+const mockUpdateParticipants = vi.fn();
 
 vi.mock("@/contexts/LanguageContext", () => ({
   useLang: () => ({
@@ -43,15 +44,18 @@ vi.mock("@/contexts/LanguageContext", () => ({
         "rooms.createEvent": "New Event",
         "rooms.eventTitle": "Title",
         "rooms.date": "Date",
+        "rooms.participants": "Participants",
         "rooms.startTime": "Start",
         "rooms.endTime": "End",
         "rooms.submit": "Create",
         "rooms.cancel": "Cancel",
+        "rooms.save": "Save",
         "rooms.deleteConfirm": "Delete this event?",
         "rooms.overlapError": "Time conflict with another event.",
         "rooms.endAfterStart": "End time must be after start time.",
         "rooms.today": "Today",
         "rooms.viewWeek": "Week",
+        "rooms.editGuests": "Edit guests",
         "infra.loginRequired": "Please log in to access infrastructure.",
       };
       return translations[key] || key;
@@ -69,6 +73,7 @@ vi.mock("@/hooks/useRoomEvents", () => ({
   useRoomEvents: () => ({ data: mockEvents, isLoading: false }),
   useCreateRoomEvent: () => ({ mutateAsync: mockCreate, isPending: false }),
   useDeleteRoomEvent: () => ({ mutateAsync: mockDelete, isPending: false }),
+  useUpdateRoomEventParticipants: () => ({ mutateAsync: mockUpdateParticipants, isPending: false }),
 }));
 
 vi.mock("@/hooks/use-toast", () => ({
@@ -93,6 +98,7 @@ describe("RoomSchedulingPage", () => {
     currentUser = mockUser;
     mockCreate.mockReset();
     mockDelete.mockReset();
+    mockUpdateParticipants.mockReset();
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
@@ -121,6 +127,7 @@ describe("RoomSchedulingPage", () => {
     renderPage();
     fireEvent.click(screen.getByTestId("sidebar-create"));
     expect(screen.getByTestId("event-title-input")).toBeInTheDocument();
+    expect(screen.getByTestId("participants-field")).toBeInTheDocument();
     expect(screen.getByTestId("event-date-input")).toBeInTheDocument();
     expect(screen.getByTestId("event-start-input")).toBeInTheDocument();
     expect(screen.getByTestId("event-end-input")).toBeInTheDocument();
@@ -145,6 +152,7 @@ describe("RoomSchedulingPage", () => {
         title: "My Meeting",
         start_time: "2026-05-01T10:00:00",
         end_time: "2026-05-01T11:00:00",
+        participants: [],
       });
     });
   });
@@ -177,6 +185,19 @@ describe("RoomSchedulingPage", () => {
 
     await vi.waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith("evt1");
+    });
+  });
+
+  it("edit guests opens dialog and saves", async () => {
+    mockUpdateParticipants.mockResolvedValue({});
+    renderPage();
+    fireEvent.click(screen.getByTestId("event-evt1"));
+    expect(await screen.findByTestId("event-popover-evt1")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("edit-guests-evt1"));
+    expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("save-guests-btn"));
+    await vi.waitFor(() => {
+      expect(mockUpdateParticipants).toHaveBeenCalledWith({ id: "evt1", participants: [] });
     });
   });
 
