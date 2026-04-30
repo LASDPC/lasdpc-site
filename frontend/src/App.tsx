@@ -26,6 +26,7 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
 import ReservaPage from "@/pages/ReservaPage";
 import RoomSchedulingPage from "@/pages/RoomSchedulingPage";
+import HistoriaPage from "@/pages/HistoriaPage";
 import ClusterCalendarPage from "@/pages/ClusterCalendarPage";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -66,6 +67,7 @@ const AppRoutes = () => (
   <Layout>
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/historia" element={<HistoriaPage />} />
       <Route path="/people" element={<PeoplePage />} />
       <Route path="/research" element={<ResearchPage />} />
       <Route path="/reserva" element={<ReservaPage />} />

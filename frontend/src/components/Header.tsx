@@ -12,6 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const publicNavKeys = [
   { key: "nav.home", path: "/" },
+  { key: "nav.history", path: "/historia" },
   { key: "nav.people", path: "/people" },
   { key: "nav.research", path: "/research" },
   { key: "nav.blog", path: "/blog" },

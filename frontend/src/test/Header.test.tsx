@@ -29,6 +29,7 @@ vi.mock("@/contexts/LanguageContext", () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         "nav.home": "Inicio",
+        "nav.history": "Historia",
         "nav.people": "Pessoas",
         "nav.research": "Pesquisa",
         "nav.blog": "Blog",
@@ -110,5 +111,23 @@ describe("Header - unauthenticated user", () => {
       </MemoryRouter>
     );
     expect(screen.queryByText("Reserva")).not.toBeInTheDocument();
+  });
+
+  it("shows Historia link right after Inicio", () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    const inicio = screen.getAllByText("Inicio").find((el) => el.closest("a"))?.closest("a");
+    const historia = screen.getAllByText("Historia").find((el) => el.closest("a"))?.closest("a");
+    expect(inicio).toHaveAttribute("href", "/");
+    expect(historia).toHaveAttribute("href", "/historia");
+
+    // Nav order: Inicio then Historia
+    const nav = historia?.closest("nav");
+    const links = nav ? Array.from(nav.querySelectorAll("a")).map((a) => a.getAttribute("href")) : [];
+    expect(links.indexOf("/")).toBeLessThan(links.indexOf("/historia"));
   });
 });
