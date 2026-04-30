@@ -56,6 +56,7 @@ async def test_create_event_success(client):
     assert doc["room"] == "1-009"
     assert doc["title"] == "Test Event"
     assert doc["user_id"] == "user1"
+    assert doc["expires_at"] == (NOW + timedelta(hours=1)) + timedelta(days=30)
 
 
 @pytest.mark.asyncio
@@ -71,6 +72,21 @@ async def test_create_event_overlap(client):
             "end_time": (NOW + timedelta(hours=1)).isoformat(),
         })
     assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_event_too_old_rejected(client):
+    mock_db = client
+    mock_db.room_events.find_one.return_value = None
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/room-events", json={
+            "room": "1-009",
+            "title": "Too Old",
+            "start_time": (NOW - timedelta(days=31, hours=1)).isoformat(),
+            "end_time": (NOW - timedelta(days=31)).isoformat(),
+        })
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio

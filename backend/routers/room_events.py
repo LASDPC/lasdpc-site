@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timedelta
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from core.database import get_db
@@ -14,6 +15,8 @@ from models.room_event import (
 )
 
 router = APIRouter()
+
+ROOM_EVENTS_TTL_DAYS = 30
 
 
 def _to_out(doc: dict) -> RoomEventOut:
@@ -88,6 +91,17 @@ async def _resolve_participants(db, identifiers: list[str]) -> list[dict]:
     return out
 
 
+def _event_id_query(event_id: str) -> dict:
+    """
+    Events are stored with Mongo ObjectId _id.
+    If a non-ObjectId string slips through (e.g., from older data/tests), fall back to raw string.
+    """
+    try:
+        return {"_id": ObjectId(event_id)}
+    except (InvalidId, TypeError):
+        return {"_id": event_id}
+
+
 @router.get("", response_model=list[RoomEventOut])
 async def list_events(
     room: str = Query(...),
@@ -122,15 +136,22 @@ async def create_event(body: RoomEventCreate, user: dict = Depends(get_current_u
 
     participants = await _resolve_participants(db, body.participants)
 
+    expires_at = body.end_time + timedelta(days=ROOM_EVENTS_TTL_DAYS)
+    if expires_at <= datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Event would be expired by retention policy",
+        )
+
     doc = {
         "room": body.room,
         "title": body.title,
         "start_time": body.start_time,
         "end_time": body.end_time,
-        "user_id": user["_id"],
+        "user_id": str(user["_id"]),
         "user_name": user["name"],
         "created_at": datetime.utcnow(),
-        "expires_at": body.end_time + timedelta(hours=2),
+        "expires_at": expires_at,
         "participants": participants,
     }
     result = await db.room_events.insert_one(doc)
@@ -144,24 +165,24 @@ async def create_event(body: RoomEventCreate, user: dict = Depends(get_current_u
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(event_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
-    doc = await db.room_events.find_one({"_id": ObjectId(event_id)})
+    doc = await db.room_events.find_one(_event_id_query(event_id))
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
-    if doc["user_id"] != user["_id"]:
+    if str(doc.get("user_id")) != str(user["_id"]):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own events")
-    await db.room_events.delete_one({"_id": ObjectId(event_id)})
+    await db.room_events.delete_one(_event_id_query(event_id))
 
 
 @router.patch("/{event_id}/participants", response_model=RoomEventOut)
 async def update_participants(event_id: str, body: RoomEventParticipantsUpdate, user: dict = Depends(get_current_user)):
     db = get_db()
-    doc = await db.room_events.find_one({"_id": ObjectId(event_id)})
+    doc = await db.room_events.find_one(_event_id_query(event_id))
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
-    if doc["user_id"] != user["_id"]:
+    if str(doc.get("user_id")) != str(user["_id"]):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only edit your own events")
 
     participants = await _resolve_participants(db, body.participants)
-    await db.room_events.update_one({"_id": ObjectId(event_id)}, {"$set": {"participants": participants}})
+    await db.room_events.update_one(_event_id_query(event_id), {"$set": {"participants": participants}})
     doc["participants"] = participants
     return _to_out(doc)

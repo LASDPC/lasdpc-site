@@ -32,6 +32,7 @@ const mockEvents = [
 const mockCreate = vi.fn();
 const mockDelete = vi.fn();
 const mockUpdateParticipants = vi.fn();
+const toastSpy = vi.fn();
 
 vi.mock("@/contexts/LanguageContext", () => ({
   useLang: () => ({
@@ -77,7 +78,7 @@ vi.mock("@/hooks/useRoomEvents", () => ({
 }));
 
 vi.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastSpy }),
 }));
 
 import RoomSchedulingPage from "@/pages/RoomSchedulingPage";
@@ -99,6 +100,7 @@ describe("RoomSchedulingPage", () => {
     mockCreate.mockReset();
     mockDelete.mockReset();
     mockUpdateParticipants.mockReset();
+    toastSpy.mockReset();
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
@@ -154,6 +156,23 @@ describe("RoomSchedulingPage", () => {
         end_time: "2026-05-01T11:00:00",
         participants: [],
       });
+    });
+  });
+
+  it("rejects creating events that would be auto-expired by TTL policy", async () => {
+    renderPage();
+    fireEvent.click(screen.getByTestId("sidebar-create"));
+
+    fireEvent.change(screen.getByTestId("event-title-input"), { target: { value: "Too old" } });
+    fireEvent.change(screen.getByTestId("event-date-input"), { target: { value: "2020-01-01" } });
+    fireEvent.change(screen.getByTestId("event-start-input"), { target: { value: "10:00" } });
+    fireEvent.change(screen.getByTestId("event-end-input"), { target: { value: "11:00" } });
+
+    fireEvent.click(screen.getByTestId("submit-event-btn"));
+
+    await vi.waitFor(() => {
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(toastSpy).toHaveBeenCalled();
     });
   });
 

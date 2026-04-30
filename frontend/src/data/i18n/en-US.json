@@ -26,6 +26,7 @@
   "rooms.participants": "Participants",
   "rooms.editGuests": "Edit guests",
   "rooms.save": "Save",
+  "rooms.ttlTooOld": "This event is too far in the past and would be auto-expired. Please pick a more recent time.",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
   "nav.contact": "Contact",

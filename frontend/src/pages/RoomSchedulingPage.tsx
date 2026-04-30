@@ -17,6 +17,7 @@ import ParticipantsInput from "@/components/room-scheduling/ParticipantsInput";
 import { AnimatePresence, motion } from "framer-motion";
 
 const ROOMS = ["1-009", "1-007"] as const;
+const ROOM_EVENTS_TTL_DAYS = 30;
 
 const RoomSchedulingPage = () => {
   // Keep page palette consistent with site; structure mimics Google Calendar.
@@ -72,6 +73,15 @@ const RoomSchedulingPage = () => {
 
     if (end_time <= start_time) {
       toast({ title: "Error", description: t("rooms.endAfterStart"), variant: "destructive" });
+      return;
+    }
+
+    // Guard against creating events that would immediately be expired by retention policy.
+    const endDt = new Date(end_time);
+    const expiresAt = new Date(endDt);
+    expiresAt.setDate(expiresAt.getDate() + ROOM_EVENTS_TTL_DAYS);
+    if (expiresAt <= new Date()) {
+      toast({ title: "Warning", description: t("rooms.ttlTooOld") });
       return;
     }
 

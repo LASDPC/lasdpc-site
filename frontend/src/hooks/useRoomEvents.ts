@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { roomEventsService, type RoomEventCreate } from "@/services/roomEvents";
+import { roomEventsService, type RoomEvent, type RoomEventCreate } from "@/services/roomEvents";
 
 export function useRoomEvents(room: string, start: string, end: string) {
   return useQuery({
@@ -15,7 +15,27 @@ export function useCreateRoomEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: RoomEventCreate) => roomEventsService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["room-events"] }),
+    onSuccess: (created) => {
+      // Optimistically merge into any cached week ranges that contain this event,
+      // so the user sees it immediately (no "shows only after reload" glitch).
+      const createdStart = new Date(created.start_time);
+      const createdEnd = new Date(created.end_time);
+
+      const entries = qc.getQueriesData<RoomEvent[]>({ queryKey: ["room-events"] });
+      for (const [key, old] of entries) {
+        if (!Array.isArray(key) || key.length < 4) continue;
+        const keyRoom = String(key[1] ?? "");
+        const keyStart = new Date(String(key[2] ?? ""));
+        const keyEnd = new Date(String(key[3] ?? ""));
+        if (!old) continue;
+        if (keyRoom !== created.room) continue;
+        if (!(createdStart < keyEnd && createdEnd > keyStart)) continue;
+        if (old.some((e) => e.id === created.id)) continue;
+        qc.setQueryData<RoomEvent[]>(key, [...old, created]);
+      }
+
+      qc.invalidateQueries({ queryKey: ["room-events"] });
+    },
   });
 }
 
