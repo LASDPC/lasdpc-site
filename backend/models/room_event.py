@@ -26,6 +26,11 @@ class RoomEventParticipantsUpdate(BaseModel):
     participants: list[str] = []
 
 
+class RoomEventUpdate(BaseModel):
+    title: Optional[str] = None
+    participants: Optional[list[str]] = None
+
+
 class RoomEventOut(BaseModel):
     id: str
     room: str

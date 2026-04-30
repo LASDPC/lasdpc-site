@@ -107,6 +107,19 @@
   code, pre {
     font-family: var(--font-mono);
   }
+
+  /* Improve native date/time picker icon visibility across themes (notably Safari/Chrome). */
+  input[type="date"], input[type="time"] {
+    color-scheme: light;
+  }
+
+  .dark input[type="date"], .dark input[type="time"] {
+    color-scheme: dark;
+  }
+
+  .high-contrast input[type="date"], .high-contrast input[type="time"] {
+    color-scheme: dark;
+  }
 }
 
 @layer components {
@@ -114,6 +127,20 @@
     background: var(--surface-glass);
     backdrop-filter: blur(12px);
   }
+}
+
+/* WebKit: force the calendar/time picker indicator to be visible in dark themes. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.75;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
+.high-contrast input[type="date"]::-webkit-calendar-picker-indicator,
+.high-contrast input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
 }
 
 /* Global blur overlay for modals/dialogs */

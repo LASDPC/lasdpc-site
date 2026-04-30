@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { addDays, startOfWeek } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRoomEvents, useCreateRoomEvent, useDeleteRoomEvent, useUpdateRoomEventParticipants } from "@/hooks/useRoomEvents";
+import { useRoomEvents, useCreateRoomEvent, useDeleteRoomEvent, useUpdateRoomEvent } from "@/hooks/useRoomEvents";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,7 @@ const RoomSchedulingPage = () => {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editParticipants, setEditParticipants] = useState<string[]>([]);
+  const [editTitle, setEditTitle] = useState("");
 
   const weekEndExclusive = useMemo(() => addDays(weekStart, 7), [weekStart]);
   const weekEndInclusive = useMemo(() => addDays(weekStart, 6), [weekStart]);
@@ -56,7 +57,7 @@ const RoomSchedulingPage = () => {
 
   const createMutation = useCreateRoomEvent();
   const deleteMutation = useDeleteRoomEvent();
-  const updateParticipantsMutation = useUpdateRoomEventParticipants();
+  const updateEventMutation = useUpdateRoomEvent();
 
   if (!user) {
     return (
@@ -111,13 +112,17 @@ const RoomSchedulingPage = () => {
       .filter(Boolean) as string[];
     setEditingEventId(eventId);
     setEditParticipants(initial);
+    setEditTitle(ev?.title || "");
     setEventDialogOpen(true);
   };
 
   const saveGuests = async () => {
     if (!editingEventId) return;
     try {
-      await updateParticipantsMutation.mutateAsync({ id: editingEventId, participants: editParticipants });
+      await updateEventMutation.mutateAsync({
+        id: editingEventId,
+        data: { title: editTitle, participants: editParticipants },
+      });
       setEventDialogOpen(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error";
@@ -365,10 +370,10 @@ const RoomSchedulingPage = () => {
             <div>
               <Label>{t("rooms.eventTitle")}</Label>
               <Input
-                disabled
-                value=""
-                placeholder="(mock) Edit title not implemented yet"
-                data-testid="mock-edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder={t("rooms.eventTitle")}
+                data-testid="edit-title-input"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -385,7 +390,7 @@ const RoomSchedulingPage = () => {
               <Button variant="outline" onClick={() => setEventDialogOpen(false)}>
                 {t("rooms.cancel")}
               </Button>
-              <Button onClick={saveGuests} disabled={updateParticipantsMutation.isPending} data-testid="save-guests-btn">
+              <Button onClick={saveGuests} disabled={updateEventMutation.isPending} data-testid="save-guests-btn">
                 {t("rooms.save")}
               </Button>
             </div>

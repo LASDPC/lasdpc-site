@@ -74,7 +74,7 @@ vi.mock("@/hooks/useRoomEvents", () => ({
   useRoomEvents: () => ({ data: mockEvents, isLoading: false }),
   useCreateRoomEvent: () => ({ mutateAsync: mockCreate, isPending: false }),
   useDeleteRoomEvent: () => ({ mutateAsync: mockDelete, isPending: false }),
-  useUpdateRoomEventParticipants: () => ({ mutateAsync: mockUpdateParticipants, isPending: false }),
+  useUpdateRoomEvent: () => ({ mutateAsync: mockUpdateParticipants, isPending: false }),
 }));
 
 vi.mock("@/hooks/use-toast", () => ({
@@ -218,9 +218,10 @@ describe("RoomSchedulingPage", () => {
     renderPage();
     fireEvent.click(screen.getByTestId("event-evt1"));
     expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
+    expect(screen.getByTestId("edit-title-input")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("save-guests-btn"));
     await vi.waitFor(() => {
-      expect(mockUpdateParticipants).toHaveBeenCalledWith({ id: "evt1", participants: [] });
+      expect(mockUpdateParticipants).toHaveBeenCalledWith({ id: "evt1", data: { title: "My Event", participants: [] } });
     });
   });
 

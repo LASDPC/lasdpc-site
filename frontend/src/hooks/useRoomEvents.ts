@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { roomEventsService, type RoomEvent, type RoomEventCreate } from "@/services/roomEvents";
+import { roomEventsService, type RoomEvent, type RoomEventCreate, type RoomEventUpdate } from "@/services/roomEvents";
 
 export function useRoomEvents(room: string, start: string, end: string) {
   return useQuery({
@@ -53,5 +53,22 @@ export function useUpdateRoomEventParticipants() {
     mutationFn: ({ id, participants }: { id: string; participants: string[] }) =>
       roomEventsService.updateParticipants(id, participants),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["room-events"] }),
+  });
+}
+
+export function useUpdateRoomEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: RoomEventUpdate }) =>
+      roomEventsService.update(id, data),
+    onSuccess: (updated) => {
+      const entries = qc.getQueriesData<RoomEvent[]>({ queryKey: ["room-events"] });
+      for (const [key, old] of entries) {
+        if (!old) continue;
+        const next = old.map((e) => (e.id === updated.id ? updated : e));
+        qc.setQueryData<RoomEvent[]>(key, next);
+      }
+      qc.invalidateQueries({ queryKey: ["room-events"] });
+    },
   });
 }

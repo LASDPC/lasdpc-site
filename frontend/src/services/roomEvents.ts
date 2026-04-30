@@ -24,6 +24,11 @@ export interface RoomEventCreate {
   participants?: string[];
 }
 
+export interface RoomEventUpdate {
+  title?: string;
+  participants?: string[];
+}
+
 export const roomEventsService = {
   list: (room: string, start: string, end: string) =>
     api.get<RoomEvent[]>(`/api/v1/room-events?room=${encodeURIComponent(room)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
@@ -33,4 +38,6 @@ export const roomEventsService = {
     api.delete<void>(`/api/v1/room-events/${id}`),
   updateParticipants: (id: string, participants: string[]) =>
     api.patch<RoomEvent>(`/api/v1/room-events/${id}/participants`, { participants }),
+  update: (id: string, data: RoomEventUpdate) =>
+    api.patch<RoomEvent>(`/api/v1/room-events/${id}`, data),
 };

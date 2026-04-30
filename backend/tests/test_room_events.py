@@ -140,3 +140,79 @@ async def test_list_events(client):
     data = resp.json()
     assert len(data) == 1
     assert data[0]["title"] == "Event 1"
+
+
+@pytest.mark.asyncio
+async def test_patch_event_updates_title(client):
+    mock_db = client
+    oid = ObjectId()
+    mock_db.room_events.find_one.return_value = {
+        "_id": oid,
+        "user_id": "user1",
+        "room": "1-009",
+        "title": "Old",
+        "start_time": NOW,
+        "end_time": NOW + timedelta(hours=1),
+        "user_name": "Test User",
+        "created_at": NOW,
+        "participants": [],
+    }
+    mock_db.room_events.update_one = AsyncMock()
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch(f"/api/v1/room-events/{str(oid)}", json={"title": "New Title"})
+    assert resp.status_code == 200
+    mock_db.room_events.update_one.assert_called_once()
+    args, _kwargs = mock_db.room_events.update_one.call_args
+    assert args[0] == {"_id": oid}
+    assert args[1]["$set"]["title"] == "New Title"
+
+
+@pytest.mark.asyncio
+async def test_patch_event_non_owner_forbidden(client):
+    mock_db = client
+    oid = ObjectId()
+    mock_db.room_events.find_one.return_value = {
+        "_id": oid,
+        "user_id": "user2",
+        "room": "1-009",
+        "title": "Old",
+        "start_time": NOW,
+        "end_time": NOW + timedelta(hours=1),
+        "user_name": "Other User",
+        "created_at": NOW,
+        "participants": [],
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch(f"/api/v1/room-events/{str(oid)}", json={"title": "New Title"})
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_patch_event_invalid_id(client):
+    mock_db = client
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch("/api/v1/room-events/not-an-oid", json={"title": "New Title"})
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_patch_event_empty_title_rejected(client):
+    mock_db = client
+    oid = ObjectId()
+    mock_db.room_events.find_one.return_value = {
+        "_id": oid,
+        "user_id": "user1",
+        "room": "1-009",
+        "title": "Old",
+        "start_time": NOW,
+        "end_time": NOW + timedelta(hours=1),
+        "user_name": "Test User",
+        "created_at": NOW,
+        "participants": [],
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.patch(f"/api/v1/room-events/{str(oid)}", json={"title": "   "})
+    assert resp.status_code == 400

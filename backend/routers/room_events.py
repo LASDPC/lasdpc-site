@@ -11,6 +11,7 @@ from models.room_event import (
     RoomEventOut,
     RoomEventParticipant,
     RoomEventParticipantsUpdate,
+    RoomEventUpdate,
 )
 
 router = APIRouter()
@@ -183,4 +184,39 @@ async def update_participants(event_id: str, body: RoomEventParticipantsUpdate, 
     participants = await _resolve_participants(db, body.participants)
     await db.room_events.update_one({"_id": oid}, {"$set": {"participants": participants}})
     doc["participants"] = participants
+    return _to_out(doc)
+
+
+@router.patch("/{event_id}", response_model=RoomEventOut)
+async def update_event(event_id: str, body: RoomEventUpdate, user: dict = Depends(get_current_user)):
+    db = get_db()
+    try:
+        oid = ObjectId(event_id)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid event id")
+
+    doc = await db.room_events.find_one({"_id": oid})
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    if str(doc.get("user_id")) != str(user["_id"]):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only edit your own events")
+
+    update: dict = {}
+
+    if body.title is not None:
+        title = body.title.strip()
+        if not title:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="title must not be empty")
+        update["title"] = title
+        doc["title"] = title
+
+    if body.participants is not None:
+        participants = await _resolve_participants(db, body.participants)
+        update["participants"] = participants
+        doc["participants"] = participants
+
+    if not update:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to update")
+
+    await db.room_events.update_one({"_id": oid}, {"$set": update})
     return _to_out(doc)
