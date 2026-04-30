@@ -17,9 +17,12 @@ const ReservaPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-12 mt-16">
-      <h1 className="text-3xl font-bold text-foreground mb-8">
-        {t("reserva.heading")}
-      </h1>
+      <div className="flex items-center gap-3 mb-12">
+        <CalendarDays className="h-8 w-8 text-primary" />
+        <h1 className="font-display text-4xl font-bold text-foreground">
+          {t("reserva.heading")}
+        </h1>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <Link

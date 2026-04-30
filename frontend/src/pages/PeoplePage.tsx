@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
-import { ExternalLink, Mail, Search, X, Linkedin, Github, Twitter } from "lucide-react";
+import { ExternalLink, Mail, Search, X, Linkedin, Github, Twitter, Users } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -115,6 +115,12 @@ const PeoplePage = () => {
     <div className="py-10">
       <div className="container mx-auto px-4">
 
+        {/* Page title */}
+        <div className="flex items-center gap-3 mb-12">
+          <Users className="h-8 w-8 text-primary" />
+          <h1 className="font-display text-4xl font-bold text-foreground">{t("nav.people")}</h1>
+        </div>
+
         {/* Filter bar */}
         <div className="mb-10 bg-card border border-border rounded-xl p-4">
           <div className="flex flex-wrap gap-3 items-end">
@@ -169,9 +175,8 @@ const PeoplePage = () => {
 
         {/* Faculty section */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="font-display text-4xl font-bold text-foreground">{t("section.faculty")}</h1>
+          <h2 className="font-display text-3xl font-bold text-foreground">{t("section.faculty")}</h2>
         </div>
-        <p className="text-muted-foreground mb-12 text-sm font-mono">{t("section.faculty")}</p>
 
         {filteredDocentes.length === 0 ? (
           <p className="text-muted-foreground text-center py-8 mb-20">{t("people.noResults")}</p>

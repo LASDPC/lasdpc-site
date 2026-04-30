@@ -71,7 +71,16 @@ const DocsPage = () => {
   const categories = Array.from(new Set(docs.map((d) => d.category)));
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex">
+    <div className="min-h-[calc(100vh-4rem)]">
+      <div className="container mx-auto px-4 py-10">
+        <div className="flex items-center gap-3 mb-12">
+          <FileText className="h-8 w-8 text-primary" />
+          <h1 className="font-display text-4xl font-bold text-foreground">
+            {isPt ? "Documentação" : "Documentation"}
+          </h1>
+        </div>
+      </div>
+      <div className="flex">
       {/* Sidebar */}
       <aside className="w-64 shrink-0 border-r border-border bg-card overflow-y-auto hidden md:block">
         <div className="p-4">
@@ -183,6 +192,7 @@ const DocsPage = () => {
             </article>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

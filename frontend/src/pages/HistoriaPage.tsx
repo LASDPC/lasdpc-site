@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Landmark } from "lucide-react";
 
 import { useLang } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -54,9 +54,12 @@ export default function HistoriaPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 mt-16">
-      <h1 className="font-display text-3xl font-bold text-foreground mb-2" data-testid="history-title">
-        {t("history.title")}
-      </h1>
+      <div className="flex items-center gap-3 mb-2">
+        <Landmark className="h-8 w-8 text-primary" />
+        <h1 className="font-display text-4xl font-bold text-foreground" data-testid="history-title">
+          {t("history.title")}
+        </h1>
+      </div>
       <p className="text-muted-foreground max-w-2xl mb-10" data-testid="history-subtitle">
         {t("history.subtitle")}
       </p>

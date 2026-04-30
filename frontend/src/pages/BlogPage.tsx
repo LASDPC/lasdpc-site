@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Newspaper } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,7 +38,8 @@ const BlogPage = () => {
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Newspaper className="h-8 w-8 text-primary" />
           <h1 className="font-display text-4xl font-bold text-foreground">{t("section.blog")}</h1>
         </div>
         <p className="text-xs text-muted-foreground mb-12 italic">

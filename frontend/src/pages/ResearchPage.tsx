@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FlaskConical } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
@@ -44,7 +45,10 @@ const ResearchPage = () => {
   return (
     <div className="py-10">
       <div className="container mx-auto px-4">
-        <h1 className="font-display text-4xl font-bold text-foreground mb-12">{t("section.research")}</h1>
+        <div className="flex items-center gap-3 mb-12">
+          <FlaskConical className="h-8 w-8 text-primary" />
+          <h1 className="font-display text-4xl font-bold text-foreground">{t("section.research")}</h1>
+        </div>
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-2xl font-bold text-foreground">{t("section.projects")}</h2>
