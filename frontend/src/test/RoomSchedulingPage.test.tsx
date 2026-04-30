@@ -184,23 +184,29 @@ describe("RoomSchedulingPage", () => {
     expect(screen.getByText("Other Event")).toBeInTheDocument();
   });
 
-  it("delete button only shown for user's own events (in popover)", async () => {
+  it("event details dialog only opens for owner's events", async () => {
     renderPage();
     fireEvent.click(screen.getByTestId("event-evt1"));
-    expect(await screen.findByTestId("event-popover-evt1")).toBeInTheDocument();
-    expect(screen.getByTestId("delete-event-evt1")).toBeInTheDocument();
+    expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
+    expect(screen.getByTestId("event-dialog-delete")).toBeInTheDocument();
+
+    // Close the dialog
+    fireEvent.click(screen.getByText("Cancel"));
+    await vi.waitFor(() => {
+      expect(screen.queryByTestId("edit-participants-field")).not.toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByTestId("event-evt2"));
-    expect(await screen.findByTestId("event-popover-evt2")).toBeInTheDocument();
-    expect(screen.queryByTestId("delete-event-evt2")).not.toBeInTheDocument();
+    // Non-owner events should not open the dialog
+    expect(screen.queryByTestId("edit-participants-field")).not.toBeInTheDocument();
   });
 
   it("delete calls roomEventsService.delete", async () => {
     mockDelete.mockResolvedValue(undefined);
     renderPage();
     fireEvent.click(screen.getByTestId("event-evt1"));
-    expect(await screen.findByTestId("event-popover-evt1")).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId("delete-event-evt1"));
+    expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("event-dialog-delete"));
 
     await vi.waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith("evt1");
@@ -211,8 +217,6 @@ describe("RoomSchedulingPage", () => {
     mockUpdateParticipants.mockResolvedValue({});
     renderPage();
     fireEvent.click(screen.getByTestId("event-evt1"));
-    expect(await screen.findByTestId("event-popover-evt1")).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId("edit-guests-evt1"));
     expect(await screen.findByTestId("edit-participants-field")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("save-guests-btn"));
     await vi.waitFor(() => {

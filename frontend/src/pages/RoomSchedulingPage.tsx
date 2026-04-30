@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Trash2 } from "lucide-react";
 
 import RoomSchedulingToolbar from "@/components/room-scheduling/RoomSchedulingToolbar";
 import RoomSchedulingSidebar from "@/components/room-scheduling/RoomSchedulingSidebar";
@@ -40,7 +41,7 @@ const RoomSchedulingPage = () => {
   const [formEnd, setFormEnd] = useState("09:00");
   const [formParticipants, setFormParticipants] = useState<string[]>([]);
 
-  const [editGuestsOpen, setEditGuestsOpen] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editParticipants, setEditParticipants] = useState<string[]>([]);
 
@@ -110,14 +111,14 @@ const RoomSchedulingPage = () => {
       .filter(Boolean) as string[];
     setEditingEventId(eventId);
     setEditParticipants(initial);
-    setEditGuestsOpen(true);
+    setEventDialogOpen(true);
   };
 
   const saveGuests = async () => {
     if (!editingEventId) return;
     try {
       await updateParticipantsMutation.mutateAsync({ id: editingEventId, participants: editParticipants });
-      setEditGuestsOpen(false);
+      setEventDialogOpen(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error";
       toast({ title: "Error", description: message, variant: "destructive" });
@@ -326,15 +327,31 @@ const RoomSchedulingPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit guests dialog */}
-      <Dialog open={editGuestsOpen} onOpenChange={setEditGuestsOpen}>
+      {/* Event details dialog (participants editing + UI mocks for name/date) */}
+      <Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
         <DialogTrigger asChild>
           <span />
         </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[680px]">
+          <DialogHeader className="pr-10">
             <DialogTitle>{t("rooms.editGuests")}</DialogTitle>
           </DialogHeader>
+
+          {editingEventId ? (
+            <button
+              type="button"
+              className="absolute right-12 top-4 text-destructive hover:opacity-80"
+              aria-label="Delete event"
+              data-testid="event-dialog-delete"
+              onClick={async () => {
+                await handleDelete(editingEventId);
+                setEventDialogOpen(false);
+              }}
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          ) : null}
+
           <div className="space-y-4">
             <div>
               <Label>{t("rooms.participants")}</Label>
@@ -345,8 +362,27 @@ const RoomSchedulingPage = () => {
                 data-testid="edit-participants-field"
               />
             </div>
+            <div>
+              <Label>{t("rooms.eventTitle")}</Label>
+              <Input
+                disabled
+                value=""
+                placeholder="(mock) Edit title not implemented yet"
+                data-testid="mock-edit-title"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{t("rooms.startTime")}</Label>
+                <Input disabled value="" placeholder="(mock)" data-testid="mock-edit-start" />
+              </div>
+              <div>
+                <Label>{t("rooms.endTime")}</Label>
+                <Input disabled value="" placeholder="(mock)" data-testid="mock-edit-end" />
+              </div>
+            </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditGuestsOpen(false)}>
+              <Button variant="outline" onClick={() => setEventDialogOpen(false)}>
                 {t("rooms.cancel")}
               </Button>
               <Button onClick={saveGuests} disabled={updateParticipantsMutation.isPending} data-testid="save-guests-btn">

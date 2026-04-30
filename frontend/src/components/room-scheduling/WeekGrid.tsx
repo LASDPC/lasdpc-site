@@ -6,8 +6,6 @@ import { useLang } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { END_HOUR, PX_PER_HOUR, START_HOUR, eventOverlapsDayWindow, minutesFromWindowStart } from "@/components/room-scheduling/eventPositioning";
 import type { RoomEvent } from "@/services/roomEvents";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 
 type Props = {
   weekStart: Date;
@@ -130,53 +128,27 @@ export default function WeekGrid(props: Props) {
                 const isOwner = ev.user_id === props.currentUserId;
 
                 return (
-                  <Popover key={ev.id}>
-                    <PopoverTrigger asChild>
-                      <motion.button
-                        type="button"
-                        className={cn(
-                          "absolute left-1 right-1 rounded-lg border px-2 py-1 text-left",
-                          "bg-primary/15 border-primary/40 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-ring"
-                        )}
-                        style={{
-                          top: (topMin / 60) * PX_PER_HOUR,
-                          height: (heightMin / 60) * PX_PER_HOUR,
-                        }}
-                        data-testid={`event-${ev.id}`}
-                        aria-label={`Event ${ev.title}`}
-                      >
-                        <div className="text-xs font-semibold truncate text-foreground">{ev.title}</div>
-                        <div className="text-[11px] truncate text-muted-foreground">{ev.user_name}</div>
-                      </motion.button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72" align="start" data-testid={`event-popover-${ev.id}`}>
-                      <div className="text-sm font-semibold">{ev.title}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{ev.user_name}</div>
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        {format(s, "PPPP", { locale })} · {format(s, "HH:mm", { locale })}–{format(e, "HH:mm", { locale })}
-                      </div>
-                      {isOwner ? (
-                        <div className="mt-3 flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => props.onEditGuests(ev.id)}
-                            data-testid={`edit-guests-${ev.id}`}
-                          >
-                            {t("rooms.editGuests")}
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => props.onDelete(ev.id)}
-                            data-testid={`delete-event-${ev.id}`}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      ) : null}
-                    </PopoverContent>
-                  </Popover>
+                  <motion.button
+                    key={ev.id}
+                    type="button"
+                    className={cn(
+                      "absolute left-1 right-1 rounded-lg border px-2 py-1 text-left",
+                      "bg-primary/15 border-primary/40 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-ring"
+                    )}
+                    style={{
+                      top: (topMin / 60) * PX_PER_HOUR,
+                      height: (heightMin / 60) * PX_PER_HOUR,
+                    }}
+                    data-testid={`event-${ev.id}`}
+                    aria-label={`Event ${ev.title}`}
+                    onClick={() => {
+                      if (!isOwner) return;
+                      props.onEditGuests(ev.id);
+                    }}
+                  >
+                    <div className="text-xs font-semibold truncate text-foreground">{ev.title}</div>
+                    <div className="text-[11px] truncate text-muted-foreground">{ev.user_name}</div>
+                  </motion.button>
                 );
               })}
             </div>

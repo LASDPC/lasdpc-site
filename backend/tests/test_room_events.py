@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from bson import ObjectId
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
@@ -39,9 +40,8 @@ def client(mock_db):
 async def test_create_event_success(client):
     mock_db = client
     mock_db.room_events.find_one.return_value = None
-    inserted_id = MagicMock()
-    inserted_id.inserted_id = "abc123"
-    mock_db.room_events.insert_one.return_value = inserted_id
+    inserted_oid = ObjectId()
+    mock_db.room_events.insert_one.return_value = MagicMock(inserted_id=inserted_oid)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         resp = await ac.post("/api/v1/room-events", json={
@@ -92,27 +92,29 @@ async def test_create_event_too_old_rejected(client):
 @pytest.mark.asyncio
 async def test_delete_own_event(client):
     mock_db = client
+    oid = ObjectId()
     mock_db.room_events.find_one.return_value = {
-        "_id": "evt1", "user_id": "user1", "room": "1-009",
+        "_id": oid, "user_id": "user1", "room": "1-009",
         "title": "My Event", "start_time": NOW, "end_time": NOW + timedelta(hours=1),
     }
     mock_db.room_events.delete_one.return_value = MagicMock(deleted_count=1)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        resp = await ac.delete("/api/v1/room-events/evt1")
+        resp = await ac.delete(f"/api/v1/room-events/{str(oid)}")
     assert resp.status_code == 204
 
 
 @pytest.mark.asyncio
 async def test_delete_other_user_event(client):
     mock_db = client
+    oid = ObjectId()
     mock_db.room_events.find_one.return_value = {
-        "_id": "evt2", "user_id": "user2", "room": "1-009",
+        "_id": oid, "user_id": "user2", "room": "1-009",
         "title": "Their Event", "start_time": NOW, "end_time": NOW + timedelta(hours=1),
     }
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        resp = await ac.delete("/api/v1/room-events/evt2")
+        resp = await ac.delete(f"/api/v1/room-events/{str(oid)}")
     assert resp.status_code == 403
 
 
