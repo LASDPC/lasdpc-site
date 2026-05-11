@@ -1,10 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
-import { ArrowLeft, BookOpen, Users } from "lucide-react";
+import { ArrowLeft, BookOpen, Users, ExternalLink, Github } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
+import { mediaUrl } from "@/lib/media";
 import { useProjects } from "@/hooks/useProjects";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -84,13 +85,31 @@ const ProjectPage = () => {
             {isPt ? project.descriptionPt : project.description}
           </p>
 
-          <div className="flex gap-6 text-sm text-muted-foreground mb-10 border-y border-border py-4">
+          {project.image && (
+            <img
+              src={mediaUrl(project.image)}
+              alt={isPt ? project.titlePt : project.title}
+              className="w-full rounded-lg border border-border mb-8"
+            />
+          )}
+
+          <div className="flex flex-wrap gap-6 text-sm text-muted-foreground mb-10 border-y border-border py-4">
             <span className="inline-flex items-center gap-1.5">
               <BookOpen size={15} /> {project.publications} {isPt ? "publicações" : "publications"}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Users size={15} /> Impact: {project.impact}
             </span>
+            {project.website && (
+              <a href={project.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline">
+                <ExternalLink size={15} /> {isPt ? "Site" : "Website"}
+              </a>
+            )}
+            {project.github && (
+              <a href={project.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline">
+                <Github size={15} /> GitHub
+              </a>
+            )}
           </div>
 
           <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">

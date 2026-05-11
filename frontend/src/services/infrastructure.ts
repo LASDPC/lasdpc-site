@@ -12,6 +12,8 @@ export interface Cluster {
   storageUsage: number;
   status: "online" | "maintenance";
   custom_fields: CustomFieldDef[];
+  image?: string | null;
+  gallery?: string[];
 }
 
 export type ClusterInput = Omit<Cluster, "id">;

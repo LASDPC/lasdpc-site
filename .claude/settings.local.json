@@ -35,7 +35,9 @@
       "Read(//tmp/**)",
       "Bash(chmod +x \"/home/lfelipediniz/Documents/Github/lasdpc-site/conteudo lspdc antigo/extrair-imagens.sh\")",
       "Bash(\"/home/lfelipediniz/Documents/Github/lasdpc-site/conteudo lspdc *)",
-      "Bash(grep -E '\\\\.\\(png|jpg|jpeg|gif|pdf\\)$')"
+      "Bash(grep -E '\\\\.\\(png|jpg|jpeg|gif|pdf\\)$')",
+      "Bash(./venv/bin/python -c ' *)",
+      "Bash(./venv/bin/python -m scripts.seed)"
     ]
   }
 }

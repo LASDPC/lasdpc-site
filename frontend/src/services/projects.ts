@@ -12,6 +12,10 @@ export interface Project {
   tags: string[];
   publications: number;
   impact: "High" | "Medium";
+  image?: string | null;
+  gallery?: string[];
+  website?: string | null;
+  github?: string | null;
 }
 
 export type ProjectInput = Omit<Project, "id">;

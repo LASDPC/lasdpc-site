@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Clock, CheckCircle, XCircle, Server, KeyRound, Ban } from "lucide-react";
+import { mediaUrl } from "@/lib/media";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -235,6 +236,13 @@ const InfrastructurePage = () => {
           {clusters.map((c, i) => (
             <div key={c.id} className="relative group">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border">
+                {c.image && (
+                  <img
+                    src={mediaUrl(c.image)}
+                    alt={c.name}
+                    className="w-full h-32 object-cover rounded-md mb-4 border border-border"
+                  />
+                )}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-display text-lg font-semibold text-foreground">{c.name}</h3>
                   <span className={`text-xs font-mono px-2 py-0.5 rounded ${c.status === "online" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"}`}>

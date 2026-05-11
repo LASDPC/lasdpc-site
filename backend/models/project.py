@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -12,6 +13,10 @@ class ProjectBase(BaseModel):
     tags: list[str] = []
     publications: int = 0
     impact: str = "Medium"
+    image: Optional[str] = None
+    gallery: list[str] = []
+    website: Optional[str] = None
+    github: Optional[str] = None
 
 
 class ProjectCreate(ProjectBase):

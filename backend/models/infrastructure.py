@@ -21,6 +21,8 @@ class ClusterBase(BaseModel):
     storageUsage: int = 0
     status: str = "online"
     custom_fields: list[CustomFieldDef] = []
+    image: Optional[str] = None
+    gallery: list[str] = []
 
 
 class ClusterCreate(ClusterBase):
