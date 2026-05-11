@@ -192,6 +192,7 @@
   "admin.tabUsers": "Users",
   "admin.tabClusters": "Clusters",
   "notif.title": "Notifications",
+  "notif.description": "All user notifications.",
   "notif.empty": "No notifications.",
   "notif.approved": "Your request for cluster {cluster} was approved! Period: {start} to {end}.",
   "notif.rejected": "Your request for cluster {cluster} was rejected. Period: {start} to {end}.",

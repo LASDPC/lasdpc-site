@@ -7,7 +7,6 @@ import { Sun, Moon, Contrast, Search, Menu, X, Globe, AArrowUp } from "lucide-re
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
 import UserAvatarButton from "@/components/UserAvatarButton";
-import NotificationBell from "@/components/NotificationBell";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { mediaUrl } from "@/lib/media";
 
@@ -63,7 +62,6 @@ const Header = () => {
             </Link>
             <div className="w-px h-5 bg-border/60 hidden sm:block" />
             <UserAvatarButton />
-            <NotificationBell />
           </div>
 
           <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">

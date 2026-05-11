@@ -29,5 +29,5 @@ backend/.env
 backend/uploads
 frontend/.env
 .env
-conteudo lspdc antigo
+
 *.pyc

@@ -29,7 +29,13 @@
       "Bash(sudo ss -tlnp)",
       "Bash(sudo -n ss -tlnp)",
       "Bash(sudo -n lsof -i :27017)",
-      "Bash(systemctl status *)"
+      "Bash(systemctl status *)",
+      "Bash(grep -nE \"^[0-9]{4}$|^Publications|^by year|^Last edited\" \"/home/lfelipediniz/Documents/Github/lasdpc-site/conteudo lspdc antigo/publications.md\")",
+      "Bash(awk 'NR>=41 && NR<=1077 { *)",
+      "Read(//tmp/**)",
+      "Bash(chmod +x \"/home/lfelipediniz/Documents/Github/lasdpc-site/conteudo lspdc antigo/extrair-imagens.sh\")",
+      "Bash(\"/home/lfelipediniz/Documents/Github/lasdpc-site/conteudo lspdc *)",
+      "Bash(grep -E '\\\\.\\(png|jpg|jpeg|gif|pdf\\)$')"
     ]
   }
 }
