@@ -26,6 +26,8 @@ def mock_db():
     db.room_events.insert_one = AsyncMock()
     db.room_events.delete_one = AsyncMock()
     db.room_events.create_index = AsyncMock()
+    db.rooms = MagicMock()
+    db.rooms.find_one = AsyncMock(return_value={"_id": ObjectId(), "name": "1-009"})
     return db
 
 
@@ -73,6 +75,21 @@ async def test_create_event_overlap(client):
             "end_time": (NOW + timedelta(hours=1)).isoformat(),
         })
     assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_unknown_room(client):
+    mock_db = client
+    mock_db.rooms.find_one.return_value = None
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/room-events", json={
+            "room": "unknown",
+            "title": "Unknown Room",
+            "start_time": NOW.isoformat(),
+            "end_time": (NOW + timedelta(hours=1)).isoformat(),
+        })
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio

@@ -1,12 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import type { ComponentProps, PropsWithChildren } from "react";
 
 vi.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: PropsWithChildren<ComponentProps<"div">>) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: PropsWithChildren) => <>{children}</>,
 }));
 
 vi.mock("@/contexts/LanguageContext", () => ({
@@ -86,4 +87,3 @@ describe("HistoriaPage", () => {
     expect(screen.queryByTestId("history-expanded-1990")).not.toBeInTheDocument();
   });
 });
-

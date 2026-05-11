@@ -38,9 +38,7 @@ describe("ReservaPage", () => {
         <ReservaPage />
       </MemoryRouter>
     );
-    expect(
-      screen.getByText("Reserve salas ou infraestrutura computacional")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Reservas")).toBeInTheDocument();
   });
 
   it("renders the infrastructure button", () => {

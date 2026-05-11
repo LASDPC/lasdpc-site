@@ -33,6 +33,7 @@
   "rooms.userFilter": "Filter by user",
   "rooms.userFilterPlaceholder": "Search user...",
   "rooms.clearUserFilter": "Clear filter",
+  "rooms.noRooms": "No rooms are available. Ask an admin to add a room.",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
   "nav.contact": "Contact",

@@ -71,7 +71,7 @@ const studentSchema = z.object({
 
 interface DocenteFormProps {
   type: "docente";
-  initial?: User;
+  initial?: Partial<User>;
   onSubmit: (data: Record<string, unknown>) => void;
   loading?: boolean;
   lang?: "en" | "pt";
@@ -79,7 +79,7 @@ interface DocenteFormProps {
 
 interface StudentFormProps {
   type: "student";
-  initial?: User;
+  initial?: Partial<User>;
   onSubmit: (data: Record<string, unknown>) => void;
   loading?: boolean;
   lang?: "en" | "pt";

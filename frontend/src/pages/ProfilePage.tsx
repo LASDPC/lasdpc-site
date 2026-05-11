@@ -440,7 +440,8 @@ const ProfilePage = () => {
     Boolean(profile.photo),
     Boolean(profile.bio || profile.bioPt),
     Boolean(profile.research_areas?.length),
-    Boolean(profile.lattes || profile.orcid || profile.scholar || profile.linkedin || profile.github || profile.page),
+    Boolean(profile.lattes && profile.orcid && profile.scholar && profile.github),
+    Boolean(profile.lab_relationship_type && profile.affiliation_name),
   ].filter(Boolean).length;
 
   return (
@@ -795,10 +796,10 @@ const ProfilePage = () => {
               <section className="rounded-lg border border-border bg-card p-5">
                 <h2 className="mb-3 font-semibold text-foreground">{isPt ? "Perfil" : "Profile"}</h2>
                 <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${profileCompletion * 25}%` }} />
+                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${profileCompletion * 20}%` }} />
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {isPt ? `${profileCompletion}/4 blocos preenchidos` : `${profileCompletion}/4 blocks filled`}
+                  {isPt ? `${profileCompletion}/5 blocos preenchidos` : `${profileCompletion}/5 blocks filled`}
                 </p>
                 <Button variant="outline" size="sm" className="mt-4 w-full justify-start" onClick={() => navigate("/settings")}>
                   <Settings size={14} className="mr-2" />

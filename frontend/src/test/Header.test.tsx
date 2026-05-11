@@ -1,17 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import type { ComponentProps, PropsWithChildren } from "react";
 
 const mockUser = { id: "1", name: "Test", email: "t@t.com", initials: "T" };
 let currentUser: typeof mockUser | null = mockUser;
 
 vi.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    nav: ({ children, ...props }: any) => <nav {...props}>{children}</nav>,
-    input: (props: any) => <input {...props} />,
+    div: ({ children, ...props }: PropsWithChildren<ComponentProps<"div">>) => <div {...props}>{children}</div>,
+    nav: ({ children, ...props }: PropsWithChildren<ComponentProps<"nav">>) => <nav {...props}>{children}</nav>,
+    input: (props: ComponentProps<"input">) => <input {...props} />,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: PropsWithChildren) => <>{children}</>,
 }));
 
 vi.mock("@/contexts/ThemeContext", () => ({

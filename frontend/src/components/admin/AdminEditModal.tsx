@@ -13,6 +13,7 @@ import DocForm from "./forms/DocForm";
 import InfraClusterForm from "./forms/InfraClusterForm";
 import DeleteConfirmButton from "./DeleteConfirmButton";
 import { toast } from "sonner";
+import type { User } from "@/services/auth";
 
 import { useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
 import { useCreatePublication, useUpdatePublication, useDeletePublication } from "@/hooks/usePublications";
@@ -121,7 +122,7 @@ const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) 
         return (
           <PersonForm
             type="docente"
-            initial={data}
+            initial={data as Partial<User>}
             loading={createDocente.isPending || updateDocente.isPending}
             onSubmit={(values: Record<string, unknown>) => {
               if (isEdit) updateDocente.mutate({ id: data.id, data: values }, { onSuccess: handleSuccess });
@@ -133,7 +134,7 @@ const AdminEditModal = ({ open, onClose, resource, data }: AdminEditModalProps) 
         return (
           <PersonForm
             type="student"
-            initial={data}
+            initial={data as Partial<User>}
             loading={createStudent.isPending || updateStudent.isPending}
             onSubmit={(values: Record<string, unknown>) => {
               if (isEdit) updateStudent.mutate({ id: data.id, data: values }, { onSuccess: handleSuccess });

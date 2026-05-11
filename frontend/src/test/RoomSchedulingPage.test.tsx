@@ -11,21 +11,21 @@ const mockEvents = [
     id: "evt1",
     room: "1-009",
     title: "My Event",
-    start_time: "2026-04-27T10:00:00",
-    end_time: "2026-04-27T11:00:00",
+    start_time: "2026-05-11T10:00:00",
+    end_time: "2026-05-11T11:00:00",
     user_id: "user1",
     user_name: "Test User",
-    created_at: "2026-04-27T09:00:00",
+    created_at: "2026-05-11T09:00:00",
   },
   {
     id: "evt2",
     room: "1-009",
     title: "Other Event",
-    start_time: "2026-04-27T14:00:00",
-    end_time: "2026-04-27T15:00:00",
+    start_time: "2026-05-11T14:00:00",
+    end_time: "2026-05-11T15:00:00",
     user_id: "user2",
     user_name: "Other User",
-    created_at: "2026-04-27T13:00:00",
+    created_at: "2026-05-11T13:00:00",
   },
 ];
 
@@ -59,6 +59,7 @@ vi.mock("@/contexts/LanguageContext", () => ({
         "rooms.editGuests": "Edit guests",
         "rooms.date": "Date",
         "rooms.ttlTooOld": "Too old",
+        "rooms.noRooms": "No rooms",
         "infra.loginRequired": "Please log in to access infrastructure.",
       };
       return translations[key] || key;
@@ -77,6 +78,10 @@ vi.mock("@/hooks/useRoomEvents", () => ({
   useCreateRoomEvent: () => ({ mutateAsync: mockCreate, isPending: false }),
   useDeleteRoomEvent: () => ({ mutateAsync: mockDelete, isPending: false }),
   useUpdateRoomEvent: () => ({ mutateAsync: mockUpdateParticipants, isPending: false }),
+}));
+
+vi.mock("@/hooks/useRooms", () => ({
+  useRooms: () => ({ data: [{ id: "room1", name: "1-009" }, { id: "room2", name: "1-007" }], isLoading: false }),
 }));
 
 vi.mock("@/hooks/use-toast", () => ({
@@ -228,7 +233,7 @@ describe("RoomSchedulingPage", () => {
     await vi.waitFor(() => {
       expect(mockUpdateParticipants).toHaveBeenCalledWith({
         id: "evt1",
-        data: { title: "My Event", participants: [], start_time: "2026-04-27T10:00:00", end_time: "2026-04-27T11:00:00" },
+        data: { title: "My Event", participants: [], start_time: "2026-05-11T10:00:00", end_time: "2026-05-11T11:00:00" },
       });
     });
   });

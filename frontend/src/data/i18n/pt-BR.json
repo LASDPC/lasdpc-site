@@ -33,6 +33,7 @@
   "rooms.userFilter": "Filtrar por usuario",
   "rooms.userFilterPlaceholder": "Buscar usuario...",
   "rooms.clearUserFilter": "Limpar filtro",
+  "rooms.noRooms": "Nenhuma sala disponível. Peça para um admin cadastrar uma sala.",
   "nav.blog": "Blog",
   "nav.docs": "Docs",
   "nav.contact": "Contato",
