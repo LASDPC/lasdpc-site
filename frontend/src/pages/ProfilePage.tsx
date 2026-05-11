@@ -6,7 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDocentes, useStudents, useUser } from "@/hooks/usePeople";
 import { peopleService } from "@/services/people";
 import type { User } from "@/services/auth";
-import { getToken } from "@/lib/api";
+import { uploadProfilePhoto } from "@/services/uploads";
+import AffiliationInput from "@/components/profile/AffiliationInput";
+import ProfileTermPicker from "@/components/profile/ProfileTermPicker";
 import {
   Mail, ExternalLink, Camera, GraduationCap, BookOpen, User as UserIcon,
   Linkedin, Github, Twitter, Pencil, Save, XCircle, Plus,
@@ -37,6 +39,7 @@ const EDITABLE_FIELDS = [
   "level", "levelPt", "year_joined", "graduation_year",
   "skills", "research_areas",
   "linkedin", "github", "twitter", "researchgate", "lattes", "orcid", "scholar", "page",
+  "lab_relationship_type", "affiliation_name",
 ] as const;
 
 const DEFAULT_RESEARCH_AREAS = [
@@ -64,6 +67,12 @@ const SOCIAL_LINKS = [
   { key: "researchgate", label: "ResearchGate", icon: ExternalLink },
   { key: "page", label: "Personal page", icon: Link2 },
 ] as const;
+
+const LAB_RELATIONSHIP_LABELS: Record<string, { en: string; pt: string }> = {
+  academic_advisor: { en: "Academic advisor", pt: "Orientador acadêmico" },
+  usp_organization: { en: "USP organization", pt: "Organização da USP" },
+  external_organization: { en: "External organization", pt: "Organização externa" },
+};
 
 const uniqueSorted = (items: Array<string | null | undefined>) =>
   Array.from(new Set(items.map((item) => item?.trim()).filter(Boolean) as string[])).sort((a, b) =>
@@ -302,6 +311,9 @@ const ProfilePage = () => {
   const visibleArea = isPt ? profile.areaPt || profile.area : profile.area || profile.areaPt;
   const visibleLevel = isPt ? profile.levelPt || profile.level : profile.level || profile.levelPt;
   const visibleBio = isPt ? profile.bioPt || profile.bio : profile.bio || profile.bioPt;
+  const visibleRelationship = profile.lab_relationship_type
+    ? LAB_RELATIONSHIP_LABELS[profile.lab_relationship_type]?.[isPt ? "pt" : "en"] ?? profile.lab_relationship_type
+    : "";
   const selectedResearchAreas = listValue(draft.research_areas);
   const selectedSkills = listValue(draft.skills);
   const hasBio = visibleBio || (isEditing && isOwnProfile);
@@ -363,6 +375,13 @@ const ProfilePage = () => {
       payload.research_areas = uniqueSorted(listValue(payload.research_areas));
       payload.skills = uniqueSorted(listValue(payload.skills));
 
+      const requiredFields = ["lattes", "orcid", "scholar", "github", "lab_relationship_type", "affiliation_name"] as const;
+      const missingRequired = requiredFields.some((key) => !stringValue((payload as Record<string, unknown>)[key]).trim());
+      if (!profile.photo || missingRequired) {
+        toast.error(isPt ? "Complete foto, links obrigatorios, relacao com o lab e afiliacao." : "Complete photo, required links, lab relationship, and affiliation.");
+        return;
+      }
+
       await peopleService.updateUser(profile.id, payload);
       queryClient.invalidateQueries({ queryKey: ["user", profile.id] });
       queryClient.invalidateQueries({ queryKey: ["docentes"] });
@@ -392,16 +411,7 @@ const ProfilePage = () => {
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const token = getToken();
-      const res = await fetch("/api/v1/uploads", {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = await res.json();
+      const { url } = await uploadProfilePhoto(file);
 
       await peopleService.updateUser(profile.id, { photo: url });
       queryClient.invalidateQueries({ queryKey: ["user", profile.id] });
@@ -452,7 +462,7 @@ const ProfilePage = () => {
                     {profile.initials}
                   </div>
                 )}
-                {isOwnProfile && !isEditing && (
+                {isOwnProfile && (
                   <>
                     <button
                       type="button"
@@ -493,6 +503,12 @@ const ProfilePage = () => {
                         {roleIcon}
                         {roleLabel}
                       </span>
+                      {profile.affiliation_name && visibleRelationship && !isEditing && (
+                        <span className="inline-flex items-center gap-2">
+                          <Briefcase size={14} />
+                          {visibleRelationship}: {profile.affiliation_name}
+                        </span>
+                      )}
                       {profile.is_admin && (
                         <Badge variant="secondary" className="rounded-full">Admin</Badge>
                       )}
@@ -654,9 +670,9 @@ const ProfilePage = () => {
                 </div>
 
                 {isEditing ? (
-                  <ResearchAreaPicker
+                  <ProfileTermPicker
+                    kind="research_area"
                     selected={selectedResearchAreas}
-                    options={globalResearchAreas}
                     isPt={isPt}
                     onChange={(areas) => updateDraft("research_areas", areas)}
                   />
@@ -685,31 +701,16 @@ const ProfilePage = () => {
                   <h2 className="font-semibold text-foreground">{t("people.skills")}</h2>
                 </div>
                 {isEditing ? (
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      {selectedSkills.map((skill) => (
-                        <button
-                          key={skill}
-                          type="button"
-                          onClick={() => removeSkill(skill)}
-                          className="inline-flex min-h-8 items-center gap-1 rounded-full border border-border bg-secondary px-3 py-1 text-xs text-secondary-foreground"
-                        >
-                          {skill}
-                          <X size={13} />
-                        </button>
-                      ))}
-                    </div>
-                    <Input
-                      placeholder={isPt ? "Digite uma habilidade e pressione Enter" : "Type a skill and press Enter"}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          addSkill(event.currentTarget.value);
-                          event.currentTarget.value = "";
-                        }
-                      }}
-                    />
-                  </div>
+                  <ProfileTermPicker
+                    kind="skill"
+                    selected={selectedSkills}
+                    isPt={isPt}
+                    onChange={(skills) => updateDraft("skills", skills)}
+                    emptyText={isPt ? "Nenhuma habilidade selecionada ainda." : "No skills selected yet."}
+                    searchPlaceholder={isPt ? "Buscar habilidade existente" : "Search existing skill"}
+                    customPlaceholder={isPt ? "Nova habilidade ou tecnologia" : "New skill or technology"}
+                    addLabel={isPt ? "Adicionar nova habilidade" : "Add new skill"}
+                  />
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {profile.skills!.map((skill) => (
@@ -731,6 +732,31 @@ const ProfilePage = () => {
                   <div className="flex min-h-10 items-center gap-2 rounded-lg bg-secondary/60 px-3 text-muted-foreground">
                     <Mail size={16} />
                     <span className="min-w-0 truncate">{profile.email}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {isPt ? "Relacao com o lab" : "Relationship with the lab"}
+                    </label>
+                    <select
+                      value={stringValue(draft.lab_relationship_type) || "academic_advisor"}
+                      onChange={(event) => updateDraft("lab_relationship_type", event.target.value)}
+                      className="w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm"
+                    >
+                      <option value="academic_advisor">{isPt ? "Orientador acadêmico" : "Academic advisor"}</option>
+                      <option value="usp_organization">{isPt ? "Organização da USP (Técnicos, Grupos de Extensão...)" : "USP organization (technicians, extension groups...)"}</option>
+                      <option value="external_organization">{isPt ? "Organização externa (Universidade, Empresa)" : "External organization (university, company)"}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {isPt ? "Nome da afiliacao/organizacao" : "Affiliation or organization name"}
+                    </label>
+                    <AffiliationInput
+                      value={stringValue(draft.affiliation_name)}
+                      onChange={(value) => updateDraft("affiliation_name", value)}
+                      relationshipType={stringValue(draft.lab_relationship_type) || "academic_advisor"}
+                      placeholder={isPt ? "Digite ou selecione uma afiliacao existente" : "Type or select an existing affiliation"}
+                    />
                   </div>
                   {SOCIAL_LINKS.map(({ key, label, icon: Icon }) => (
                     <div key={key} className="flex items-center gap-2">

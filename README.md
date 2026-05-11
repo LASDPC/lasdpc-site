@@ -76,3 +76,6 @@ npm run dev
 ```
 
 App available at http://localhost:8080
+cd frontend
+npm install
+npm run dev

@@ -36,6 +36,8 @@ export interface User {
   github?: string | null;
   twitter?: string | null;
   researchgate?: string | null;
+  lab_relationship_type?: string | null;
+  affiliation_name?: string | null;
   // USP
   usp_number?: string | null;
   // LGPD
@@ -81,6 +83,8 @@ export interface UserCreateData {
   github?: string;
   twitter?: string;
   researchgate?: string;
+  lab_relationship_type?: string;
+  affiliation_name?: string;
   usp_number?: string;
 }
 
@@ -89,6 +93,13 @@ export interface RegisterData {
   password: string;
   name: string;
   role: string;
+  photo: string;
+  lattes: string;
+  orcid: string;
+  scholar: string;
+  github: string;
+  lab_relationship_type: string;
+  affiliation_name: string;
   advisor_id?: string;
   advisor_name?: string;
   level?: string;

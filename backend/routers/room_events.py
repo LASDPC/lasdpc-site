@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from core.database import get_db
 from core.dependencies import get_current_user, require_admin
+from core.profile_terms import normalize_text
 from models.room_event import (
     RoomEventCreate,
     RoomEventOut,
@@ -37,6 +38,10 @@ def _to_out(doc: dict) -> RoomEventOut:
 
 def _normalize_identifier(s: str) -> str:
     return s.strip()
+
+
+def _normalize_room_name(s: str) -> str:
+    return " ".join(s.strip().split())
 
 
 def _is_email(s: str) -> bool:
@@ -193,9 +198,15 @@ async def create_event(body: RoomEventCreate, user: dict = Depends(get_current_u
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="end_time must be after start_time")
 
     db = get_db()
+    room_name = _normalize_room_name(body.room)
+    if not room_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="room is required")
+    room_doc = await db.rooms.find_one({"normalized_name": normalize_text(room_name)})
+    if not room_doc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid room")
 
     overlap = await db.room_events.find_one({
-        "room": body.room,
+        "room": room_doc["name"],
         "start_time": {"$lt": body.end_time},
         "end_time": {"$gt": body.start_time},
     })
@@ -212,7 +223,7 @@ async def create_event(body: RoomEventCreate, user: dict = Depends(get_current_u
         )
 
     doc = {
-        "room": body.room,
+        "room": room_doc["name"],
         "title": body.title,
         "start_time": body.start_time,
         "end_time": body.end_time,

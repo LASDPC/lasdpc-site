@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from core.config import settings
 from core.database import get_db
 from core.dependencies import get_current_user, require_admin
+from core.profile_terms import normalize_profile_payload, upsert_profile_terms, validate_required_profile
 from core.security import hash_password
 from models.user import (
     BootstrapAdmin,
@@ -32,6 +33,10 @@ def _user_out(doc: dict) -> UserOut:
         id=str(doc["_id"]),
         **{k: doc.get(k) for k in UserOut.model_fields if k != "id" and k in doc},
     )
+
+
+def _is_photo_only_update(update_data: dict) -> bool:
+    return set(update_data.keys()) == {"photo"}
 
 
 @router.post("/bootstrap", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -86,9 +91,12 @@ async def create_user(body: UserCreate, _admin: dict = Depends(require_admin)):
         doc["advisor_name"] = advisor.get("name")
         if not doc.get("level") or not doc.get("levelPt"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Academic category is required for students")
+    normalize_profile_payload(doc)
+    validate_required_profile(doc)
     doc["hashed_password"] = hash_password(doc.pop("password"))
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id
+    await upsert_profile_terms(db, doc)
     return _user_out(doc)
 
 
@@ -323,10 +331,22 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
             update_data.pop(field, None)
     if not update_data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nothing to update")
-    result = await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_data})
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id")
+    existing = await db.users.find_one({"_id": oid})
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    normalize_profile_payload(update_data)
+    updated_doc = {**existing, **update_data}
+    if not _is_photo_only_update(update_data):
+        validate_required_profile(updated_doc)
+    result = await db.users.update_one({"_id": oid}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    doc = await db.users.find_one({"_id": ObjectId(user_id)})
+    doc = await db.users.find_one({"_id": oid})
+    await upsert_profile_terms(db, doc)
     return _user_out(doc)
 
 

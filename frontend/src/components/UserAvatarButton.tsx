@@ -35,7 +35,7 @@ const UserAvatarButton = () => {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           className="focus:outline-none focus:ring-2 focus:ring-ring rounded-full"

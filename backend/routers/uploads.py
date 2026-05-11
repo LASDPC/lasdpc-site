@@ -14,8 +14,7 @@ ALLOWED_TYPES = {"image/jpeg", "image/png"}
 MAX_SIZE = 2 * 1024 * 1024  # 2 MB
 
 
-@router.post("")
-async def upload_file(file: UploadFile, _user: dict = Depends(get_current_user)):
+async def _store_upload(file: UploadFile) -> dict:
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -35,3 +34,13 @@ async def upload_file(file: UploadFile, _user: dict = Depends(get_current_user))
     path.write_bytes(contents)
 
     return {"url": f"/uploads/{filename}"}
+
+
+@router.post("")
+async def upload_file(file: UploadFile, _user: dict = Depends(get_current_user)):
+    return await _store_upload(file)
+
+
+@router.post("/public")
+async def upload_public_registration_photo(file: UploadFile):
+    return await _store_upload(file)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { authService, type User } from "@/services/auth";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Check, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
+import AffiliationInput from "@/components/profile/AffiliationInput";
+import { uploadProfilePhoto } from "@/services/uploads";
 
 const ACADEMIC_LEVELS = [
   { value: "undergrad", level: "Undergraduate", levelPt: "Graduação" },
@@ -23,10 +25,18 @@ const RegisterPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [photo, setPhoto] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [role, setRole] = useState("aluno_ativo");
   const [advisorId, setAdvisorId] = useState("");
   const [academicLevel, setAcademicLevel] = useState("masters");
   const [customAcademicLevel, setCustomAcademicLevel] = useState("");
+  const [lattes, setLattes] = useState("");
+  const [orcid, setOrcid] = useState("");
+  const [scholar, setScholar] = useState("");
+  const [github, setGithub] = useState("");
+  const [labRelationshipType, setLabRelationshipType] = useState("academic_advisor");
+  const [affiliationName, setAffiliationName] = useState("");
   const [registrationObjective, setRegistrationObjective] = useState("");
   const [observation, setObservation] = useState("");
   const [uspNumber, setUspNumber] = useState("");
@@ -35,6 +45,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const isStudent = role === "aluno_ativo" || role === "alumni";
   const isPt = lang === "pt-BR";
   const steps = [
@@ -65,12 +76,27 @@ const RegisterPage = () => {
       .catch(() => setAdvisors([]));
   }, []);
 
+  const handlePhotoUpload = async (file?: File) => {
+    if (!file) return;
+    setUploadingPhoto(true);
+    setError("");
+    try {
+      const { url } = await uploadProfilePhoto(file, true);
+      setPhoto(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
   const validateStep = (step: number) => {
     setError("");
 
     if (step === 0) {
-      if (!name.trim() || !email.trim() || !password) {
-        setError(isPt ? "Preencha nome, e-mail e senha para continuar." : "Fill in name, email, and password to continue.");
+      if (!name.trim() || !email.trim() || !password || !photo) {
+        setError(isPt ? "Preencha nome, e-mail, senha e foto para continuar." : "Fill in name, email, password, and photo to continue.");
         return false;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -90,6 +116,10 @@ const RegisterPage = () => {
       const selectedAdvisor = advisors.find((advisor) => advisor.id === advisorId);
       if (isStudent && (!selectedAdvisor || !resolvedLevel || !resolvedLevelPt)) {
         setError(t("auth.requiredStudentFields"));
+        return false;
+      }
+      if (!lattes.trim() || !orcid.trim() || !scholar.trim() || !github.trim() || !labRelationshipType || !affiliationName.trim()) {
+        setError(isPt ? "Preencha Lattes, ORCID, Google Scholar, GitHub, relacao com o lab e afiliacao." : "Fill in Lattes, ORCID, Google Scholar, GitHub, lab relationship, and affiliation.");
         return false;
       }
     }
@@ -141,6 +171,13 @@ const RegisterPage = () => {
         email,
         password,
         role,
+        photo,
+        lattes: lattes.trim(),
+        orcid: orcid.trim(),
+        scholar: scholar.trim(),
+        github: github.trim(),
+        lab_relationship_type: labRelationshipType,
+        affiliation_name: affiliationName.trim(),
         advisor_id: isStudent ? advisorId : undefined,
         advisor_name: isStudent ? selectedAdvisor?.name : undefined,
         level: isStudent ? resolvedLevel : undefined,
@@ -309,6 +346,28 @@ const RegisterPage = () => {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label>{isPt ? "Foto de perfil" : "Profile photo"}</Label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {photo ? (
+                        <img src={photo} alt="" className="h-16 w-16 rounded-full border border-border object-cover" />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary text-xs text-muted-foreground">
+                          {isPt ? "Sem foto" : "No photo"}
+                        </div>
+                      )}
+                      <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={uploadingPhoto}>
+                        {uploadingPhoto ? "..." : isPt ? "Enviar foto" : "Upload photo"}
+                      </Button>
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        className="hidden"
+                        onChange={(event) => handlePhotoUpload(event.target.files?.[0])}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="role">{t("auth.role")}</Label>
                     <select
                       id="role"
@@ -386,6 +445,47 @@ const RegisterPage = () => {
                       onChange={(e) => setUspNumber(e.target.value)}
                       placeholder="12345678"
                       autoComplete="off"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="lattes">Lattes URL</Label>
+                      <Input id="lattes" value={lattes} onChange={(e) => setLattes(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="orcid">ORCID URL</Label>
+                      <Input id="orcid" value={orcid} onChange={(e) => setOrcid(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="scholar">Google Scholar URL</Label>
+                      <Input id="scholar" value={scholar} onChange={(e) => setScholar(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="github">GitHub</Label>
+                      <Input id="github" value={github} onChange={(e) => setGithub(e.target.value)} placeholder="https://github.com/..." required />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="labRelationshipType">{isPt ? "Relacao com o lab" : "Relationship with the lab"}</Label>
+                    <select
+                      id="labRelationshipType"
+                      value={labRelationshipType}
+                      onChange={(e) => setLabRelationshipType(e.target.value)}
+                      className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                      required
+                    >
+                      <option value="academic_advisor">{isPt ? "Orientador acadêmico" : "Academic advisor"}</option>
+                      <option value="usp_organization">{isPt ? "Organização da USP (Técnicos, Grupos de Extensão...)" : "USP organization (technicians, extension groups...)"}</option>
+                      <option value="external_organization">{isPt ? "Organização externa (Universidade, Empresa)" : "External organization (university, company)"}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{isPt ? "Nome da afiliacao/organizacao" : "Affiliation or organization name"}</Label>
+                    <AffiliationInput
+                      value={affiliationName}
+                      onChange={setAffiliationName}
+                      relationshipType={labRelationshipType}
+                      placeholder={isPt ? "Digite ou selecione uma afiliacao existente" : "Type or select an existing affiliation"}
                     />
                   </div>
                 </>

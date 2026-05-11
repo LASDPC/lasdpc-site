@@ -17,15 +17,16 @@ import {
   Plus,
   Server,
   Shield,
+  Trash2,
   UserPlus,
   Users,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import UserCreateModal from "@/components/admin/UserCreateModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -43,6 +44,7 @@ import { useInfrastructure } from "@/hooks/useInfrastructure";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
+import { useCreateRoom, useDeleteRoom, useRooms } from "@/hooks/useRooms";
 import { authService, type User } from "@/services/auth";
 import { clusterRequestsService, type ClusterRequest } from "@/services/clusterRequests";
 import { roomEventsService, type RoomEvent } from "@/services/roomEvents";
@@ -89,6 +91,7 @@ function invalidateAdminData(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["cluster-requests"] });
   queryClient.invalidateQueries({ queryKey: ["lgpd-requests"] });
   queryClient.invalidateQueries({ queryKey: ["room-events"] });
+  queryClient.invalidateQueries({ queryKey: ["rooms"] });
 }
 
 function dateOnly(value?: string | null) {
@@ -267,6 +270,81 @@ function CalendarList({
   );
 }
 
+function RoomManagement({
+  rooms,
+  newRoomName,
+  setNewRoomName,
+  onCreate,
+  onDelete,
+  creating,
+  deleting,
+  isPt,
+}: {
+  rooms: Array<{ id: string; name: string }>;
+  newRoomName: string;
+  setNewRoomName: (value: string) => void;
+  onCreate: () => void;
+  onDelete: (id: string) => void;
+  creating: boolean;
+  deleting: boolean;
+  isPt: boolean;
+}) {
+  return (
+    <section className="rounded-lg border border-border bg-card xl:col-span-2">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={18} className="text-primary" />
+          <h3 className="font-display text-lg font-semibold text-foreground">{isPt ? "Salas de reserva" : "Reservation rooms"}</h3>
+        </div>
+      </div>
+      <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="divide-y divide-border rounded-lg border border-border">
+          {rooms.length === 0 ? (
+            <div className="p-4"><EmptyState text={isPt ? "Nenhuma sala cadastrada." : "No rooms registered."} /></div>
+          ) : (
+            rooms.map((room) => (
+              <div key={room.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <span className="font-medium text-foreground">{room.name}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={deleting}
+                  onClick={() => onDelete(room.id)}
+                  aria-label={isPt ? `Remover sala ${room.name}` : `Delete room ${room.name}`}
+                >
+                  <Trash2 size={16} className="text-destructive" />
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+        <form
+          className="space-y-3 rounded-lg border border-border bg-secondary/30 p-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onCreate();
+          }}
+        >
+          <label className="text-sm font-medium text-foreground" htmlFor="admin-new-room">
+            {isPt ? "Nova sala" : "New room"}
+          </label>
+          <Input
+            id="admin-new-room"
+            value={newRoomName}
+            onChange={(event) => setNewRoomName(event.target.value)}
+            placeholder="1-009"
+          />
+          <Button type="submit" disabled={creating || !newRoomName.trim()} className="w-full">
+            <Plus size={14} />
+            {isPt ? "Cadastrar sala" : "Add room"}
+          </Button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
 function editUserPath(user: User) {
   return user.role === "docente"
     ? `/admin/edit/docente/${user.id}`
@@ -280,7 +358,7 @@ const AdminDashboardPage = () => {
   const locale = isPt ? ptBR : enUS;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newRoomName, setNewRoomName] = useState("");
 
   const rangeStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }), []);
   const rangeEnd = useMemo(() => addDays(rangeStart, 21), [rangeStart]);
@@ -332,6 +410,9 @@ const AdminDashboardPage = () => {
   const { data: students = [] } = useStudents();
   const { data: docs = [] } = useDocs();
   const { data: infra } = useInfrastructure();
+  const { data: rooms = [] } = useRooms();
+  const createRoom = useCreateRoom();
+  const deleteRoom = useDeleteRoom();
 
   const approveUser = useMutation({
     mutationFn: (id: string) => authService.approveUser(id),
@@ -393,6 +474,35 @@ const AdminDashboardPage = () => {
     },
   });
 
+  const handleCreateRoom = () => {
+    const name = newRoomName.trim();
+    if (!name) return;
+    createRoom.mutate(name, {
+      onSuccess: () => {
+        setNewRoomName("");
+        invalidateAdminData(queryClient);
+        toast.success(isPt ? "Sala cadastrada." : "Room added.");
+      },
+      onError: (err) => {
+        const message = err instanceof Error ? err.message : "";
+        toast.error(message || (isPt ? "Erro ao cadastrar sala." : "Failed to add room."));
+      },
+    });
+  };
+
+  const handleDeleteRoom = (id: string) => {
+    deleteRoom.mutate(id, {
+      onSuccess: () => {
+        invalidateAdminData(queryClient);
+        toast.success(isPt ? "Sala removida." : "Room deleted.");
+      },
+      onError: (err) => {
+        const message = err instanceof Error ? err.message : "";
+        toast.error(message || (isPt ? "Nao foi possivel remover a sala." : "Could not delete room."));
+      },
+    });
+  };
+
   if (!isAdmin) {
     return <Navigate to="/login" replace />;
   }
@@ -429,9 +539,13 @@ const AdminDashboardPage = () => {
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setShowCreateUser(true)}>
+            <Button variant="outline" onClick={() => navigate("/admin/edit/docente")}>
               <UserPlus size={16} />
-              {isPt ? "Novo usuário" : "New user"}
+              {isPt ? "Novo docente" : "New faculty"}
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/admin/edit/student")}>
+              <UserPlus size={16} />
+              {isPt ? "Novo aluno" : "New student"}
             </Button>
             <Button onClick={() => navigate("/admin/edit/blog")}>
               <Plus size={16} />
@@ -630,6 +744,16 @@ const AdminDashboardPage = () => {
           </TabsContent>
 
           <TabsContent value="calendars" className="mt-6 grid gap-6 xl:grid-cols-2">
+            <RoomManagement
+              rooms={rooms}
+              newRoomName={newRoomName}
+              setNewRoomName={setNewRoomName}
+              onCreate={handleCreateRoom}
+              onDelete={handleDeleteRoom}
+              creating={createRoom.isPending}
+              deleting={deleteRoom.isPending}
+              isPt={isPt}
+            />
             <CalendarList
               title={isPt ? "Reservas do laboratório" : "Lab reservations"}
               icon={<CalendarDays size={18} />}
@@ -654,10 +778,16 @@ const AdminDashboardPage = () => {
                   <Users size={18} className="text-primary" />
                   <h2 className="font-display text-lg font-semibold">{isPt ? "Usuários" : "Users"}</h2>
                 </div>
-                <Button size="sm" onClick={() => setShowCreateUser(true)}>
-                  <UserPlus size={14} />
-                  {isPt ? "Novo usuário" : "New user"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => navigate("/admin/edit/docente")}>
+                    <UserPlus size={14} />
+                    {isPt ? "Novo docente" : "New faculty"}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/admin/edit/student")}>
+                    <UserPlus size={14} />
+                    {isPt ? "Novo aluno" : "New student"}
+                  </Button>
+                </div>
               </div>
               <Table>
                 <TableHeader>
@@ -785,8 +915,6 @@ const AdminDashboardPage = () => {
             </section>
           </TabsContent>
         </Tabs>
-
-        <UserCreateModal open={showCreateUser} onClose={() => setShowCreateUser(false)} />
       </div>
     </div>
   );

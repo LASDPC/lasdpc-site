@@ -5,6 +5,7 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, HTTPException, status
 
 from core.database import get_db
+from core.profile_terms import normalize_profile_payload, upsert_profile_terms, validate_required_profile
 from core.security import verify_password, create_access_token, hash_password
 from models.user import LoginRequest, LoginResponse, RegisterRequest, UserOut
 
@@ -90,6 +91,13 @@ async def register(body: RegisterRequest):
         "avatar": None,
         "initials": _initials(body.name),
         "status": "pending",
+        "photo": body.photo,
+        "lattes": body.lattes,
+        "orcid": body.orcid,
+        "scholar": body.scholar,
+        "github": body.github,
+        "lab_relationship_type": body.lab_relationship_type,
+        "affiliation_name": body.affiliation_name,
         "advisor_id": str(advisor["_id"]) if advisor else None,
         "advisor_name": advisor.get("name") if advisor else None,
         "level": level or None,
@@ -101,8 +109,11 @@ async def register(body: RegisterRequest):
         "lgpd_consent_at": datetime.now(timezone.utc).isoformat(),
         "lgpd_consent_version": "1.0",
     }
+    normalize_profile_payload(doc)
+    validate_required_profile(doc)
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id
+    await upsert_profile_terms(db, doc)
     return _user_out(doc)
 
 

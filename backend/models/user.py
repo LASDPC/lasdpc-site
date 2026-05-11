@@ -7,6 +7,13 @@ class RegisterRequest(BaseModel):
     password: str
     name: str
     role: str = "aluno_ativo"  # docente | aluno_ativo | alumni
+    photo: str
+    lattes: str
+    orcid: str
+    scholar: str
+    github: str
+    lab_relationship_type: str
+    affiliation_name: str
     advisor_id: Optional[str] = None
     advisor_name: Optional[str] = None
     level: Optional[str] = None
@@ -55,6 +62,8 @@ class UserCreate(BaseModel):
     github: Optional[str] = None
     twitter: Optional[str] = None
     researchgate: Optional[str] = None
+    lab_relationship_type: Optional[str] = None
+    affiliation_name: Optional[str] = None
     # USP
     usp_number: Optional[str] = None
 
@@ -92,6 +101,8 @@ class UserUpdate(BaseModel):
     github: Optional[str] = None
     twitter: Optional[str] = None
     researchgate: Optional[str] = None
+    lab_relationship_type: Optional[str] = None
+    affiliation_name: Optional[str] = None
     # USP
     usp_number: Optional[str] = None
     # LGPD
@@ -136,6 +147,8 @@ class UserOut(BaseModel):
     github: Optional[str] = None
     twitter: Optional[str] = None
     researchgate: Optional[str] = None
+    lab_relationship_type: Optional[str] = None
+    affiliation_name: Optional[str] = None
     # USP
     usp_number: Optional[str] = None
     # LGPD

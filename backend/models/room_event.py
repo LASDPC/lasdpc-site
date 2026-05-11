@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -19,7 +19,7 @@ class RoomEventParticipant(BaseModel):
 
 
 class RoomEventCreate(BaseModel):
-    room: Literal["1-009", "1-007"]
+    room: str
     title: str
     start_time: datetime
     end_time: datetime

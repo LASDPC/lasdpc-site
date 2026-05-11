@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addDays, startOfWeek } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useRooms } from "@/hooks/useRooms";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { CalendarDays, Trash2 } from "lucide-react";
 
@@ -30,7 +31,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { RoomEvent } from "@/services/roomEvents";
 import type { UserSuggestion } from "@/services/users";
 
-const ROOMS = ["1-009", "1-007"] as const;
 const ROOM_EVENTS_TTL_DAYS = 30;
 
 function pad2(n: number) {
@@ -78,7 +78,7 @@ const RoomSchedulingPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [room, setRoom] = useState<string>(ROOMS[0]);
+  const [room, setRoom] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [navDirection, setNavDirection] = useState<-1 | 1>(1);
@@ -108,6 +108,13 @@ const RoomSchedulingPage = () => {
 
   const weekEndExclusive = useMemo(() => addDays(weekStart, 7), [weekStart]);
   const weekEndInclusive = useMemo(() => addDays(weekStart, 6), [weekStart]);
+  const { data: rooms = [], isLoading: roomsLoading } = useRooms();
+  const roomNames = useMemo(() => rooms.map((item) => item.name), [rooms]);
+
+  useEffect(() => {
+    if (roomNames.length === 0) return;
+    if (!room || !roomNames.includes(room)) setRoom(roomNames[0]);
+  }, [room, roomNames]);
 
   const { data: events = [], isLoading, isFetching } = useRoomEvents(
     room,
@@ -128,6 +135,22 @@ const RoomSchedulingPage = () => {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <p className="text-muted-foreground">{t("infra.loginRequired")}</p>
+      </div>
+    );
+  }
+
+  if (roomsLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (roomNames.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-muted-foreground">{t("rooms.noRooms")}</p>
       </div>
     );
   }
@@ -287,7 +310,7 @@ const RoomSchedulingPage = () => {
             selectedDate={selectedDate}
             onSelectDate={(d) => goToWeekContaining(d)}
             room={room}
-            rooms={ROOMS}
+            rooms={roomNames}
             onSelectRoom={(r) => setRoom(r)}
             onCreateClick={() => setDialogOpen(true)}
             participantFilter={participantFilter}
@@ -307,7 +330,7 @@ const RoomSchedulingPage = () => {
                     setMobileSidebarOpen(false);
                   }}
                   room={room}
-                  rooms={ROOMS}
+                  rooms={roomNames}
                   onSelectRoom={(r) => setRoom(r)}
                   onCreateClick={() => setDialogOpen(true)}
                   participantFilter={participantFilter}
@@ -390,7 +413,7 @@ const RoomSchedulingPage = () => {
                 onChange={(e) => setRoom(e.target.value)}
                 data-testid="event-room-select"
               >
-                {ROOMS.map((r) => (
+                {roomNames.map((r) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>

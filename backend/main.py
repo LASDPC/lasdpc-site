@@ -9,7 +9,23 @@ from fastapi.staticfiles import StaticFiles
 from core.config import settings
 from core.database import get_db
 from core.security import hash_password
-from routers import auth, users, projects, publications, blog, people, infrastructure, docs, stats, uploads, cluster_requests, notifications, room_events
+from routers import (
+    auth,
+    users,
+    projects,
+    publications,
+    blog,
+    people,
+    infrastructure,
+    docs,
+    stats,
+    uploads,
+    cluster_requests,
+    notifications,
+    room_events,
+    rooms,
+    profile_terms,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +52,8 @@ app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["uploads"])
 app.include_router(cluster_requests.router, prefix="/api/v1/cluster-requests", tags=["cluster-requests"])
 app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 app.include_router(room_events.router, prefix="/api/v1/room-events", tags=["room-events"])
+app.include_router(rooms.router, prefix="/api/v1/rooms", tags=["rooms"])
+app.include_router(profile_terms.router, prefix="/api/v1/profile-terms", tags=["profile-terms"])
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -44,9 +62,18 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 @app.on_event("startup")
 async def auto_bootstrap_admin():
+    db = get_db()
+    try:
+        await rooms.initialize_default_rooms(db)
+    except ServerSelectionTimeoutError:
+        logger.error(
+            "MongoDB is not reachable at %s. Start it with: docker compose up -d",
+            settings.mongo_uri,
+        )
+        raise
+
     if not settings.admin_email or not settings.admin_password:
         return
-    db = get_db()
     try:
         existing = await db.users.find_one({"email": settings.admin_email})
     except ServerSelectionTimeoutError:
