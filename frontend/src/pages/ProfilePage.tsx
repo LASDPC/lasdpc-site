@@ -7,6 +7,7 @@ import { useDocentes, useStudents, useUser } from "@/hooks/usePeople";
 import { peopleService } from "@/services/people";
 import type { User } from "@/services/auth";
 import { uploadProfilePhoto } from "@/services/uploads";
+import { mediaUrl } from "@/lib/media";
 import AffiliationInput from "@/components/profile/AffiliationInput";
 import ProfileTermPicker from "@/components/profile/ProfileTermPicker";
 import {
@@ -269,7 +270,7 @@ const ResearchAreaPicker = ({ selected, options, isPt, onChange }: ResearchAreaP
 const ProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
   const { lang, t } = useLang();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
   const isPt = lang === "pt-BR";
   const { data: profile, isLoading } = useUser(userId || "");
   const { data: docentes = [] } = useDocentes();
@@ -411,12 +412,13 @@ const ProfilePage = () => {
 
     setUploading(true);
     try {
-      const { url } = await uploadProfilePhoto(file);
+      const { key } = await uploadProfilePhoto(file);
 
-      await peopleService.updateUser(profile.id, { photo: url });
+      await peopleService.updateUser(profile.id, { photo: key });
       queryClient.invalidateQueries({ queryKey: ["user", profile.id] });
       queryClient.invalidateQueries({ queryKey: ["docentes"] });
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      if (isOwnProfile) await refreshUser();
       toast.success(isPt ? "Foto atualizada!" : "Photo updated!");
     } catch {
       toast.error(isPt ? "Erro ao fazer upload" : "Upload failed");
@@ -454,7 +456,7 @@ const ProfilePage = () => {
               <div className="relative -mt-14 w-fit shrink-0 sm:-mt-16">
                 {profile.photo ? (
                   <img
-                    src={profile.photo}
+                    src={mediaUrl(profile.photo)}
                     alt={profile.name}
                     className="h-28 w-28 rounded-full border-4 border-card object-cover shadow-sm sm:h-32 sm:w-32"
                   />

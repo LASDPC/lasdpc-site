@@ -7,6 +7,7 @@ import { useDocentes, useStudents } from "@/hooks/usePeople";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { mediaUrl } from "@/lib/media";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -196,7 +197,7 @@ const PeoplePage = () => {
                   <div className="flex items-start gap-4">
                     {d.photo ? (
                       <img
-                        src={d.photo}
+                        src={mediaUrl(d.photo)}
                         alt={d.name}
                         className="w-16 h-16 rounded-full object-cover shrink-0"
                       />

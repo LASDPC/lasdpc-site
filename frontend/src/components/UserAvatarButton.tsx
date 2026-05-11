@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { mediaUrl } from "@/lib/media";
 
 const UserAvatarButton = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -42,7 +43,9 @@ const UserAvatarButton = () => {
           aria-label={user.name}
         >
           <Avatar className="h-8 w-8 cursor-pointer">
-            {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+            {(user.photo || user.avatar) && (
+              <AvatarImage src={mediaUrl(user.photo || user.avatar)} alt={user.name} />
+            )}
             <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
               {user.initials}
             </AvatarFallback>

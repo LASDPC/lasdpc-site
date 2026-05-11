@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
 import AffiliationInput from "@/components/profile/AffiliationInput";
 import { uploadProfilePhoto } from "@/services/uploads";
+import { mediaUrl } from "@/lib/media";
 
 const ACADEMIC_LEVELS = [
   { value: "undergrad", level: "Undergraduate", levelPt: "Graduação" },
@@ -81,8 +82,8 @@ const RegisterPage = () => {
     setUploadingPhoto(true);
     setError("");
     try {
-      const { url } = await uploadProfilePhoto(file, true);
-      setPhoto(url);
+      const { key } = await uploadProfilePhoto(file, true);
+      setPhoto(key);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -349,7 +350,7 @@ const RegisterPage = () => {
                     <Label>{isPt ? "Foto de perfil" : "Profile photo"}</Label>
                     <div className="flex flex-wrap items-center gap-3">
                       {photo ? (
-                        <img src={photo} alt="" className="h-16 w-16 rounded-full border border-border object-cover" />
+                        <img src={mediaUrl(photo)} alt="" className="h-16 w-16 rounded-full border border-border object-cover" />
                       ) : (
                         <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary text-xs text-muted-foreground">
                           {isPt ? "Sem foto" : "No photo"}

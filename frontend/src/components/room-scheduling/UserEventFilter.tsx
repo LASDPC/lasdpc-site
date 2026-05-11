@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLang } from "@/contexts/LanguageContext";
+import { mediaUrl } from "@/lib/media";
 
 type Props = {
   value: UserSuggestion | null;
@@ -66,7 +67,7 @@ export default function UserEventFilter({ value, onChange }: Props) {
       {value ? (
         <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-2 py-2">
           <Avatar className="h-7 w-7">
-            {(value.photo || value.avatar) && <AvatarImage src={value.photo || value.avatar || ""} alt={value.name || value.email || ""} />}
+            {(value.photo || value.avatar) && <AvatarImage src={mediaUrl(value.photo || value.avatar) || ""} alt={value.name || value.email || ""} />}
             <AvatarFallback className="text-xs">{value.initials || fallbackInitials(value.name || value.email || "")}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
@@ -118,7 +119,7 @@ export default function UserEventFilter({ value, onChange }: Props) {
                     }}
                   >
                     <Avatar className="h-8 w-8">
-                      {(user.photo || user.avatar) && <AvatarImage src={user.photo || user.avatar || ""} alt={label} />}
+                      {(user.photo || user.avatar) && <AvatarImage src={mediaUrl(user.photo || user.avatar) || ""} alt={label} />}
                       <AvatarFallback className="text-xs">{user.initials || fallbackInitials(label)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">

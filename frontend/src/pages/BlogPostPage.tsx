@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
 import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mediaUrl } from "@/lib/media";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=500&fit=crop";
 
@@ -64,7 +65,7 @@ const BlogPostPage = () => {
           </Link>
 
           <img
-            src={post.coverImage || FALLBACK_IMAGE}
+            src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
             alt={isPt ? post.titlePt : post.title}
             className="w-full h-64 sm:h-80 object-cover rounded-xl mb-8"
           />

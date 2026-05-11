@@ -11,6 +11,7 @@ export interface User {
   role: UserRole;
   is_admin: boolean;
   avatar?: string;
+  photo?: string;
   initials: string;
 }
 
@@ -19,6 +20,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (identifier: string, password: string) => Promise<boolean>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const SESSION_KEY = "lasdpc-auth-user";
@@ -38,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   login: async () => false,
   logout: () => {},
+  refreshUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -56,6 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: res.user.role as UserRole,
         is_admin: res.user.is_admin ?? false,
         avatar: res.user.avatar ?? undefined,
+        photo: res.user.photo ?? undefined,
         initials: res.user.initials,
       };
       setUser(userData);
@@ -76,10 +80,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.removeItem(SESSION_KEY);
   };
 
+  const refreshUser = async () => {
+    try {
+      const fresh = await authService.me();
+      const userData: User = {
+        id: fresh.id,
+        email: fresh.email,
+        name: fresh.name,
+        role: fresh.role as UserRole,
+        is_admin: fresh.is_admin ?? false,
+        avatar: fresh.avatar ?? undefined,
+        photo: fresh.photo ?? undefined,
+        initials: fresh.initials,
+      };
+      setUser(userData);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+    } catch {
+      // keep current session if refresh fails
+    }
+  };
+
   const isAdmin = user?.is_admin ?? false;
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, login, logout }}>
+    <AuthContext.Provider value={{ user, isAdmin, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

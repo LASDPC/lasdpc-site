@@ -5,6 +5,7 @@ import { Bold, Italic, Heading2, Code, Link2, ImagePlus, Columns2, PanelLeft, Pa
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
+import { uploadMedia } from "@/services/uploads";
 
 interface MarkdownEditorProps {
   label: string;
@@ -16,27 +17,6 @@ interface MarkdownEditorProps {
 
 const DEFAULT_PROSE =
   "prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary";
-
-const IMG_PLACEHOLDER_RE = /!\[([^\]]*)\]\((img:\d+)\)/g;
-const IMG_DATA_RE = /!\[([^\]]*)\]\((data:[^)]+)\)/g;
-
-const expand = (text: string, map: Record<string, string>) =>
-  text.replace(IMG_PLACEHOLDER_RE, (match, alt, id) => {
-    const src = map[id];
-    return src ? `![${alt}](${src})` : match;
-  });
-
-const collapse = (raw: string) => {
-  const map: Record<string, string> = {};
-  let counter = 0;
-  const display = raw.replace(IMG_DATA_RE, (_match, alt, dataUri) => {
-    counter += 1;
-    const id = `img:${counter}`;
-    map[id] = dataUri;
-    return `![${alt}](${id})`;
-  });
-  return { display, map, counter };
-};
 
 type ViewMode = "split" | "editor" | "preview";
 
@@ -50,22 +30,14 @@ const MarkdownEditor = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const imageMapRef = useRef<Record<string, string>>({});
-  const counterRef = useRef(0);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const [displayValue, setDisplayValue] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [collapsed, setCollapsed] = useState(false);
   const [syncMode, setSyncMode] = useState(true);
   const [editorHeight, setEditorHeight] = useState(300);
-
-  useEffect(() => {
-    const { display, map, counter } = collapse(value);
-    imageMapRef.current = map;
-    counterRef.current = counter;
-    setDisplayValue(display);
-  }, [value]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     return () => {
@@ -85,15 +57,7 @@ const MarkdownEditor = ({
 
   useEffect(() => {
     autoResize();
-  }, [displayValue, viewMode, collapsed, autoResize]);
-
-  const handleDisplayChange = useCallback(
-    (newDisplay: string) => {
-      setDisplayValue(newDisplay);
-      onChange(expand(newDisplay, imageMapRef.current));
-    },
-    [onChange],
-  );
+  }, [value, viewMode, collapsed, autoResize]);
 
   // Sync preview to editor cursor position
   const syncPreviewToEditor = useCallback(() => {
@@ -147,10 +111,10 @@ const MarkdownEditor = ({
     if (!el) return;
     const start = el.selectionStart;
     const end = el.selectionEnd;
-    const selected = displayValue.slice(start, end);
+    const selected = value.slice(start, end);
     const insertion = before + selected + after;
-    const newDisplay = displayValue.slice(0, start) + insertion + displayValue.slice(end);
-    handleDisplayChange(newDisplay);
+    const newValue = value.slice(0, start) + insertion + value.slice(end);
+    onChange(newValue);
     requestAnimationFrame(() => {
       el.focus();
       const cursor = start + before.length + selected.length;
@@ -158,26 +122,23 @@ const MarkdownEditor = ({
     });
   };
 
-  const handleImageUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target?.result as string;
-      counterRef.current += 1;
-      const id = `img:${counterRef.current}`;
-      imageMapRef.current[id] = base64;
-
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    setUploadError("");
+    try {
+      const { key } = await uploadMedia(file, "markdown");
       const alt = file.name.replace(/\.[^.]+$/, "");
-      const placeholder = `![${alt}](${id})\n`;
-
+      const insertion = `![${alt}](${key})\n`;
       const el = textareaRef.current;
-      const start = el ? el.selectionStart : displayValue.length;
-      const newDisplay = displayValue.slice(0, start) + placeholder + displayValue.slice(start);
-      handleDisplayChange(newDisplay);
-    };
-    reader.readAsDataURL(file);
+      const start = el ? el.selectionStart : value.length;
+      const newValue = value.slice(0, start) + insertion + value.slice(start);
+      onChange(newValue);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
-
-  const previewMarkdown = expand(displayValue, imageMapRef.current);
 
   const showEditor = viewMode === "split" || viewMode === "editor";
   const showPreview = viewMode === "split" || viewMode === "preview";
@@ -262,15 +223,16 @@ const MarkdownEditor = ({
                 <Link2 size={14} />
               </Button>
               {enableImageUpload && (
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => fileInputRef.current?.click()}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
                   <ImagePlus size={14} />
                 </Button>
               )}
             </div>
+            {uploadError && <p className="text-xs text-destructive mb-1">{uploadError}</p>}
             <textarea
               ref={textareaRef}
-              value={displayValue}
-              onChange={(e) => handleDisplayChange(e.target.value)}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
               onClick={syncPreviewToEditor}
               onKeyUp={syncPreviewToEditor}
               className={`w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono ${
@@ -311,7 +273,7 @@ const MarkdownEditor = ({
           >
             <article className={proseClassName}>
               <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
-                {previewMarkdown}
+                {value}
               </ReactMarkdown>
             </article>
           </div>

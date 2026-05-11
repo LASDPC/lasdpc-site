@@ -4,6 +4,7 @@ import { Newspaper } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useBlog } from "@/hooks/useBlog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mediaUrl } from "@/lib/media";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -52,7 +53,7 @@ const BlogPage = () => {
               <Link to={`/blog/${post.id}`} className="h-full">
                 <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
                   <img
-                    src={post.coverImage || FALLBACK_IMAGE}
+                    src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
                     alt={isPt ? post.titlePt : post.title}
                     className="w-full h-44 object-cover shrink-0"
                     loading="lazy"

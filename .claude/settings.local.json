@@ -8,7 +8,28 @@
       "Bash(source:*)",
       "Bash(npm run:*)",
       "Bash(pip install:*)",
-      "Bash(pip3 install:*)"
+      "Bash(pip3 install:*)",
+      "Bash(docker compose *)",
+      "Bash(python -c ' *)",
+      "Bash(python3 -c ' *)",
+      "Bash(ls venv/bin/python 2>/dev/null && echo \"venv exists\" || echo \"no venv\")",
+      "Read(//usr/bin/**)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx eslint *)",
+      "Bash(echo \"compose exit=$?\")",
+      "Bash(docker info *)",
+      "Bash(systemctl --user status docker-desktop)",
+      "Read(//var/run/**)",
+      "Read(//home/lfelipediniz/.docker/desktop/**)",
+      "Bash(systemctl --user start docker-desktop)",
+      "Bash(echo \"start_exit=$?\")",
+      "Bash(docker version *)",
+      "Bash(echo \"pull_exit=$?\")",
+      "Bash(sudo ss -tlnp)",
+      "Bash(sudo -n ss -tlnp)",
+      "Bash(sudo -n lsof -i :27017)",
+      "Bash(systemctl status *)"
     ]
   }
 }

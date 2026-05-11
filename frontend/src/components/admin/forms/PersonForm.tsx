@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useDocentes } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
 import { uploadProfilePhoto } from "@/services/uploads";
+import { mediaUrl } from "@/lib/media";
 
 const LAB_RELATIONSHIP_OPTIONS = [
   { value: "academic_advisor", pt: "Orientador acadêmico", en: "Academic advisor" },
@@ -114,8 +115,8 @@ function ProfilePhotoField({
     setUploading(true);
     setError("");
     try {
-      const { url } = await uploadProfilePhoto(file);
-      setPhoto(url);
+      const { key } = await uploadProfilePhoto(file);
+      setPhoto(key);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -129,7 +130,7 @@ function ProfilePhotoField({
       <Label>{pt ? "Foto de perfil" : "Profile photo"}</Label>
       <div className="flex flex-wrap items-center gap-3">
         {photo ? (
-          <img src={photo} alt="" className="h-16 w-16 rounded-full border border-border object-cover" />
+          <img src={mediaUrl(photo)} alt="" className="h-16 w-16 rounded-full border border-border object-cover" />
         ) : (
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary text-xs text-muted-foreground">
             {pt ? "Sem foto" : "No photo"}

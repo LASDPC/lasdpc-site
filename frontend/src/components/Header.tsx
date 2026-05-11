@@ -9,6 +9,7 @@ import logo from "@/assets/lasdpc-logo.png";
 import UserAvatarButton from "@/components/UserAvatarButton";
 import NotificationBell from "@/components/NotificationBell";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { mediaUrl } from "@/lib/media";
 
 const publicNavKeys = [
   { key: "nav.home", path: "/" },
@@ -154,7 +155,9 @@ const Header = () => {
                 {user && (
                   <div className="flex items-center gap-3 px-3 py-2.5 mb-2 border-b border-border pb-3">
                     <Avatar className="h-8 w-8">
-                      {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                      {(user.photo || user.avatar) && (
+                        <AvatarImage src={mediaUrl(user.photo || user.avatar)} alt={user.name} />
+                      )}
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                         {user.initials}
                       </AvatarFallback>

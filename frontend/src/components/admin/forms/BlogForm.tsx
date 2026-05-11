@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import type { BlogPost } from "@/services/blog";
+import { uploadMedia } from "@/services/uploads";
+import { mediaUrl } from "@/lib/media";
 import MarkdownEditor from "./MarkdownEditor";
 
 const schema = z.object({
@@ -40,13 +42,20 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
 
   const coverImage = watch("coverImage");
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverError, setCoverError] = useState("");
 
-  const handleCoverUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setValue("coverImage", ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+  const handleCoverUpload = async (file: File) => {
+    setUploadingCover(true);
+    setCoverError("");
+    try {
+      const { key } = await uploadMedia(file, "blog");
+      setValue("coverImage", key);
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   return (
@@ -67,7 +76,7 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
         <div className="flex items-center gap-3 mt-1">
           {coverImage ? (
             <div className="relative">
-              <img src={coverImage} alt={pt ? "Prévia da capa" : "Cover preview"} className="h-24 rounded-md object-cover" />
+              <img src={mediaUrl(coverImage)} alt={pt ? "Prévia da capa" : "Cover preview"} className="h-24 rounded-md object-cover" />
               <Button
                 type="button"
                 variant="destructive"
@@ -79,8 +88,8 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
               </Button>
             </div>
           ) : (
-            <Button type="button" variant="outline" size="sm" onClick={() => coverInputRef.current?.click()}>
-              <ImagePlus size={14} className="mr-2" /> {pt ? "Enviar capa" : "Upload Cover"}
+            <Button type="button" variant="outline" size="sm" disabled={uploadingCover} onClick={() => coverInputRef.current?.click()}>
+              <ImagePlus size={14} className="mr-2" /> {uploadingCover ? (pt ? "Enviando..." : "Uploading...") : (pt ? "Enviar capa" : "Upload Cover")}
             </Button>
           )}
           <input
@@ -95,6 +104,7 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
             }}
           />
         </div>
+        {coverError && <p className="text-xs text-destructive mt-1">{coverError}</p>}
       </div>
 
       <Controller
