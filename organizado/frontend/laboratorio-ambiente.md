@@ -1,4 +1,4 @@
-# Frontend — Página Infraestrutura / Ambiente do Laboratório
+# Frontend - Página Infraestrutura / Ambiente do Laboratório
 
 > **Destino:** `frontend/src/pages/InfrastructurePage.tsx` (seções
 > descritivas) + `data/i18n`.
@@ -28,19 +28,19 @@
 ### EN
 > This room contains **24 computers** and the **principal data center**,
 > divided into a small adapted room to maintain server temperature. It
-> includes **five air conditioners** — three in the small data-center room
+> includes **five air conditioners** - three in the small data-center room
 > and two outside.
 
 ### PT
 > Esta sala contém **24 computadores** e o **datacenter principal**,
 > dividido em uma pequena sala adaptada para manter a temperatura dos
-> servidores. Conta com **cinco aparelhos de ar-condicionado** — três no
+> servidores. Conta com **cinco aparelhos de ar-condicionado** - três no
 > datacenter e dois externos.
 
 ### Imagens
 
-- `icmc_lasdpc_lab_1006.png` — planta/visão geral
-- `lasdpc_1006_1.jpg`, `lasdpc_1006_2.jpg`, `lasdpc_1006_3.jpg` — galeria
+- `icmc_lasdpc_lab_1006.png` - planta/visão geral
+- `lasdpc_1006_1.jpg`, `lasdpc_1006_2.jpg`, `lasdpc_1006_3.jpg` - galeria
 
 ## Sala 1008
 
@@ -55,13 +55,13 @@
 > Esta sala contém **cinco computadores**, dois monitores grandes e um
 > **datacenter secundário** que apoia atividades de pesquisa e ensino. A
 > temperatura é mantida por dois aparelhos de ar-condicionado. A sala
-> funciona como espaço de convivência para alunos e professores —
+> funciona como espaço de convivência para alunos e professores -
 > contém geladeira, chaleira elétrica e máquina de café.
 
 ### Imagens
 
-- `icmc_lasdpc_lab_1008.png` — planta/visão geral
-- `lasdpc_1008_1.jpg`, `lasdpc_1008_2.jpg`, `lasdpc_1008_3.jpg` — galeria
+- `icmc_lasdpc_lab_1008.png` - planta/visão geral
+- `lasdpc_1008_1.jpg`, `lasdpc_1008_2.jpg`, `lasdpc_1008_3.jpg` - galeria
 
 ## Ativos do laboratório (overview)
 

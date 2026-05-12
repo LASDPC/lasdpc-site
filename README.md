@@ -129,7 +129,7 @@ You skipped step 1. The compose file reads from `backend/.env`. Run `cp backend/
 The Docker daemon isn't running. See the Prerequisites section.
 
 **`ports are not available: ... bind: address already in use` on 27017**
-You have a native `mongod` running on the host. The compose file already maps the container Mongo to `27018` on the host to avoid this — make sure `MONGO_URI` in `backend/.env` ends with `:27018`.
+You have a native `mongod` running on the host. The compose file already maps the container Mongo to `27018` on the host to avoid this - make sure `MONGO_URI` in `backend/.env` ends with `:27018`.
 
 **`unpigz: corrupted -- crc32 mismatch` during `docker compose pull`**
 Transient registry/network glitch. Retry: `docker compose pull && docker compose up -d`.

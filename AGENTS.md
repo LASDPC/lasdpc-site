@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-LASDPC website — a bilingual (pt-BR / en-US) academic lab site with a React+TypeScript frontend and a Python FastAPI backend backed by MongoDB.
+LASDPC website - a bilingual (pt-BR / en-US) academic lab site with a React+TypeScript frontend and a Python FastAPI backend backed by MongoDB.
 
 ## Development Commands
 
@@ -40,19 +40,19 @@ Frontend env vars: `VITE_API_URL` (defaults to `http://localhost:8000`), `VITE_M
 
 ### Backend (`backend/`)
 - **FastAPI** app in `main.py`, all routes under `/api/v1/`
-- **Motor** (async MongoDB driver) via `core/database.py` — no ORM, direct collection access
-- `core/config.py` — Pydantic Settings loaded from `.env`
-- `core/security.py` / `core/dependencies.py` — JWT auth, password hashing, route guards
-- `routers/` — one file per resource (blog, projects, publications, people, infrastructure, docs, stats, auth, users)
-- `models/` — Pydantic schemas for each resource
+- **Motor** (async MongoDB driver) via `core/database.py` - no ORM, direct collection access
+- `core/config.py` - Pydantic Settings loaded from `.env`
+- `core/security.py` / `core/dependencies.py` - JWT auth, password hashing, route guards
+- `routers/` - one file per resource (blog, projects, publications, people, infrastructure, docs, stats, auth, users)
+- `models/` - Pydantic schemas for each resource
 - Admin bootstrap: auto-creates admin user on startup if `ADMIN_EMAIL`/`ADMIN_PASSWORD` are set
 
 ### Frontend (`frontend/`)
 - **Vite + React 18 + TypeScript**, ShadCN/UI components (Radix + Tailwind CSS)
-- `src/services/` — thin API clients per resource, all use `src/lib/api.ts` (fetch wrapper with JWT token from localStorage)
-- `src/hooks/` — React Query hooks wrapping each service
-- `src/contexts/` — AuthContext (JWT login state), LanguageContext (i18n via JSON files in `src/data/i18n/`), ThemeContext
-- `src/pages/` — route pages; `AdminEditPage` is the generic CRUD editor for all resources
+- `src/services/` - thin API clients per resource, all use `src/lib/api.ts` (fetch wrapper with JWT token from localStorage)
+- `src/hooks/` - React Query hooks wrapping each service
+- `src/contexts/` - AuthContext (JWT login state), LanguageContext (i18n via JSON files in `src/data/i18n/`), ThemeContext
+- `src/pages/` - route pages; `AdminEditPage` is the generic CRUD editor for all resources
 - Path alias: `@` maps to `src/`
 - Vite dev server proxies `/api` requests to the backend at port 8000
 

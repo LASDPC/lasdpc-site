@@ -37,8 +37,13 @@ async def get_stats():
 
 
 async def _count_researchers(db) -> int:
+    """Count active researchers for the home-page stats card.
+
+    Alumni are intentionally excluded - they are former members and should
+    not inflate the "current researchers" counter.
+    """
     docentes, students = await asyncio.gather(
         db.users.count_documents({"role": "docente", "status": "active"}),
-        db.users.count_documents({"role": {"$in": ["aluno_ativo", "alumni"]}, "status": "active"}),
+        db.users.count_documents({"role": "aluno_ativo", "status": "active"}),
     )
     return docentes + students

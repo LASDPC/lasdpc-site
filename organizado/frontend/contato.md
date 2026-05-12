@@ -1,4 +1,4 @@
-# Frontend — Página Contato
+# Frontend - Página Contato
 
 > **Destino:** `frontend/src/pages/ContactPage.tsx` + i18n.
 > **Fontes:** `home.md`, `info.md`, `Contact us - Smart LaSDPC.html`.
@@ -6,8 +6,8 @@
 ## Endereço institucional (versão clássica)
 
 ```yaml
-institution_en: "University of São Paulo — Institute of Mathematics and Computer Sciences (ICMC)"
-institution_pt: "Universidade de São Paulo — Instituto de Ciências Matemáticas e de Computação (ICMC)"
+institution_en: "University of São Paulo - Institute of Mathematics and Computer Sciences (ICMC)"
+institution_pt: "Universidade de São Paulo - Instituto de Ciências Matemáticas e de Computação (ICMC)"
 phone:          "+55 (16) 3373-9564"
 address_line1:  "Rua Doutor Carlos de Camargo Salles, 395"
 address_line2:  "Bloco 1, Sala 1-006"
@@ -20,10 +20,10 @@ country:        "Brazil"
 ## Endereço institucional (versão Smart-LaSDPC, mais recente)
 
 > Fonte: `Contact us - Smart LaSDPC.html`. Conflita parcialmente com a versão
-> clássica (CEP diferente — provável endereço atualizado).
+> clássica (CEP diferente - provável endereço atualizado).
 
 ```yaml
-institution_en: "Universidade de São Paulo — Instituto de Ciências Matemáticas e de Computação"
+institution_en: "Universidade de São Paulo - Instituto de Ciências Matemáticas e de Computação"
 address_line1:  "Avenida Trabalhador São-carlense, 400"
 neighborhood:   "Centro"
 cep_main:       "13566-590"
@@ -69,7 +69,7 @@ github_new: "https://github.com/Smart-LaSDPC"
     "titlePt": "Contato",
     "address": { "en": "...", "pt": "..." },
     "phone": "+55 (16) 3373-9564",
-    "email": "lasdpc@icmc.usp.br",   // confirmar — não estava no site antigo
+    "email": "lasdpc@icmc.usp.br",   // confirmar - não estava no site antigo
     "map": { "lat": -22.00741, "lng": -47.89533, "zoom": 15 }
   }
 }

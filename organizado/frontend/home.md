@@ -1,4 +1,4 @@
-# Frontend — Página Home
+# Frontend - Página Home
 
 > **Destino:** `frontend/src/pages/HomePage.tsx` + `src/data/i18n/*.json`
 > **Fonte:** `home.md` (versão clássica, julho/2015) + `info.md`

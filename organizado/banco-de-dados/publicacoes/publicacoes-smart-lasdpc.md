@@ -1,4 +1,4 @@
-# Publicações — Projeto Smart-LaSDPC (2023 – 2024)
+# Publicações - Projeto Smart-LaSDPC (2023 – 2024)
 
 > **Destino:** coleção `publications`
 > **Modelo:** `backend/models/publication.py :: PublicationCreate`

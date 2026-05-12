@@ -12,6 +12,6 @@ export const urlTransform = (url: string) => {
   ) {
     return defaultUrlTransform(url);
   }
-  // Relative path that doesn't start with "/" — treat as MinIO object key
+  // Relative path that doesn't start with "/" - treat as MinIO object key
   return defaultUrlTransform(mediaUrl(url) ?? url);
 };

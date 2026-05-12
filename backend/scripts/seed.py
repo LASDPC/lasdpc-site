@@ -89,10 +89,17 @@ async def main() -> None:
         try:
             image_uploader.ensure_bucket()
             uploader = image_uploader.upload_local_image
-            print("[+] MinIO bucket ready — image uploads enabled")
+            print("[+] MinIO bucket ready - image uploads enabled")
         except Exception as exc:
-            print(f"[!] MinIO unavailable ({exc}); continuing without image uploads")
+            print(
+                f"[!] MinIO unavailable or credentials invalid ({exc}); "
+                "continuing without image uploads. "
+                "Tip: `docker compose down -v && docker compose up -d` "
+                "to reset MinIO with the credentials in backend/.env."
+            )
             uploader = None
+    else:
+        print("[i] --skip-images set; image uploads disabled")
 
     # 1. Pessoas
     docentes_docs, others_docs = people.parse_everyone()

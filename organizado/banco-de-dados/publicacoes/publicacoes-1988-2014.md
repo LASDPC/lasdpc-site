@@ -1,4 +1,4 @@
-# Publicações LaSDPC — Histórico 1988–2014
+# Publicações LaSDPC - Histórico 1988–2014
 
 > **Destino:** coleção `publications`
 > **Modelo:** `backend/models/publication.py :: PublicationCreate`
@@ -23,7 +23,7 @@ doi:      ""            # poucos têm DOI no original; preencher na revisão
 > **Observação:** a contagem é de aproximadamente 350+ entradas distribuídas
 > entre 1988 e 2014. As entradas sem ano (final do arquivo) aparecem na seção
 > "Sem ano declarado". Esta lista NÃO inclui as publicações do Smart-LaSDPC
-> (2023–2024) — essas estão em `publicacoes-smart-lasdpc.md`.
+> (2023–2024) - essas estão em `publicacoes-smart-lasdpc.md`.
 
 ---
 
@@ -584,5 +584,5 @@ doi:      ""            # poucos têm DOI no original; preencher na revisão
 2. SANTANA, R. H. C.; SANTANA, Marcos José. **Cursos de Computação na USP São Carlos.** Jornal Primeira Página, São Carlos.
 3. UEYAMA, J.; MADEIRA, E. R. M.. **Catálogos Eletrônicos para Comércio Eletrônico.** Developers' Magazine, Rio de Janeiro, p. 20-28.
 
-> *Data de processamento original: 11/11/2014 12:46:15 — scriptLattes V8.09
+> *Data de processamento original: 11/11/2014 12:46:15 - scriptLattes V8.09
 > (NUVEM/UFABC e CCSL-IME/USP, Jesús P. Mena-Chalco e Roberto M. Cesar-Jr).*

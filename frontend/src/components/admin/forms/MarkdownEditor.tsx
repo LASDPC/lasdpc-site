@@ -257,7 +257,7 @@ const MarkdownEditor = ({
           </div>
         )}
 
-        {/* Preview — height follows editor, scrolls internally */}
+        {/* Preview - height follows editor, scrolls internally */}
         {showPreview && (
           <div className="flex flex-col">
             {/* Spacer matching the toolbar height */}

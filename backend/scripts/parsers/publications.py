@@ -3,7 +3,7 @@
 - `publicacoes-smart-lasdpc.md`: 5 entries in structured bullet format.
 - `publicacoes-1988-2014.md`: ~350 entries in scriptLattes bibliographic format,
   grouped by year section. We use a regex-based state machine and fall back to
-  writing the raw entry into `title` when parsing fails — nothing is lost.
+  writing the raw entry into `title` when parsing fails - nothing is lost.
 """
 
 from __future__ import annotations

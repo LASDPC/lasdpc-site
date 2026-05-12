@@ -1,4 +1,4 @@
-# Conteúdo do LaSDPC antigo — Organizado
+# Conteúdo do LaSDPC antigo - Organizado
 
 Este diretório reúne, em formato Markdown limpo, todo o conteúdo recuperado do
 site antigo do LaSDPC (versão "clássica" 1990–2016) e do site Smart-LaSDPC
@@ -47,7 +47,7 @@ organizado/
 
 ---
 
-## Banco de Dados — o que vira registro
+## Banco de Dados - o que vira registro
 
 | Arquivo | Coleção alvo | Modelo (backend) |
 |---|---|---|
@@ -61,7 +61,7 @@ Cada arquivo nessa pasta contém, no topo, um bloco YAML/frontmatter sugerindo
 o mapeamento de campos. Os itens individuais ficam em listas/tabelas para
 facilitar um script de seed futuro.
 
-## Frontend — o que vira texto da página
+## Frontend - o que vira texto da página
 
 Cada arquivo corresponde a uma página/seção do site atual. O texto fica em
 pares EN/PT seguindo a convenção do projeto (`field` em inglês,

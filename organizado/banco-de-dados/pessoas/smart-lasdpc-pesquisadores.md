@@ -1,4 +1,4 @@
-# Smart-LaSDPC — Pesquisadores (2020 – 2024)
+# Smart-LaSDPC - Pesquisadores (2020 – 2024)
 
 > **Destino:** coleção `users`
 > **Fonte:** `Researchers - LaSDPC.html` (snapshot smart-lasdpc.github.io)

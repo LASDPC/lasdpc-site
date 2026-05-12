@@ -1,4 +1,4 @@
-# LaSDPC Games — REA Metabolismo e Obesidade
+# LaSDPC Games - REA Metabolismo e Obesidade
 
 > **Destino:** coleção `projects` (ou um project pai + filhos)
 > **Modelo:** `backend/models/project.py :: ProjectCreate`
@@ -9,8 +9,8 @@
 ## Resumo
 
 ```yaml
-title:        "LaSDPC Games — Health & Metabolism OERs"
-titlePt:      "LaSDPC Games — REA Metabolismo e Obesidade"
+title:        "LaSDPC Games - Health & Metabolism OERs"
+titlePt:      "LaSDPC Games - REA Metabolismo e Obesidade"
 description:  "Open Educational Resources (games) produced in partnership between ICB/USP and ICMC/USP, addressing physiology, healthy nutrition and metabolism."
 descriptionPt: "Recursos Educacionais Abertos (jogos) em parceria entre ICB/USP e ICMC/USP, abordando fisiologia, alimentação saudável e metabolismo."
 status:       "active"
@@ -22,7 +22,7 @@ impact:       "Medium"
 ## Financiamento
 
 Projeto apoiado pela **Pró-Reitoria de Cultura e Extensão Universitária
-(PRCEU/USP)** — chamada **ODS-ONU (2021)**.
+(PRCEU/USP)** - chamada **ODS-ONU (2021)**.
 
 ## Jogos disponíveis
 
@@ -54,7 +54,7 @@ competitiva.
 ## Notas
 
 - Instruções de instalação e formulário de feedback estavam disponíveis no
-  site antigo (links quebrados — recuperar nos repositórios da
+  site antigo (links quebrados - recuperar nos repositórios da
   organização `lasdpc-games` no GitHub).
 - Como cada jogo é um produto independente, o seed pode criar **4 projects**
   irmãos (com `tags: ["LaSDPC Games"]`) ou um único project pai com

@@ -92,7 +92,7 @@ def _parse_yaml_value(raw: str) -> object:
 
 def _extract_content_sections(text: str) -> tuple[str, str]:
     """Pull English/Portuguese narrative from the `### English`/`### Português`
-    subsections under `## Conteúdo`. Returns (`content`, `contentPt`) — empty
+    subsections under `## Conteúdo`. Returns (`content`, `contentPt`) - empty
     strings if absent.
     """
     en_match = re.search(r"### English\s*\n(.*?)(?=### Português|\Z)", text, flags=re.DOTALL)
@@ -157,14 +157,14 @@ def parse_lasdpc_games(image_uploader: Optional[Callable] = None) -> dict:
         "metabolism, with Desktop and Android versions, funded by PRCEU/USP under "
         "the ODS-ONU (2021) call.\n\n"
         "### Available games\n\n"
-        "- **Magnatas da Saúde** — a character must recover physical health; teaches "
+        "- **Magnatas da Saúde** - a character must recover physical health; teaches "
         "energy metabolism, healthy eating and physical exercise, with their link to "
         "obesity and diabetes.\n"
-        "- **Enzigame** — the player controls digestive enzymes, accelerating chemical "
+        "- **Enzigame** - the player controls digestive enzymes, accelerating chemical "
         "reactions and contributing to metabolism.\n"
-        "- **Batalha dos Alimentos** — the player shields a character from harmful "
+        "- **Batalha dos Alimentos** - the player shields a character from harmful "
         "foods; teaches food choice with reinforcement questions on nutrition.\n"
-        "- **Metabuleiro** — board game with a Metabolism & Obesity quiz, balanced "
+        "- **Metabuleiro** - board game with a Metabolism & Obesity quiz, balanced "
         "for competitive group play.\n"
     )
     content_pt = (
@@ -176,8 +176,8 @@ def parse_lasdpc_games(image_uploader: Optional[Callable] = None) -> dict:
     )
 
     return {
-        "title": meta.get("title", "LaSDPC Games — Health & Metabolism OERs"),
-        "titlePt": meta.get("titlePt", "LaSDPC Games — REA Metabolismo e Obesidade"),
+        "title": meta.get("title", "LaSDPC Games - Health & Metabolism OERs"),
+        "titlePt": meta.get("titlePt", "LaSDPC Games - REA Metabolismo e Obesidade"),
         "description": meta.get("description", ""),
         "descriptionPt": meta.get("descriptionPt", ""),
         "content": content_en,
@@ -213,9 +213,9 @@ def parse_oer_sistemas_operacionais(image_uploader: Optional[Callable] = None) -
         "the GNU/GPL licence to support the teaching of Operating Systems. The "
         "initiative started in 2015 in three courses coordinated by Prof. Paulo "
         "Sérgio Lopes de Souza:\n\n"
-        "- **SSC0640 – Operating Systems I** (Computer Engineering, undergraduate) — 14 OERs.\n"
-        "- **SSC5723 – Operating System** (PPG-CCMC, graduate) — 5 OERs.\n"
-        "- **SSC0140 – Operating Systems** (2nd semester 2015) — remaining OERs.\n\n"
+        "- **SSC0640 – Operating Systems I** (Computer Engineering, undergraduate) - 14 OERs.\n"
+        "- **SSC5723 – Operating System** (PPG-CCMC, graduate) - 5 OERs.\n"
+        "- **SSC0140 – Operating Systems** (2nd semester 2015) - remaining OERs.\n\n"
         "Faculty collaborators: Ellen Francine Barbosa, Sarita Mazzini Bruschi and "
         "Júlio Cézar Estrella, with students Douglas Rondon (monitor), Liuri Loami, "
         "Felipe Brunelli de Andrade and Danilo Marins Costa Segura.\n\n"
@@ -231,9 +231,9 @@ def parse_oer_sistemas_operacionais(image_uploader: Optional[Callable] = None) -
         "sob licença GNU/GPL para apoiar o ensino de Sistemas Operacionais. A "
         "iniciativa começou em 2015 em três disciplinas coordenadas pelo "
         "Prof. Paulo Sérgio Lopes de Souza:\n\n"
-        "- **SSC0640 – Sistemas Operacionais I** (Engenharia de Computação, graduação) — 14 REAs.\n"
-        "- **SSC5723 – Sistemas Operacionais** (PPG-CCMC, pós-graduação) — 5 REAs.\n"
-        "- **SSC0140 – Sistemas Operacionais** (2º semestre 2015) — demais REAs.\n\n"
+        "- **SSC0640 – Sistemas Operacionais I** (Engenharia de Computação, graduação) - 14 REAs.\n"
+        "- **SSC5723 – Sistemas Operacionais** (PPG-CCMC, pós-graduação) - 5 REAs.\n"
+        "- **SSC0140 – Sistemas Operacionais** (2º semestre 2015) - demais REAs.\n\n"
         "Colaboração: Ellen Francine Barbosa, Sarita Mazzini Bruschi e "
         "Júlio Cézar Estrella, com os alunos Douglas Rondon (monitor), Liuri Loami, "
         "Felipe Brunelli de Andrade e Danilo Marins Costa Segura.\n\n"
@@ -246,11 +246,11 @@ def parse_oer_sistemas_operacionais(image_uploader: Optional[Callable] = None) -
 
     return {
         "title": meta.get(
-            "title", "OER — Open Educational Resources for Operating Systems"
+            "title", "OER - Open Educational Resources for Operating Systems"
         ),
         "titlePt": meta.get(
             "titlePt",
-            "REA — Recursos Educacionais Abertos para Sistemas Operacionais",
+            "REA - Recursos Educacionais Abertos para Sistemas Operacionais",
         ),
         "description": meta.get(
             "description",

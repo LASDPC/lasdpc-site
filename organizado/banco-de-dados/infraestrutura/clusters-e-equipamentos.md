@@ -1,6 +1,6 @@
-# Infraestrutura LaSDPC — Clusters e Equipamentos
+# Infraestrutura LaSDPC - Clusters e Equipamentos
 
-> **Destino:** coleção `infrastructure` (clusters) — `backend/models/infrastructure.py :: ClusterCreate`
+> **Destino:** coleção `infrastructure` (clusters) - `backend/models/infrastructure.py :: ClusterCreate`
 > **Fontes:** `info.md`, `resources.md`, `About the project.html`
 
 ## Visão geral (do `info.md`, 2016)
@@ -15,7 +15,7 @@
 ### Sala 1006
 
 24 computadores e o **data center principal** (sala adaptada para manter a
-temperatura dos servidores), com cinco aparelhos de ar-condicionado — três
+temperatura dos servidores), com cinco aparelhos de ar-condicionado - três
 no datacenter e dois externos. Fotos disponíveis em
 `About the project_files/lasdpc_1006_{1,2,3}.jpg`.
 
@@ -61,7 +61,7 @@ descriptionPt:   "Cluster de computação para experimentos de processamento par
 status:          "online"
 ```
 
-> Convenção sugerida: usar **"Halley"** (grafia correta — cometa de Edmund
+> Convenção sugerida: usar **"Halley"** (grafia correta - cometa de Edmund
 > Halley). "Harlley" provavelmente é digitação no slide de apresentação.
 
 ## Política de acesso
@@ -83,9 +83,9 @@ Mais detalhes operacionais (solicitar conta, trocar senha) estão em
 
 ## Imagens associadas (extraídas em `organizado/imagens/`)
 
-- `assets_icmc_lasdpc_labs.png` — quadro com todos os ativos do laboratório.
-- `icmc_lasdpc_lab_1006.png` — planta/visão da sala 1006.
-- `icmc_lasdpc_lab_1008.png` — planta/visão da sala 1008.
-- `lasdpc_1006_{1,2,3}.jpg` — fotografias da sala 1006.
-- `lasdpc_1008_{1,2,3}.jpg` — fotografias da sala 1008.
-- `lasdpc_1006_1.jpg` (raiz, ~1,6 MB) — versão de alta resolução.
+- `assets_icmc_lasdpc_labs.png` - quadro com todos os ativos do laboratório.
+- `icmc_lasdpc_lab_1006.png` - planta/visão da sala 1006.
+- `icmc_lasdpc_lab_1008.png` - planta/visão da sala 1008.
+- `lasdpc_1006_{1,2,3}.jpg` - fotografias da sala 1006.
+- `lasdpc_1008_{1,2,3}.jpg` - fotografias da sala 1008.
+- `lasdpc_1006_1.jpg` (raiz, ~1,6 MB) - versão de alta resolução.

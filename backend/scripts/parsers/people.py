@@ -20,7 +20,7 @@ PESSOAS_DIR = (
 
 
 # ---------------------------------------------------------------------------
-# Docente registry — emails verified manually (markdown lists "sim" but no URL)
+# Docente registry - emails verified manually (markdown lists "sim" but no URL)
 # ---------------------------------------------------------------------------
 # Maps the docente full name (as written in corpo-docente.md) to a canonical
 # email and the enrichment data the markdown alone does not carry. Anything
@@ -126,7 +126,7 @@ def _normalize_advisor(raw: str) -> list[str]:
         "Monaco / Regina"      -> ["Francisco José Monaco", "Regina Helena Carlucci Santana"]
         "Jó Ueyama"            -> ["Jó Ueyama"]   (not in registry, returned as-is)
     """
-    if not raw or raw.strip() in {"—", "-", ""}:
+    if not raw or raw.strip() in {"-", "-", ""}:
         return []
     parts = re.split(r"\s*/\s*", raw.strip())
     out: list[str] = []
@@ -183,7 +183,7 @@ def _parse_markdown_table(text: str) -> list[list[str]]:
             if all(re.match(r":?-+:?$", c) for c in cells if c):
                 seen_separator = True
                 continue
-            # No separator yet — treat as another header to skip
+            # No separator yet - treat as another header to skip
             continue
         rows.append(cells)
     return rows
@@ -204,7 +204,7 @@ def parse_docentes() -> list[dict]:
         name = row[0]
         registry = _DOCENTE_REGISTRY.get(name)
         if not registry:
-            print(f"[!] docente sem registro de email: {name} — usando email sintético")
+            print(f"[!] docente sem registro de email: {name} - usando email sintético")
             registry = {"email": _synth_email(name, "icmc.usp.br")}
         doc = {
             "email": registry["email"],
@@ -230,8 +230,16 @@ def _parse_student_table(
     md_path: Path,
     level: str,
     level_pt: str,
-    role: str = "aluno_ativo",
+    role: str = "alumni",
 ) -> list[dict]:
+    """Parse a markdown student table.
+
+    Historically the snapshots in `doutorandos.md`, `mestrandos.md` and
+    `graduandos-iniciacao.md` were captured in 2016 and most of those people
+    have long since graduated - they are imported as `alumni`. The only
+    currently-active student is `Luiz Felipe Diniz Costa` (2024), injected
+    explicitly in `parse_everyone()`.
+    """
     md = md_path.read_text(encoding="utf-8")
     rows = _parse_markdown_table(md)
     out: list[dict] = []
@@ -253,7 +261,7 @@ def _parse_student_table(
                 "level": level,
                 "levelPt": level_pt,
                 "advisor_name": advisor_name,
-                "year_joined": 2016 if role == "aluno_ativo" else None,
+                "year_joined": 2016,
             }
         )
     return out
@@ -280,7 +288,7 @@ def parse_graduandos() -> list[dict]:
 
 
 def parse_alumni() -> list[dict]:
-    """Parse `alumni.md` — 172 alumni rows.
+    """Parse `alumni.md` - 172 alumni rows.
 
     Column order: # | Aluno | Ano(s) | Orientador(es) | Nível
     """
@@ -323,8 +331,8 @@ def parse_alumni() -> list[dict]:
                 lv_en, lv_pt = level_map.get(lv, (lv, lv))
                 steps_en.append(f"{lv_en} in {y}")
                 steps_pt.append(f"{lv_pt} em {y}")
-            bio_en = "LaSDPC alumnus — " + ", ".join(steps_en) + "."
-            bio_pt = "Egresso(a) do LaSDPC — " + ", ".join(steps_pt) + "."
+            bio_en = "LaSDPC alumnus - " + ", ".join(steps_en) + "."
+            bio_pt = "Egresso(a) do LaSDPC - " + ", ".join(steps_pt) + "."
 
         out.append(
             {
@@ -404,30 +412,99 @@ def parse_smart_lasdpc_researchers() -> list[dict]:
             out.append(doc)
         return out
 
-    return _parse(current_md, "aluno_ativo") + _parse(past_md, "alumni")
+    # Both "current" and "past" Smart-LaSDPC researchers are treated as alumni
+    # - the lab snapshot is outdated. The only currently-active student is
+    # injected explicitly in `parse_everyone()`.
+    return _parse(current_md, "alumni") + _parse(past_md, "alumni")
 
 
 def parse_all_students() -> list[dict]:
-    """Parse the 2016 active-student snapshots (PhD/MSc/Undergrad)."""
+    """Parse the 2016 snapshots (PhD/MSc/Undergrad) - imported as alumni."""
     return parse_doutorandos() + parse_mestrandos() + parse_graduandos()
+
+
+# ---------------------------------------------------------------------------
+# Active student overrides - kept in code so the seed always reflects the
+# current state of the lab regardless of what is (or isn't) in the markdown
+# snapshots. Add new active students here.
+# ---------------------------------------------------------------------------
+
+ACTIVE_STUDENTS: list[dict] = [
+    {
+        "email": "lfediniz@gmail.com",
+        "name": "Luiz Felipe Diniz Costa",
+        "role": "aluno_ativo",
+        "status": "active",
+        "level": "Iniciação Científica",
+        "levelPt": "Iniciação Científica",
+        "year_joined": 2024,
+        "advisor_name": "Júlio Cezar Estrella",
+        "research_areas": [
+            "Distributed Systems",
+            "Cloud Computing",
+        ],
+    },
+]
+
+
+def parse_active_students() -> list[dict]:
+    """Return the hand-curated list of currently-active students.
+
+    Each entry is shaped like the records produced by `_parse_student_table`
+    so the seed pipeline can treat them uniformly. `initials` is filled in
+    automatically from the name.
+    """
+    out: list[dict] = []
+    for raw in ACTIVE_STUDENTS:
+        doc = dict(raw)
+        doc.setdefault("initials", _initials(doc["name"]))
+        out.append(doc)
+    return out
 
 
 def parse_everyone() -> tuple[list[dict], list[dict]]:
     """Return (docentes, others) where `others` already excludes anyone whose
     name appears in `docentes` (deduplicates Sarita/Paulo/Julio who are in alumni
     table but currently faculty).
+
+    Active students (see `ACTIVE_STUDENTS`) are placed first so any duplicate
+    that also appears in the markdown snapshots is filtered out by name/email
+    dedup. Everyone else is imported as `alumni`.
     """
     docentes = parse_docentes()
     docente_names = {d["name"] for d in docentes}
 
-    others = parse_all_students() + parse_smart_lasdpc_researchers() + parse_alumni()
+    active = parse_active_students()
+    others = (
+        active
+        + parse_all_students()
+        + parse_smart_lasdpc_researchers()
+        + parse_alumni()
+    )
+    active_names = {p["name"] for p in active}
+
     deduped: list[dict] = []
     seen_emails: set[str] = set()
+    seen_names: set[str] = set()
     for person in others:
         if person["name"] in docente_names:
+            continue
+        # Active overrides take precedence; downstream duplicates are dropped.
+        if person["name"] in seen_names:
             continue
         if person["email"] in seen_emails:
             continue
         seen_emails.add(person["email"])
+        seen_names.add(person["name"])
         deduped.append(person)
+
+    active_count = sum(1 for p in deduped if p.get("role") == "aluno_ativo")
+    alumni_count = sum(1 for p in deduped if p.get("role") == "alumni")
+    print(
+        f"[i] parse_everyone: {active_count} active student(s), "
+        f"{alumni_count} alumni"
+    )
+    if active_names - {p["name"] for p in deduped}:
+        missing = active_names - {p["name"] for p in deduped}
+        print(f"[!] active student(s) dropped during dedup: {missing}")
     return docentes, deduped

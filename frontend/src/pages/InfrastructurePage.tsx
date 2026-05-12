@@ -75,7 +75,7 @@ function DynamicField({
             className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
             required={field.required}
           >
-            <option value="">—</option>
+            <option value="">-</option>
             {field.options.map((o) => (
               <option key={o} value={o}>{o}</option>
             ))}
@@ -276,7 +276,7 @@ const InfrastructurePage = () => {
                   className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
                   required
                 >
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {clusters.filter((c) => c.status === "online").map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}

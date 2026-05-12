@@ -1,7 +1,7 @@
-# OER — Recursos Educacionais Abertos para Sistemas Operacionais
+# OER - Recursos Educacionais Abertos para Sistemas Operacionais
 
 > **Destino:** coleção `projects` (cada OER pode virar **um project** ou um
-> único project com array — sugestão: criar **um** project "OER Operating
+> único project com array - sugestão: criar **um** project "OER Operating
 > Systems" e armazenar os 41 recursos numa coleção dedicada ou em
 > `tags`/`content`).
 > **Modelo:** `backend/models/project.py :: ProjectCreate`
@@ -10,8 +10,8 @@
 ## Resumo
 
 ```yaml
-title:        "OER — Open Educational Resources for Operating Systems"
-titlePt:      "REA — Recursos Educacionais Abertos para Sistemas Operacionais"
+title:        "OER - Open Educational Resources for Operating Systems"
+titlePt:      "REA - Recursos Educacionais Abertos para Sistemas Operacionais"
 description:  "41 Open Educational Resources developed by ICMC/USP students under GNU/GPL to support the teaching of Operating Systems."
 descriptionPt: "41 Recursos Educacionais Abertos (REA) desenvolvidos por alunos do ICMC/USP sob licença GNU/GPL para o ensino de Sistemas Operacionais."
 status:       "active"
@@ -25,10 +25,10 @@ impact:       "Medium"
 A proposta surgiu em 2015 nas disciplinas de Sistemas Operacionais
 ministradas pelo **Prof. Paulo Sérgio Lopes de Souza** no ICMC/USP:
 
-- **SSC0640 – Operating Systems I** (Engenharia de Computação, graduação) —
+- **SSC0640 – Operating Systems I** (Engenharia de Computação, graduação) -
   14 OERs.
-- **SSC5723 – Operating System** (PPG-CCMC, pós-graduação) — 5 OERs.
-- **SSC0140** (Sistemas Operacionais, 2º semestre 2015) — demais OERs.
+- **SSC5723 – Operating System** (PPG-CCMC, pós-graduação) - 5 OERs.
+- **SSC0140** (Sistemas Operacionais, 2º semestre 2015) - demais OERs.
 
 Colaboraram também as professoras **Ellen Francine Barbosa**,
 **Sarita Mazzini Bruschi** e o **Prof. Júlio Cézar Estrella**, além dos
@@ -103,6 +103,6 @@ Cada item segue o padrão `<#> – <Nome> (<Turma>)`. Os campos `Disponível`,
 ## Notas
 
 - Licença: GNU/GPL.
-- Coordenação: Prof. Paulo Sérgio Lopes de Souza — LaSDPC/SSC/ICMC/USP.
+- Coordenação: Prof. Paulo Sérgio Lopes de Souza - LaSDPC/SSC/ICMC/USP.
 - Há um conjunto separado de jogos do projeto **Metabolismo e Obesidade**
-  (ICB/USP × ICMC/USP) — modelados em `lasdpc-games.md`.
+  (ICB/USP × ICMC/USP) - modelados em `lasdpc-games.md`.

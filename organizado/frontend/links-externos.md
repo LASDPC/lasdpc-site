@@ -1,4 +1,4 @@
-# Frontend — Links externos (header, rodapé, sidebar)
+# Frontend - Links externos (header, rodapé, sidebar)
 
 > **Destino:** rodapé, barra superior e widgets de sidebar do site.
 > **Fontes:** `home.md`, `Smart LaSDPC.html`, `Researchers - LaSDPC.html`,
@@ -11,7 +11,7 @@ Itens que apareciam como atalhos no topo da página:
 | Label  | URL aproximada (verificar antes de usar) |
 |---|---|
 | Facebook | https://www.facebook.com/lasdpc.icmc |
-| Email    | `mailto:` — não havia endereço fixo no antigo |
+| Email    | `mailto:` - não havia endereço fixo no antigo |
 | REDMINE  | (intranet do laboratório) |
 | GITLAB   | (intranet do laboratório) |
 | MOODLE   | (Moodle institucional ICMC) |
@@ -19,7 +19,7 @@ Itens que apareciam como atalhos no topo da página:
 | ICMC     | https://icmc.usp.br/ |
 | USP      | https://www.usp.br/ |
 
-> **Sugestão:** REDMINE, GITLAB e MOODLE eram links da intranet —
+> **Sugestão:** REDMINE, GITLAB e MOODLE eram links da intranet -
 > confirmar URLs com o administrador atual antes de incluir.
 
 ## Rodapé / redes sociais
@@ -42,7 +42,7 @@ Eram atalhos para páginas internas:
 
 ```text
 © Smart-LaSDPC. All rights reserved.
-Design: HTML5 UP — http://html5up.net/
+Design: HTML5 UP - http://html5up.net/
 ```
 
 > Quando o site novo entrar no ar, **remover** os créditos do HTML5 UP

@@ -1,6 +1,6 @@
 # Alumni LaSDPC (1992 – 2015)
 
-> **Destino:** coleção `users` — `role: "alumni"`
+> **Destino:** coleção `users` - `role: "alumni"`
 > **Modelo:** `backend/models/user.py :: UserCreate` (campos `graduation_year`, `level`, `advisor_name`)
 > **Fonte:** `people/alumini.md` (172 alumni, última edição jul/2015 por Paulo Souza)
 > **Legenda:** SI = Iniciação Científica; MSc = Mestrado; PhD = Doutorado; Post-Doc = Pós-doutorado
@@ -201,7 +201,7 @@ bio: "<Anos e níveis anteriores, se houver: ex. 'SI em 2003, MSc em 2008'>"
 
 - Há nomes que aparecem aqui **e** em `corpo-docente.md` (ex.: Sarita,
   Paulo S. L. de Souza, Júlio C. Estrella). Eles fizeram MSc/PhD na LaSDPC e
-  hoje são docentes — manter apenas o registro de docente (vínculo atual).
+  hoje são docentes - manter apenas o registro de docente (vínculo atual).
 - O orientador "Jó Ueyama" aparece muitas vezes mas ele não consta como
   docente no `team.md` de 2016. Provavelmente migrou para o Intermedia/SSC;
   manter como string `advisor_name` no momento do seed.

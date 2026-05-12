@@ -1,9 +1,9 @@
-# Frontend — Página "Computing in Education" / OER
+# Frontend - Página "Computing in Education" / OER
 
 > **Destino:** landing page do projeto OER (provavelmente derivada da
 > `ProjectPage.tsx` ou uma página dedicada).
 > **Fonte:** `computing in education/educationresouces.md` (cabeçalho e
-> texto introdutório — o catálogo de OERs em si é dado de banco em
+> texto introdutório - o catálogo de OERs em si é dado de banco em
 > `../banco-de-dados/projetos/oer-sistemas-operacionais.md`).
 
 ## Cabeçalho / hero
@@ -15,7 +15,7 @@
 > the teaching of computer systems. The resources available here, under the
 > **GNU/GPL license**, were developed by undergraduate and graduate students
 > of ICMC/USP under the supervision of professors. This initiative aims to
-> contribute to more attractive and dynamic classes — not just for our
+> contribute to more attractive and dynamic classes - not just for our
 > courses at ICMC/USP, but also for other institutions.
 >
 > The OERs available consider the teaching of **Operating Systems** for now.
@@ -28,7 +28,7 @@
 > Abertos para apoiar o ensino de sistemas computacionais. Os recursos aqui
 > disponíveis, sob **licença GNU/GPL**, foram desenvolvidos por alunos de
 > graduação e pós-graduação do ICMC/USP, sob supervisão de professores. A
-> iniciativa busca contribuir com aulas mais atrativas e dinâmicas — não
+> iniciativa busca contribuir com aulas mais atrativas e dinâmicas - não
 > apenas para nossos cursos no ICMC/USP, mas também para outras instituições.
 >
 > Os REAs disponíveis atualmente consideram o ensino de **Sistemas
@@ -86,8 +86,8 @@
 > The proposal to make these OERs available was born in the Operating
 > Systems courses taught in the first semester of 2015 at ICMC/USP, under
 > the responsibility of **Prof. Paulo Sérgio Lopes de Souza**. Two classes
-> participated: an undergraduate one (**SSC0640 — Operating Systems I**,
-> Computer Engineering, 14 OERs) and a graduate one (**SSC5723 — Operating
+> participated: an undergraduate one (**SSC0640 - Operating Systems I**,
+> Computer Engineering, 14 OERs) and a graduate one (**SSC5723 - Operating
 > System**, PPG-CCMC, 5 OERs).
 >
 > The initiative was supported by **Prof. Ellen Francine Barbosa** and
@@ -98,14 +98,14 @@
 > Andrade** (BIS undergraduate, WordPress kick-off) and **Danilo Marins
 > Costa Segura** (ICMC graduate, WordPress kick-off).
 >
-> by **Paulo Sérgio Lopes de Souza** — LaSDPC/SSC/ICMC/USP.
+> by **Paulo Sérgio Lopes de Souza** - LaSDPC/SSC/ICMC/USP.
 
 ### PT
 > A proposta de disponibilizar esses REAs nasceu nas disciplinas de Sistemas
 > Operacionais ministradas no primeiro semestre de 2015 no ICMC/USP, sob
 > responsabilidade do **Prof. Paulo Sérgio Lopes de Souza**. Duas turmas
-> participaram: uma de graduação (**SSC0640 — Sistemas Operacionais I**,
-> Engenharia de Computação, 14 REAs) e uma de pós-graduação (**SSC5723 —
+> participaram: uma de graduação (**SSC0640 - Sistemas Operacionais I**,
+> Engenharia de Computação, 14 REAs) e uma de pós-graduação (**SSC5723 -
 > Sistemas Operacionais**, PPG-CCMC, 5 REAs).
 >
 > A iniciativa contou com colaboração da **Profa. Ellen Francine Barbosa**
@@ -116,19 +116,19 @@
 > **Felipe Brunelli de Andrade** (graduando BSI, início do WordPress) e
 > **Danilo Marins Costa Segura** (mestrando ICMC, início do WordPress).
 >
-> por **Paulo Sérgio Lopes de Souza** — LaSDPC/SSC/ICMC/USP.
+> por **Paulo Sérgio Lopes de Souza** - LaSDPC/SSC/ICMC/USP.
 
 ## Avaliações (texto curto para a página)
 
 ### EN
-> So far, **773 evaluations** were performed on the OERs — **632** by
+> So far, **773 evaluations** were performed on the OERs - **632** by
 > undergraduate and graduate students and **141** by professors.
 > Considering all evaluation criteria, **90.8%** of professors and **96.4%**
 > of students rated the OERs as at least "Good". Average score: **9.0** by
 > students and **8.4** by professors.
 
 ### PT
-> Até o momento, foram realizadas **773 avaliações** sobre os REAs — **632**
+> Até o momento, foram realizadas **773 avaliações** sobre os REAs - **632**
 > por alunos (graduação e pós-graduação) e **141** por professores.
 > Considerando todos os critérios de avaliação, **90,8%** dos professores e
 > **96,4%** dos alunos avaliaram os REAs como, no mínimo, "Bons". Nota

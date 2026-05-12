@@ -47,10 +47,10 @@ const BlogPage = () => {
           {isPt ? "Nota: futura integração com LinkedIn/Instagram para publicação automática." : "Note: future LinkedIn/Instagram integration for auto-publishing."}
         </p>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid auto-rows-fr md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blog.map((post, i) => (
             <div key={post.id} className="relative group h-full">
-              <Link to={`/blog/${post.id}`} className="h-full">
+              <Link to={`/blog/${post.id}`} className="block h-full">
                 <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
                   <img
                     src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}

@@ -1,4 +1,4 @@
-# Frontend — Página História
+# Frontend - Página História
 
 > **Destino:** `frontend/src/pages/HistoriaPage.tsx` + i18n.
 > **Fonte:** `history.md` (jul/2015, Paulo Souza).
@@ -6,10 +6,10 @@
 ## Cabeçalho
 
 ### `header_en`
-> History — some words about our history.
+> History - some words about our history.
 
 ### `header_pt`
-> História — algumas palavras sobre a nossa história.
+> História - algumas palavras sobre a nossa história.
 
 ## Texto
 
@@ -46,7 +46,7 @@ research projects developed by undergraduate scientific-initiation students
 have also been important. Our alumni work in industry and in academia, with
 national and international presence.
 
-Following the evolution of the area, our research is constantly evolving —
+Following the evolution of the area, our research is constantly evolving -
 without ever forgetting our past. Nowadays LaSDPC hosts research in themes
 such as: green computing, cloud computing, SOA, web services, development
 of high-performance applications, testing of parallel and distributed
@@ -75,7 +75,7 @@ Desde a sua fundação, o foco da pesquisa do LaSDPC é o **desenvolvimento e
 a avaliação de sistemas computacionais distribuídos, algoritmos paralelos,
 ambientes de programação concorrente e redes de computadores**. Seguindo
 essa direção inicial, o LaSDPC acompanhou a grande evolução dos sistemas
-distribuídos desde os anos 90 — desenvolvimento de sistemas distribuídos,
+distribuídos desde os anos 90 - desenvolvimento de sistemas distribuídos,
 técnicas de computação paralela (arquiteturas avançadas e programação
 paralela), simulações distribuídas, escalonamento de processos, entre
 outros temas.
@@ -89,7 +89,7 @@ científica. Nossos alumni atuam na indústria e na academia, com presença
 nacional e internacional.
 
 Acompanhando a evolução da área, nossas pesquisas estão em constante
-evolução — sem esquecer nosso passado. Hoje, o LaSDPC abriga pesquisas em
+evolução - sem esquecer nosso passado. Hoje, o LaSDPC abriga pesquisas em
 temas como: computação verde, computação em nuvem, SOA, web services,
 desenvolvimento de aplicações de alto desempenho, teste de aplicações
 paralelas e distribuídas, avaliação de desempenho, sistemas computacionais
