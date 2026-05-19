@@ -48,6 +48,7 @@ const docenteSchema = z.object({
 const studentSchema = z.object({
   name: requiredText,
   email: z.string().email(),
+  role: z.enum(["aluno_ativo", "alumni"]),
   level: requiredText,
   levelPt: requiredText,
   advisor_id: requiredText,
@@ -58,6 +59,7 @@ const studentSchema = z.object({
   bioPt: z.string().optional(),
   year_joined: z.coerce.number().int().min(1900).max(2100).optional().or(z.literal("")),
   graduation_year: z.coerce.number().int().min(1900).max(2100).optional().or(z.literal("")),
+  exit_date: z.string().optional(),
   linkedin: z.string().optional(),
   github: requiredText,
   twitter: z.string().optional(),
@@ -366,6 +368,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
     defaultValues: {
       name: initial?.name ?? "",
       email: initial?.email ?? "",
+      role: (initial?.role as "aluno_ativo" | "alumni") ?? "aluno_ativo",
       level: initial?.level ?? "",
       levelPt: initial?.levelPt ?? "",
       advisor_id: initial?.advisor_id ?? "",
@@ -375,6 +378,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       bioPt: initial?.bioPt ?? "",
       year_joined: initial?.year_joined ?? ("" as unknown as undefined),
       graduation_year: initial?.graduation_year ?? ("" as unknown as undefined),
+      exit_date: initial?.exit_date ?? "",
       linkedin: initial?.linkedin ?? "",
       github: initial?.github ?? "",
       twitter: initial?.twitter ?? "",
@@ -389,6 +393,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
   });
 
   useEffect(() => setPhoto(initial?.photo ?? ""), [initial?.photo]);
+  const selectedRole = watch("role");
 
   return (
     <form onSubmit={handleSubmit((v) => {
@@ -396,7 +401,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       const advisor = docentes.find((docente) => docente.id === v.advisor_id);
       const data: Record<string, unknown> = {
         ...v,
-        role: initial?.role ?? "aluno_ativo",
+        role: v.role,
         photo,
         advisor_id: v.advisor_id,
         advisor_name: advisor?.name ?? initial?.advisor_name ?? null,
@@ -407,7 +412,8 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
         research_areas: researchAreas,
         year_joined: numberOrNull(v.year_joined),
         skills,
-        graduation_year: numberOrNull(v.graduation_year),
+        graduation_year: v.role === "alumni" ? numberOrNull(v.graduation_year) : null,
+        exit_date: v.role === "alumni" ? v.exit_date || null : null,
         linkedin: v.linkedin || null,
         twitter: v.twitter || null,
         researchgate: v.researchgate || null,
@@ -424,6 +430,13 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
         <div><Label>{pt ? "Nome" : "Name"}</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
         <div><Label>E-mail</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">{pt ? "E-mail valido obrigatorio" : "Valid email required"}</p>}</div>
         {!isEdit && <div><Label>{pt ? "Senha" : "Password"}</Label><Input type="password" {...register("password")} placeholder={pt ? "Padrao: changeme123" : "Default: changeme123"} /></div>}
+        <div>
+          <Label>{pt ? "Situação no lab" : "Lab status"}</Label>
+          <select {...register("role")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm">
+            <option value="aluno_ativo">{pt ? "Aluno ativo" : "Active student"}</option>
+            <option value="alumni">{pt ? "Egresso" : "Alumni"}</option>
+          </select>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>{pt ? "Nivel (EN)" : "Level (EN)"}</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" />{errors.level && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
           <div><Label>{pt ? "Nivel (PT)" : "Level (PT)"}</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" />{errors.levelPt && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
@@ -471,8 +484,11 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
           <div><Label>{pt ? "Ano de ingresso" : "Year joined"}</Label><Input type="number" {...register("year_joined")} placeholder="2020" /></div>
           <div><Label>{pt ? "Numero USP" : "USP Number"}</Label><Input {...register("usp_number")} /></div>
         </div>
-        {initial?.role === "alumni" && (
-          <div><Label>{pt ? "Ano de formatura" : "Graduation year"}</Label><Input type="number" {...register("graduation_year")} placeholder="2024" /></div>
+        {selectedRole === "alumni" && (
+          <div className="grid grid-cols-2 gap-4">
+            <div><Label>{pt ? "Ano de formatura" : "Graduation year"}</Label><Input type="number" {...register("graduation_year")} placeholder="2024" /></div>
+            <div><Label>{pt ? "Data de saída" : "Exit date"}</Label><Input type="date" {...register("exit_date")} /></div>
+          </div>
         )}
       </div>
 

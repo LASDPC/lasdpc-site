@@ -22,6 +22,16 @@ const schema = z.object({
   role: z.enum(["docente", "aluno_ativo", "alumni"]),
   is_admin: z.boolean().default(false),
   initials: z.string().min(1).max(3),
+  level: z.string().optional(),
+  levelPt: z.string().optional(),
+}).superRefine((values, ctx) => {
+  if (values.role === "docente") return;
+  if (!values.level?.trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["level"], message: "Required" });
+  }
+  if (!values.levelPt?.trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["levelPt"], message: "Required" });
+  }
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -33,10 +43,11 @@ interface UserCreateModalProps {
 
 const UserCreateModal = ({ open, onClose }: UserCreateModalProps) => {
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { role: "aluno_ativo", is_admin: false },
   });
+  const selectedRole = watch("role");
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
@@ -68,6 +79,12 @@ const UserCreateModal = ({ open, onClose }: UserCreateModalProps) => {
             <div><Label>Initials</Label><Input {...register("initials")} maxLength={3} placeholder="JS" /></div>
           </div>
           <div><Label>Role</Label><select {...register("role")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="docente">Docente</option><option value="aluno_ativo">Aluno Ativo</option><option value="alumni">Alumni</option></select></div>
+          {selectedRole !== "docente" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Academic level (EN)</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" />{errors.level && <p className="text-xs text-destructive mt-1">Required</p>}</div>
+              <div><Label>Nível acadêmico (PT)</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" />{errors.levelPt && <p className="text-xs text-destructive mt-1">Obrigatório</p>}</div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input type="checkbox" {...register("is_admin")} id="is_admin" className="rounded border-border" />
             <Label htmlFor="is_admin">Admin</Label>

@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from core.database import get_db
 from core.profile_terms import (
+    DEFAULT_RESEARCH_AREAS,
     LAB_RELATIONSHIP_TYPES,
     PROFILE_TERM_KINDS,
     clean_list,
@@ -35,6 +36,7 @@ def _term_out(doc: dict) -> ProfileTermOut:
         kind=doc["kind"],
         value=doc["value"],
         relationship_type=doc.get("relationship_type"),
+        is_default=bool(doc.get("is_default")),
     )
 
 
@@ -85,15 +87,20 @@ async def suggest_profile_terms(
         term_query["relationship_type"] = relationship_type
     stored = await db.profile_terms.find(term_query).to_list(1000)
     derived = await _terms_from_users(db, kind, relationship_type)
+    defaults = [
+        {"kind": "research_area", "value": value, "relationship_type": None, "is_default": True}
+        for value in DEFAULT_RESEARCH_AREAS
+    ] if kind == "research_area" else []
 
     merged: dict[tuple[str, Optional[str]], dict] = {}
-    for doc in [*stored, *derived]:
+    for doc in [*defaults, *stored, *derived]:
         value = clean_text(doc.get("value"))
         if not value:
             continue
         relation = doc.get("relationship_type") if kind == "affiliation" else None
         key = (normalize_text(value), relation)
-        merged[key] = {**doc, "kind": kind, "value": value, "relationship_type": relation}
+        previous = merged.get(key, {})
+        merged[key] = {**previous, **doc, "kind": kind, "value": value, "relationship_type": relation}
 
     q = clean_text(query)
     matches = [doc for doc in merged.values() if term_matches(doc["value"], q)]

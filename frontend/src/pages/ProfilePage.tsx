@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { CLASSIC_RESEARCH_AREAS } from "@/lib/researchAreas";
 
 const ROLE_LABELS: Record<string, { en: string; pt: string }> = {
   docente: { en: "Faculty", pt: "Docente" },
@@ -37,26 +38,11 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 
 const EDITABLE_FIELDS = [
   "name", "bio", "bioPt", "title", "titlePt", "area", "areaPt",
-  "level", "levelPt", "year_joined", "graduation_year",
+  "level", "levelPt", "year_joined", "graduation_year", "exit_date",
   "skills", "research_areas",
   "linkedin", "github", "twitter", "researchgate", "lattes", "orcid", "scholar", "page",
   "lab_relationship_type", "affiliation_name",
 ] as const;
-
-const DEFAULT_RESEARCH_AREAS = [
-  "Artificial Intelligence",
-  "Cloud Computing",
-  "Concurrent Programming",
-  "Distributed Systems",
-  "High-Performance Computing",
-  "Machine Learning",
-  "Observability",
-  "Operating Systems",
-  "Performance Evaluation",
-  "Resource Management",
-  "Scheduling",
-  "Software Testing",
-];
 
 const SOCIAL_LINKS = [
   { key: "lattes", label: "Lattes", icon: ExternalLink },
@@ -85,6 +71,19 @@ const normalize = (value: string) => value.trim().toLocaleLowerCase();
 const stringValue = (value: unknown) => (typeof value === "string" ? value : "");
 
 const listValue = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []);
+
+const exitYear = (profile: User) => {
+  if (profile.exit_date?.match(/^\d{4}/)) return profile.exit_date.slice(0, 4);
+  return profile.graduation_year ? String(profile.graduation_year) : "";
+};
+
+const formatDate = (value?: string | null, isPt = false) => {
+  if (!value) return "";
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value;
+  const [, year, month, day] = match;
+  return isPt ? `${day}/${month}/${year}` : `${month}/${day}/${year}`;
+};
 
 const ProfilePageSkeleton = () => (
   <div className="py-10">
@@ -287,7 +286,7 @@ const ProfilePage = () => {
   const globalResearchAreas = useMemo(() => {
     const people = [...docentes, ...students];
     return uniqueSorted([
-      ...DEFAULT_RESEARCH_AREAS,
+      ...CLASSIC_RESEARCH_AREAS,
       ...people.flatMap((person) => [
         person.area,
         person.areaPt,
@@ -373,13 +372,15 @@ const ProfilePage = () => {
       }
       if (payload.year_joined === "" || payload.year_joined === 0) payload.year_joined = null;
       if (payload.graduation_year === "" || payload.graduation_year === 0) payload.graduation_year = null;
+      if (payload.exit_date === "") payload.exit_date = null;
       payload.research_areas = uniqueSorted(listValue(payload.research_areas));
       payload.skills = uniqueSorted(listValue(payload.skills));
 
       const requiredFields = ["lattes", "orcid", "scholar", "github", "lab_relationship_type", "affiliation_name"] as const;
       const missingRequired = requiredFields.some((key) => !stringValue((payload as Record<string, unknown>)[key]).trim());
-      if (!profile.photo || missingRequired) {
-        toast.error(isPt ? "Complete foto, links obrigatorios, relacao com o lab e afiliacao." : "Complete photo, required links, lab relationship, and affiliation.");
+      const missingAcademicLevel = profile.role !== "docente" && (!stringValue(payload.level).trim() || !stringValue(payload.levelPt).trim());
+      if (!profile.photo || missingRequired || missingAcademicLevel) {
+        toast.error(isPt ? "Complete foto, categoria acadêmica, links obrigatórios, relação com o lab e afiliação." : "Complete photo, academic category, required links, lab relationship, and affiliation.");
         return;
       }
 
@@ -589,6 +590,15 @@ const ProfilePage = () => {
                               className="h-9 max-w-44"
                             />
                           )}
+                          {profile.role === "alumni" && (
+                            <Input
+                              type="date"
+                              value={stringValue(draft.exit_date)}
+                              onChange={(event) => updateDraft("exit_date", event.target.value)}
+                              placeholder={isPt ? "Data de saída" : "Exit date"}
+                              className="h-9 max-w-44"
+                            />
+                          )}
                         </>
                       ) : (
                         <>
@@ -600,6 +610,16 @@ const ProfilePage = () => {
                             >
                               <CalendarDays size={13} />
                               {isPt ? `Desde ${profile.year_joined}` : `Since ${profile.year_joined}`}
+                            </button>
+                          )}
+                          {profile.exit_date && profile.role === "alumni" && (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/people?yearMode=exit&year=${encodeURIComponent(exitYear(profile))}`)}
+                              className="inline-flex min-h-7 items-center gap-1 rounded-full border border-border px-2.5 py-1 transition-colors hover:text-primary"
+                            >
+                              <CalendarDays size={13} />
+                              {isPt ? `Saiu em ${formatDate(profile.exit_date, true)}` : `Left ${formatDate(profile.exit_date)}`}
                             </button>
                           )}
                           {profile.graduation_year && profile.role === "alumni" && (

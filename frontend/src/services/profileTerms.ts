@@ -8,6 +8,7 @@ export interface ProfileTerm {
   kind: ProfileTermKind;
   value: string;
   relationship_type?: LabRelationshipType | null;
+  is_default?: boolean;
 }
 
 export const profileTermsService = {

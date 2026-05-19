@@ -10,7 +10,6 @@ vi.mock("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: PropsWithChildren<ComponentProps<"div">>) => <div {...props}>{children}</div>,
     nav: ({ children, ...props }: PropsWithChildren<ComponentProps<"nav">>) => <nav {...props}>{children}</nav>,
-    input: (props: ComponentProps<"input">) => <input {...props} />,
   },
   AnimatePresence: ({ children }: PropsWithChildren) => <>{children}</>,
 }));
@@ -38,7 +37,6 @@ vi.mock("@/contexts/LanguageContext", () => ({
         "nav.reserva": "Reserva",
         "nav.docs": "Docs",
         "nav.infrastructure": "Infraestrutura",
-        "search.placeholder": "Buscar...",
       };
       return translations[key] || key;
     },

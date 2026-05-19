@@ -1,10 +1,13 @@
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Newspaper } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useBlog } from "@/hooks/useBlog";
+import SearchFilterBar from "@/components/SearchFilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mediaUrl } from "@/lib/media";
+import { matchesSearchTerm } from "@/lib/search";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -33,6 +36,31 @@ const BlogPage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
   const { data: blog = [], isLoading } = useBlog();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q") ?? "";
+
+  const setSearchQuery = (value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set("q", value);
+      else next.delete("q");
+      return next;
+    }, { replace: true });
+  };
+
+  const filteredBlog = useMemo(() => (
+    blog.filter((post) => matchesSearchTerm(searchQuery, [
+      post.title,
+      post.titlePt,
+      post.excerpt,
+      post.excerptPt,
+      post.content,
+      post.contentPt,
+      post.tag,
+      post.author,
+      post.date,
+    ]))
+  ), [blog, searchQuery]);
 
   if (isLoading) return <BlogPageSkeleton />;
 
@@ -43,32 +71,47 @@ const BlogPage = () => {
           <Newspaper className="h-8 w-8 text-primary" />
           <h1 className="font-display text-4xl font-bold text-foreground">{t("section.blog")}</h1>
         </div>
-        <p className="text-xs text-muted-foreground mb-12 italic">
+        <p className="text-xs text-muted-foreground mb-6 italic">
           {isPt ? "Nota: futura integração com LinkedIn/Instagram para publicação automática." : "Note: future LinkedIn/Instagram integration for auto-publishing."}
         </p>
 
-        <div className="grid auto-rows-fr md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {blog.map((post, i) => (
-            <div key={post.id} className="relative group h-full">
-              <Link to={`/blog/${post.id}`} className="block h-full">
-                <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
-                  <img
-                    src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
-                    alt={isPt ? post.titlePt : post.title}
-                    className="w-full h-44 object-cover shrink-0"
-                    loading="lazy"
-                  />
-                  <div className="p-6 flex flex-col flex-1">
-                    <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded self-start shrink-0">{post.tag}</span>
-                    <h2 className="font-display text-xl font-semibold text-foreground mt-4 mb-3 line-clamp-2 shrink-0">{isPt ? post.titlePt : post.title}</h2>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1 overflow-hidden">{isPt ? post.excerptPt : post.excerpt}</p>
-                    <time className="text-xs text-muted-foreground shrink-0">{post.date}</time>
-                  </div>
-                </motion.article>
-              </Link>
-            </div>
-          ))}
-        </div>
+        <SearchFilterBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder={t("blog.searchPlaceholder")}
+          clearLabel={t("blog.clearSearch")}
+          ariaLabel={t("blog.searchPlaceholder")}
+          className="mb-8"
+        />
+
+        {filteredBlog.length > 0 ? (
+          <div className="grid auto-rows-fr md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBlog.map((post, i) => (
+              <div key={post.id} className="relative group h-full">
+                <Link to={`/blog/${post.id}`} className="block h-full">
+                  <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
+                    <img
+                      src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
+                      alt={isPt ? post.titlePt : post.title}
+                      className="w-full h-44 object-cover shrink-0"
+                      loading="lazy"
+                    />
+                    <div className="p-6 flex flex-col flex-1">
+                      <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded self-start shrink-0">{post.tag}</span>
+                      <h2 className="font-display text-xl font-semibold text-foreground mt-4 mb-3 line-clamp-2 shrink-0">{isPt ? post.titlePt : post.title}</h2>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1 overflow-hidden">{isPt ? post.excerptPt : post.excerpt}</p>
+                      <time className="text-xs text-muted-foreground shrink-0">{post.date}</time>
+                    </div>
+                  </motion.article>
+                </Link>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
+            {t("blog.noPostsFound")}
+          </p>
+        )}
       </div>
     </div>
   );

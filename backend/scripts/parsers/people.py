@@ -156,6 +156,18 @@ def _initials(name: str) -> str:
     return name[:2].upper() if name else "??"
 
 
+def _exit_date_after_join(
+    year_joined: int | None,
+    exit_year: int | None = None,
+) -> str:
+    resolved_exit_year = exit_year
+    if resolved_exit_year is None:
+        resolved_exit_year = (year_joined + 1) if year_joined else 2017
+    if year_joined and resolved_exit_year < year_joined:
+        resolved_exit_year = year_joined
+    return f"{resolved_exit_year}-12-31"
+
+
 # ---------------------------------------------------------------------------
 # Markdown table parser
 # ---------------------------------------------------------------------------
@@ -262,6 +274,7 @@ def _parse_student_table(
                 "levelPt": level_pt,
                 "advisor_name": advisor_name,
                 "year_joined": 2016,
+                "exit_date": _exit_date_after_join(2016, 2017),
             }
         )
     return out
@@ -346,6 +359,10 @@ def parse_alumni() -> list[dict]:
                 "advisor_name": advisors[0] if advisors else None,
                 "graduation_year": graduation_year,
                 "year_joined": int(years[0]) if years and years[0].isdigit() else None,
+                "exit_date": _exit_date_after_join(
+                    int(years[0]) if years and years[0].isdigit() else None,
+                    graduation_year,
+                ),
                 "bio": bio_en or None,
                 "bioPt": bio_pt or None,
             }
@@ -401,6 +418,7 @@ def parse_smart_lasdpc_researchers() -> list[dict]:
                 "advisor_name": "Júlio Cezar Estrella",
                 "year_joined": year_joined,
                 "graduation_year": graduation_year,
+                "exit_date": _exit_date_after_join(year_joined, graduation_year),
                 "research_areas": [
                     "Smart Building",
                     "IoT",

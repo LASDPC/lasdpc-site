@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from core.config import settings
 from core.database import get_db
 from core.dependencies import get_current_user, require_admin
-from core.profile_terms import normalize_profile_payload, upsert_profile_terms, validate_required_profile
+from core.profile_terms import clean_text, normalize_profile_payload, upsert_profile_terms, validate_required_profile
 from core.security import hash_password
 from models.user import (
     BootstrapAdmin,
@@ -37,6 +37,16 @@ def _user_out(doc: dict) -> UserOut:
 
 def _is_photo_only_update(update_data: dict) -> bool:
     return set(update_data.keys()) == {"photo"}
+
+
+def _validate_student_academic_level(doc: dict) -> None:
+    if doc.get("role") not in STUDENT_ROLES:
+        return
+    if not clean_text(doc.get("level")) or not clean_text(doc.get("levelPt")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Academic category is required for students",
+        )
 
 
 @router.post("/bootstrap", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -89,10 +99,10 @@ async def create_user(body: UserCreate, _admin: dict = Depends(require_admin)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid advisor")
         doc["advisor_id"] = str(advisor["_id"])
         doc["advisor_name"] = advisor.get("name")
-        if not doc.get("level") or not doc.get("levelPt"):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Academic category is required for students")
+        _validate_student_academic_level(doc)
     normalize_profile_payload(doc)
     validate_required_profile(doc)
+    _validate_student_academic_level(doc)
     doc["hashed_password"] = hash_password(doc.pop("password"))
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id
@@ -325,7 +335,7 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
     if not is_own_profile and not current_user.get("is_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
     db = get_db()
-    update_data = {k: v for k, v in body.model_dump().items() if v is not None}
+    update_data = body.model_dump(exclude_unset=True)
     if not current_user.get("is_admin"):
         for field in ADMIN_ONLY_FIELDS:
             update_data.pop(field, None)
@@ -342,6 +352,7 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
     updated_doc = {**existing, **update_data}
     if not _is_photo_only_update(update_data):
         validate_required_profile(updated_doc)
+        _validate_student_academic_level(updated_doc)
     result = await db.users.update_one({"_id": oid}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

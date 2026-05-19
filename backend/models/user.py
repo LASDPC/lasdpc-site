@@ -57,6 +57,7 @@ class UserCreate(BaseModel):
     bioPt: Optional[str] = None
     skills: Optional[list[str]] = None
     graduation_year: Optional[int] = None
+    exit_date: Optional[str] = None
     # Social links
     linkedin: Optional[str] = None
     github: Optional[str] = None
@@ -96,6 +97,7 @@ class UserUpdate(BaseModel):
     bioPt: Optional[str] = None
     skills: Optional[list[str]] = None
     graduation_year: Optional[int] = None
+    exit_date: Optional[str] = None
     # Social links
     linkedin: Optional[str] = None
     github: Optional[str] = None
@@ -142,6 +144,7 @@ class UserOut(BaseModel):
     bioPt: Optional[str] = None
     skills: Optional[list[str]] = None
     graduation_year: Optional[int] = None
+    exit_date: Optional[str] = None
     # Social links
     linkedin: Optional[str] = None
     github: Optional[str] = None

@@ -12,3 +12,4 @@ class ProfileTermOut(BaseModel):
     kind: ProfileTermKind
     value: str
     relationship_type: Optional[LabRelationshipType] = None
+    is_default: bool = False

@@ -18,6 +18,7 @@ from pathlib import Path
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from core.config import settings
+from core.profile_terms import upsert_default_profile_terms, upsert_profile_terms
 from core.security import hash_password
 
 from scripts import image_uploader
@@ -42,7 +43,9 @@ async def _insert_users(db, docs: list[dict], label: str) -> int:
         doc.setdefault("is_admin", False)
         doc.setdefault("avatar", None)
         doc["hashed_password"] = hash_password(DEFAULT_PASSWORD)
-        await db.users.insert_one(doc)
+        result = await db.users.insert_one(doc)
+        doc["_id"] = result.inserted_id
+        await upsert_profile_terms(db, doc)
         inserted += 1
     print(f"[+] Inserted {inserted} {label}")
     return inserted
@@ -100,6 +103,8 @@ async def main() -> None:
             uploader = None
     else:
         print("[i] --skip-images set; image uploads disabled")
+
+    await upsert_default_profile_terms(db)
 
     # 1. Pessoas
     docentes_docs, others_docs = people.parse_everyone()

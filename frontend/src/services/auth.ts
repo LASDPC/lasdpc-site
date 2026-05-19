@@ -31,6 +31,7 @@ export interface User {
   bioPt?: string | null;
   skills?: string[] | null;
   graduation_year?: number | null;
+  exit_date?: string | null;
   // Social links
   linkedin?: string | null;
   github?: string | null;
@@ -79,6 +80,7 @@ export interface UserCreateData {
   bioPt?: string;
   skills?: string[];
   graduation_year?: number;
+  exit_date?: string;
   linkedin?: string;
   github?: string;
   twitter?: string;

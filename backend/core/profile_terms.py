@@ -14,6 +14,21 @@ LAB_RELATIONSHIP_TYPES = {
 
 PROFILE_TERM_KINDS = {"research_area", "skill", "affiliation"}
 
+DEFAULT_RESEARCH_AREAS = (
+    "Artificial Intelligence",
+    "Cloud Computing",
+    "Concurrent Programming",
+    "Distributed Systems",
+    "High-Performance Computing",
+    "Machine Learning",
+    "Observability",
+    "Operating Systems",
+    "Performance Evaluation",
+    "Resource Management",
+    "Scheduling",
+    "Software Testing",
+)
+
 REQUIRED_PROFILE_FIELDS = (
     "photo",
     "lattes",
@@ -106,6 +121,26 @@ async def upsert_profile_terms(db, doc: dict) -> None:
                     "value": value,
                     "normalized_value": normalized_value,
                     "relationship_type": relation,
+                    "updated_at": now,
+                },
+                "$setOnInsert": {"created_at": now},
+            },
+            upsert=True,
+        )
+
+
+async def upsert_default_profile_terms(db) -> None:
+    now = datetime.now(timezone.utc)
+    for value in DEFAULT_RESEARCH_AREAS:
+        await db.profile_terms.update_one(
+            {"kind": "research_area", "normalized_value": normalize_text(value)},
+            {
+                "$set": {
+                    "kind": "research_area",
+                    "value": value,
+                    "normalized_value": normalize_text(value),
+                    "relationship_type": None,
+                    "is_default": True,
                     "updated_at": now,
                 },
                 "$setOnInsert": {"created_at": now},

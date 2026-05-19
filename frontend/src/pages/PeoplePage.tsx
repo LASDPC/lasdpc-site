@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/contexts/LanguageContext";
 import {
   ExternalLink,
@@ -11,21 +12,17 @@ import {
   Github,
   Twitter,
   Users,
-  Info,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
+import { profileTermsService } from "@/services/profileTerms";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { mediaUrl } from "@/lib/media";
+import { CLASSIC_RESEARCH_AREAS, normalizeResearchArea } from "@/lib/researchAreas";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -34,6 +31,7 @@ const fadeUp = {
 
 const ALUMNI_PAGE_SIZE = 30;
 const UNKNOWN_YEAR_BUCKET = -1; // sorts last (handled in code)
+type YearFilterMode = "entry" | "exit";
 
 const PeoplePageSkeleton = () => (
   <div className="py-10">
@@ -59,13 +57,67 @@ const PeoplePageSkeleton = () => (
   </div>
 );
 
-/** Group alumni by year_joined, sort years descending, and place "unknown
- * year" last. Returns an array of [year, students[]] pairs preserving order.
+const personAreaValues = (person: User) =>
+  [person.area, person.areaPt, ...(person.research_areas ?? [])]
+    .map((value) => value?.trim())
+    .filter(Boolean) as string[];
+
+const matchesAreaExact = (person: User, area: string) => {
+  const target = normalizeResearchArea(area);
+  return personAreaValues(person).some((value) => normalizeResearchArea(value) === target);
+};
+
+const matchesAreaSearch = (person: User, query: string) => {
+  const target = normalizeResearchArea(query);
+  if (!target) return true;
+  return personAreaValues(person).some((value) => normalizeResearchArea(value).includes(target));
+};
+
+const matchesLevel = (student: User, level: string) => {
+  const target = normalizeResearchArea(level);
+  return [student.level, student.levelPt].some((value) => value && normalizeResearchArea(value) === target);
+};
+
+const exitYear = (person: User) => {
+  const fromDate = person.exit_date?.match(/^(\d{4})/);
+  if (fromDate) return Number(fromDate[1]);
+  return person.graduation_year ?? null;
+};
+
+const exitSortValue = (person: User) => {
+  const match = person.exit_date?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return Number(`${match[1]}${match[2]}${match[3]}`);
+  const year = exitYear(person);
+  return year ? year * 10000 + 1231 : Number.NEGATIVE_INFINITY;
+};
+
+const yearForMode = (person: User, mode: YearFilterMode) =>
+  mode === "entry" ? person.year_joined ?? null : exitYear(person);
+
+const formatExitDate = (value?: string | null, isPt = false) => {
+  if (!value) return "";
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value;
+  const [, year, month, day] = match;
+  return isPt ? `${day}/${month}/${year}` : `${month}/${day}/${year}`;
+};
+
+function sortByEntryDate(items: User[]) {
+  return [...items].sort((a, b) => {
+    if (!a.year_joined && !b.year_joined) return a.name.localeCompare(b.name);
+    if (!a.year_joined) return 1;
+    if (!b.year_joined) return -1;
+    return b.year_joined - a.year_joined || a.name.localeCompare(b.name);
+  });
+}
+
+/** Group alumni by exit year, sort years descending, and place unknown dates
+ * last. Returns an array of [year, students[]] pairs preserving order.
  */
-function groupAlumniByYear(items: User[]): Array<[number, User[]]> {
+function groupAlumniByExitYear(items: User[]): Array<[number, User[]]> {
   const buckets = new Map<number, User[]>();
   for (const s of items) {
-    const y = s.year_joined ?? UNKNOWN_YEAR_BUCKET;
+    const y = exitYear(s) ?? UNKNOWN_YEAR_BUCKET;
     if (!buckets.has(y)) buckets.set(y, []);
     buckets.get(y)!.push(s);
   }
@@ -76,7 +128,10 @@ function groupAlumniByYear(items: User[]): Array<[number, User[]]> {
     if (b === UNKNOWN_YEAR_BUCKET) return -1;
     return b - a;
   });
-  return keys.map((k) => [k, buckets.get(k)!.sort((x, y) => x.name.localeCompare(y.name))]);
+  return keys.map((k) => [
+    k,
+    buckets.get(k)!.sort((x, y) => exitSortValue(y) - exitSortValue(x) || x.name.localeCompare(y.name)),
+  ]);
 }
 
 const PeoplePage = () => {
@@ -84,12 +139,18 @@ const PeoplePage = () => {
   const isPt = lang === "pt-BR";
   const { data: docentes = [], isLoading: loadingDocentes } = useDocentes();
   const { data: students = [], isLoading: loadingStudents } = useStudents();
+  const { data: researchAreaTerms = [] } = useQuery({
+    queryKey: ["profile-terms", "research_area", "people-filter"],
+    queryFn: () => profileTermsService.list("research_area", "", undefined, 50),
+  });
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const nameSearch = searchParams.get("name") ?? "";
   const areaFilter = searchParams.get("area") ?? "";
+  const areaTextFilter = searchParams.get("areaText") ?? "";
   const yearFilter = searchParams.get("year") ?? "";
+  const yearFilterMode = (searchParams.get("yearMode") === "exit" ? "exit" : "entry") as YearFilterMode;
   const levelFilter = searchParams.get("level") ?? "";
   const alumniPage = Math.max(1, Number(searchParams.get("alumniPage") || "1") || 1);
 
@@ -108,18 +169,47 @@ const PeoplePage = () => {
     }, { replace });
   };
 
-  // Derived filter options
-  const allAreas = useMemo(() => {
-    const areas = new Set<string>();
-    [...docentes, ...students].forEach(p => {
-      p.research_areas?.forEach(a => areas.add(a));
-      if (p.area) areas.add(p.area);
-      if (p.areaPt) areas.add(p.areaPt);
+  const setYearFilterMode = (mode: YearFilterMode) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (mode === "entry") next.delete("yearMode");
+      else next.set("yearMode", mode);
+      next.delete("year");
+      next.delete("alumniPage");
+      return next;
     });
-    return Array.from(areas).sort();
-  }, [docentes, students]);
+  };
 
-  const allYears = useMemo(() => {
+  // Derived filter options
+  const areaOptions = useMemo(() => {
+    const classicKeys = new Set(CLASSIC_RESEARCH_AREAS.map(normalizeResearchArea));
+    const values = new Map<string, { value: string; isClassic: boolean }>();
+
+    const addArea = (value?: string | null, isClassic = false) => {
+      const clean = value?.trim();
+      if (!clean) return;
+      const key = normalizeResearchArea(clean);
+      const previous = values.get(key);
+      values.set(key, {
+        value: previous?.value ?? clean,
+        isClassic: Boolean(previous?.isClassic || isClassic || classicKeys.has(key)),
+      });
+    };
+
+    CLASSIC_RESEARCH_AREAS.forEach((area) => addArea(area, true));
+    researchAreaTerms.forEach((term) => addArea(term.value, Boolean(term.is_default)));
+    [...docentes, ...students].forEach((person) => personAreaValues(person).forEach((area) => addArea(area)));
+
+    const sorted = Array.from(values.values()).sort((a, b) =>
+      a.value.localeCompare(b.value, undefined, { sensitivity: "base" }),
+    );
+    return {
+      classic: sorted.filter((item) => item.isClassic).map((item) => item.value),
+      other: sorted.filter((item) => !item.isClassic).map((item) => item.value),
+    };
+  }, [docentes, students, researchAreaTerms]);
+
+  const entryYears = useMemo(() => {
     const years = new Set<number>();
     [...docentes, ...students].forEach(p => {
       if (p.year_joined) years.add(p.year_joined);
@@ -127,36 +217,54 @@ const PeoplePage = () => {
     return Array.from(years).sort((a, b) => b - a);
   }, [docentes, students]);
 
-  const studentLevels = useMemo(() => {
-    const levels = new Set<string>();
-    students.forEach(s => {
-      if (s.level) levels.add(s.level);
+  const exitYears = useMemo(() => {
+    const years = new Set<number>();
+    students.forEach(p => {
+      const year = exitYear(p);
+      if (year) years.add(year);
     });
-    return Array.from(levels).sort();
+    return Array.from(years).sort((a, b) => b - a);
   }, [students]);
 
-  const hasAnyFilter = nameSearch || areaFilter || yearFilter || levelFilter;
+  const yearOptions = yearFilterMode === "entry" ? entryYears : exitYears;
+
+  const studentLevels = useMemo(() => {
+    const levels = new Map<string, string>();
+    students.forEach(s => {
+      const value = s.level || s.levelPt;
+      if (!value) return;
+      const label = isPt ? s.levelPt || s.level || value : s.level || s.levelPt || value;
+      levels.set(value, label);
+    });
+    return Array.from(levels.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
+  }, [students, isPt]);
+
+  const hasAnyFilter = nameSearch || areaFilter || areaTextFilter || yearFilter || levelFilter || yearFilterMode !== "entry";
 
   // Filtered data
   const filteredDocentes = useMemo(() => docentes.filter(d => {
     if (nameSearch && !d.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-    if (areaFilter && !d.research_areas?.includes(areaFilter) && d.area !== areaFilter && d.areaPt !== areaFilter) return false;
-    if (yearFilter && d.year_joined !== Number(yearFilter)) return false;
+    if (areaFilter && !matchesAreaExact(d, areaFilter)) return false;
+    if (areaTextFilter && !matchesAreaSearch(d, areaTextFilter)) return false;
+    if (yearFilter && yearForMode(d, yearFilterMode) !== Number(yearFilter)) return false;
     return true;
-  }), [docentes, nameSearch, areaFilter, yearFilter]);
+  }), [docentes, nameSearch, areaFilter, areaTextFilter, yearFilter, yearFilterMode]);
 
   // Apply free-text / area / year / level filters to every student first.
   const filteredStudents = useMemo(() => students.filter(s => {
     if (nameSearch && !s.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-    if (areaFilter && !s.research_areas?.includes(areaFilter) && s.area !== areaFilter && s.areaPt !== areaFilter) return false;
-    if (yearFilter && s.year_joined !== Number(yearFilter)) return false;
-    if (levelFilter && s.level !== levelFilter) return false;
+    if (areaFilter && !matchesAreaExact(s, areaFilter)) return false;
+    if (areaTextFilter && !matchesAreaSearch(s, areaTextFilter)) return false;
+    if (yearFilter && yearForMode(s, yearFilterMode) !== Number(yearFilter)) return false;
+    if (levelFilter && !matchesLevel(s, levelFilter)) return false;
     return true;
-  }), [students, nameSearch, areaFilter, yearFilter, levelFilter]);
+  }), [students, nameSearch, areaFilter, areaTextFilter, yearFilter, yearFilterMode, levelFilter]);
 
   // Split by role so the page can render Active and Alumni separately.
   const activeStudents = useMemo(
-    () => filteredStudents.filter((s) => s.role === "aluno_ativo"),
+    () => sortByEntryDate(filteredStudents.filter((s) => s.role === "aluno_ativo")),
     [filteredStudents],
   );
   const alumniStudents = useMemo(
@@ -164,10 +272,10 @@ const PeoplePage = () => {
     [filteredStudents],
   );
 
-  // Group alumni by year of entry (year_joined). Pagination paginates over
-  // the year groups so each page is a coherent "class of YYYY" view.
+  // Group alumni by exit year. Pagination paginates over the year groups so
+  // each page is a coherent former-member view.
   const alumniGroups = useMemo(
-    () => groupAlumniByYear(alumniStudents),
+    () => groupAlumniByExitYear(alumniStudents),
     [alumniStudents],
   );
 
@@ -225,11 +333,11 @@ const PeoplePage = () => {
   const yearLabel = (y: number) =>
     y === UNKNOWN_YEAR_BUCKET
       ? isPt
-        ? "Ano não informado"
-        : "Year unknown"
+        ? "Data de saída não informada"
+        : "Exit date unknown"
       : isPt
-        ? `Ingressantes em ${y}`
-        : `Joined in ${y}`;
+        ? `Saíram em ${y}`
+        : `Left in ${y}`;
 
   return (
     <div className="py-10">
@@ -255,24 +363,50 @@ const PeoplePage = () => {
                 />
               </div>
             </div>
-            {allAreas.length > 0 && (
+            {(areaOptions.classic.length > 0 || areaOptions.other.length > 0) && (
               <select
                 value={areaFilter}
                 onChange={(e) => setFilter("area", e.target.value)}
                 className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[160px]"
               >
                 <option value="">{t("people.filterByArea")}</option>
-                {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
+                {areaOptions.classic.length > 0 && (
+                  <optgroup label={t("people.areaClassic")}>
+                    {areaOptions.classic.map(a => <option key={a} value={a}>{a}</option>)}
+                  </optgroup>
+                )}
+                {areaOptions.other.length > 0 && (
+                  <optgroup label={t("people.areaOther")}>
+                    {areaOptions.other.map(a => <option key={a} value={a}>{a}</option>)}
+                  </optgroup>
+                )}
               </select>
             )}
-            {allYears.length > 0 && (
+            <div className="relative min-w-[180px]">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={areaTextFilter}
+                onChange={(e) => setFilter("areaText", e.target.value, true)}
+                placeholder={t("people.areaSearchPlaceholder")}
+                className="pl-9"
+              />
+            </div>
+            <select
+              value={yearFilterMode}
+              onChange={(e) => setYearFilterMode(e.target.value as YearFilterMode)}
+              className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[150px]"
+            >
+              <option value="entry">{t("people.filterByEntryYear")}</option>
+              <option value="exit">{t("people.filterByExitYear")}</option>
+            </select>
+            {yearOptions.length > 0 && (
               <select
                 value={yearFilter}
                 onChange={(e) => setFilter("year", e.target.value)}
                 className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
               >
                 <option value="">{t("people.filterByYear")}</option>
-                {allYears.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
               </select>
             )}
             {studentLevels.length > 0 && (
@@ -282,7 +416,7 @@ const PeoplePage = () => {
                 className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
               >
                 <option value="">{t("people.filterByLevel")}</option>
-                {studentLevels.map(l => <option key={l} value={l}>{l}</option>)}
+                {studentLevels.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
             )}
             {hasAnyFilter && (
@@ -387,47 +521,30 @@ const PeoplePage = () => {
             <span className="text-sm font-mono text-muted-foreground align-middle">
               ({alumniStudents.length})
             </span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={t("people.alumniInfoAria")}
-                  className="inline-flex items-center justify-center w-7 h-7 rounded-full text-primary hover:bg-primary/10 transition-colors"
-                >
-                  <Info size={18} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 text-sm leading-relaxed">
-                <p className="font-semibold text-foreground mb-2">
-                  {isPt ? "O que é Alumni USP?" : "What is Alumni USP?"}
-                </p>
-                <p className="text-muted-foreground">{t("people.alumniInfo")}</p>
-                <p className="text-xs text-muted-foreground mt-3">
-                  {isPt ? "Saiba mais:" : "Learn more:"}{" "}
-                  <a
-                    href="https://www5.usp.br/alumni-usp/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    alumni-usp
-                  </a>
-                  {", "}
-                  <a
-                    href="https://alumni.usp.br/plataforma-alumni-usp-completa-3-anos/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    plataforma
-                  </a>
-                </p>
-              </PopoverContent>
-            </Popover>
           </h2>
         </div>
         <p className="text-muted-foreground mb-8 text-sm font-mono">
           {t("section.alumni.desc")}
+        </p>
+        <p className="text-muted-foreground -mt-5 mb-8 max-w-4xl text-sm leading-relaxed">
+          {t("people.alumniInfo")}{" "}
+          <a
+            href="https://www5.usp.br/alumni-usp/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            alumni-usp
+          </a>
+          {", "}
+          <a
+            href="https://alumni.usp.br/plataforma-alumni-usp-completa-3-anos/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            plataforma
+          </a>
         </p>
 
         {alumniStudents.length === 0 ? (
@@ -537,44 +654,53 @@ interface StudentCardProps {
   onClick: () => void;
 }
 
-const StudentCard = ({ student: s, index: i, isPt, onClick }: StudentCardProps) => (
-  <div className="relative group h-full">
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
-      variants={fadeUp}
-      custom={i}
-      className="h-full min-h-[154px] bg-card rounded-lg p-4 border border-border cursor-pointer hover:bg-accent/5 transition-colors flex flex-col overflow-hidden"
-      onClick={onClick}
-    >
-      <p className="font-semibold text-foreground line-clamp-2">{s.name}</p>
-      <p className="text-sm text-accent line-clamp-1">{isPt ? s.levelPt : s.level}</p>
-      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{isPt ? s.areaPt : s.area}</p>
-      {s.year_joined && (
-        <p className="text-xs text-muted-foreground mt-1 shrink-0">
-          {isPt ? `Desde ${s.year_joined}` : `Since ${s.year_joined}`}
-        </p>
-      )}
-      {s.graduation_year && s.role === "alumni" && (
-        <p className="text-xs text-muted-foreground mt-0.5 shrink-0">
-          {isPt ? `Formado em ${s.graduation_year}` : `Graduated ${s.graduation_year}`}
-        </p>
-      )}
-      {s.research_areas && s.research_areas.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-auto pt-2 max-h-12 overflow-hidden">
-          {s.research_areas.slice(0, 2).map((a) => (
-            <span
-              key={a}
-              className="px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded-full"
-            >
-              {a}
-            </span>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  </div>
-);
+const StudentCard = ({ student: s, index: i, isPt, onClick }: StudentCardProps) => {
+  const exitLabel = s.exit_date
+    ? (isPt ? `Saiu em ${formatExitDate(s.exit_date, true)}` : `Left ${formatExitDate(s.exit_date)}`)
+    : null;
+
+  return (
+    <div className="relative group h-full">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeUp}
+        custom={i}
+        className="h-full min-h-[154px] bg-card rounded-lg p-4 border border-border cursor-pointer hover:bg-accent/5 transition-colors flex flex-col overflow-hidden"
+        onClick={onClick}
+      >
+        <p className="font-semibold text-foreground line-clamp-2">{s.name}</p>
+        <p className="text-sm text-accent line-clamp-1">{isPt ? s.levelPt : s.level}</p>
+        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{isPt ? s.areaPt : s.area}</p>
+        {s.year_joined && (
+          <p className="text-xs text-muted-foreground mt-1 shrink-0">
+            {isPt ? `Desde ${s.year_joined}` : `Since ${s.year_joined}`}
+          </p>
+        )}
+        {exitLabel && s.role === "alumni" && (
+          <p className="text-xs text-muted-foreground mt-0.5 shrink-0">{exitLabel}</p>
+        )}
+        {!exitLabel && s.graduation_year && s.role === "alumni" && (
+          <p className="text-xs text-muted-foreground mt-0.5 shrink-0">
+            {isPt ? `Formado em ${s.graduation_year}` : `Graduated ${s.graduation_year}`}
+          </p>
+        )}
+        {s.research_areas && s.research_areas.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-auto pt-2 max-h-12 overflow-hidden">
+            {s.research_areas.slice(0, 2).map((a) => (
+              <span
+                key={a}
+                className="px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded-full"
+              >
+                {a}
+              </span>
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+};
 
 export default PeoplePage;

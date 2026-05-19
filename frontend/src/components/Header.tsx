@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sun, Moon, Contrast, Search, Menu, X, Globe, AArrowUp } from "lucide-react";
+import { Sun, Moon, Contrast, Menu, X, Globe, AArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/lasdpc-logo.png";
 import UserAvatarButton from "@/components/UserAvatarButton";
@@ -29,7 +29,6 @@ const Header = () => {
   const { lang, setLang, t } = useLang();
   const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
 
   const themeIcon = theme === "dark" ? <Moon size={18} /> : <Sun size={18} />;
@@ -81,24 +80,6 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-2 ml-auto">
-            <AnimatePresence>
-              {searchOpen && (
-                <motion.input
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 160, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  autoFocus
-                  placeholder={t("search.placeholder")}
-                  className="bg-secondary text-secondary-foreground rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  onBlur={() => setSearchOpen(false)}
-                />
-              )}
-            </AnimatePresence>
-            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-md hover:bg-secondary text-foreground transition-all duration-200 active:scale-90" aria-label="Search">
-              <Search size={18} />
-            </button>
-
             <button onClick={() => setLang(lang === "pt-BR" ? "en-US" : "pt-BR")} className="p-2 rounded-md hover:bg-secondary text-foreground flex items-center gap-1 text-xs font-medium transition-all duration-200 active:scale-90" aria-label="Language">
               <Globe size={16} />
               <span className="hidden sm:inline">{lang === "pt-BR" ? "PT" : "EN"}</span>
