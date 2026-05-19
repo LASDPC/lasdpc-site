@@ -81,6 +81,12 @@
   "blog.searchPlaceholder": "Search posts...",
   "blog.clearSearch": "Clear blog search",
   "blog.noPostsFound": "No posts found.",
+  "blog.filterByTag": "Tag",
+  "blog.clearTagFilter": "Clear tag filter",
+  "blog.noTagResults": "No matching tags.",
+  "blog.filterByYear": "Year",
+  "blog.filterByAuthor": "Author",
+  "blog.clearFilters": "Clear filters",
 
   "history.title": "History",
   "history.subtitle": "A brief timeline of LaSDPC's origins, evolution, and current research directions.",

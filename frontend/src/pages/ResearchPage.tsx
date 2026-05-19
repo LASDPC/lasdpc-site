@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FlaskConical, Search, X, ChevronDown, Check } from "lucide-react";
@@ -8,12 +8,16 @@ import { usePublications } from "@/hooks/usePublications";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import PaginationControls from "@/components/PaginationControls";
 import { matchesSearchTerm, normalizeSearchText } from "@/lib/search";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
 };
+
+const PROJECTS_PAGE_SIZE = 6;
+const PUBLICATIONS_PAGE_SIZE = 10;
 
 const ResearchPageSkeleton = () => (
   <div className="py-10">
@@ -146,9 +150,9 @@ const ResearchPage = () => {
   const searchQuery = searchParams.get("q") ?? "";
   const yearFilter = searchParams.get("year") ?? "";
   const tagFilter = searchParams.get("tag") ?? "";
-  const statusFilter = searchParams.get("status") ?? "";
   const typeFilter = searchParams.get("type") ?? "";
-  const impactFilter = searchParams.get("impact") ?? "";
+  const projectsPage = Math.max(1, Number(searchParams.get("projectsPage") || "1") || 1);
+  const pubsPage = Math.max(1, Number(searchParams.get("pubsPage") || "1") || 1);
 
   const setFilter = useCallback(
     (key: string, value: string, replace = false) => {
@@ -157,6 +161,12 @@ const ResearchPage = () => {
           const next = new URLSearchParams(prev);
           if (value) next.set(key, value);
           else next.delete(key);
+          // Any filter change (other than pagination params themselves) resets
+          // both page params so users don't land on an empty page.
+          if (key !== "projectsPage" && key !== "pubsPage") {
+            next.delete("projectsPage");
+            next.delete("pubsPage");
+          }
           return next;
         },
         { replace },
@@ -195,33 +205,17 @@ const ResearchPage = () => {
     return Array.from(years).sort((a, b) => b - a);
   }, [publications]);
 
-  const statusOptions = useMemo(() => {
-    const set = new Set<string>();
-    projects.forEach((p) => p.status && set.add(p.status));
-    publications.forEach((p) => p.status && set.add(p.status));
-    return Array.from(set);
-  }, [projects, publications]);
-
   const typeOptions = useMemo(() => {
     const set = new Set<string>();
     publications.forEach((p) => p.type && set.add(p.type));
     return Array.from(set);
   }, [publications]);
 
-  const impactOptions = useMemo(() => {
-    const set = new Set<string>();
-    projects.forEach((p) => p.impact && set.add(p.impact));
-    publications.forEach((p) => p.impact && set.add(p.impact));
-    return Array.from(set);
-  }, [projects, publications]);
-
   const hasAnyFilter =
     Boolean(searchQuery) ||
     Boolean(yearFilter) ||
     Boolean(tagFilter) ||
-    Boolean(statusFilter) ||
-    Boolean(typeFilter) ||
-    Boolean(impactFilter);
+    Boolean(typeFilter);
 
   // ---- Filtering ----
   const tagMatches = useCallback(
@@ -257,13 +251,11 @@ const ResearchPage = () => {
         // narrowed publications to a specific year only? -> we keep projects
         // visible only when no year is set, otherwise focus on publications.
         if (yearFilter) return false;
-        if (statusFilter && project.status !== statusFilter) return false;
-        if (impactFilter && project.impact !== impactFilter) return false;
         if (typeFilter) return false; // type is a publication-only facet
         if (!tagMatches(project.tags)) return false;
         return true;
       }),
-    [projects, searchQuery, yearFilter, statusFilter, impactFilter, typeFilter, tagMatches],
+    [projects, searchQuery, yearFilter, typeFilter, tagMatches],
   );
 
   const filteredPublications = useMemo(
@@ -285,18 +277,68 @@ const ResearchPage = () => {
           return false;
         }
         if (yearFilter && String(publication.year) !== yearFilter) return false;
-        if (statusFilter && publication.status !== statusFilter) return false;
         if (typeFilter && publication.type !== typeFilter) return false;
-        if (impactFilter && publication.impact !== impactFilter) return false;
         if (!tagMatches([...(publication.tags ?? []), publication.area, publication.areaPt])) return false;
         return true;
       }),
-    [publications, searchQuery, yearFilter, statusFilter, typeFilter, impactFilter, tagMatches],
+    [publications, searchQuery, yearFilter, typeFilter, tagMatches],
   );
+
+  // ---- Pagination (mirrors PeoplePage) ----
+  const projectsPageCount = Math.max(1, Math.ceil(filteredProjects.length / PROJECTS_PAGE_SIZE));
+  const safeProjectsPage = Math.min(projectsPage, projectsPageCount);
+  const pubsPageCount = Math.max(1, Math.ceil(filteredPublications.length / PUBLICATIONS_PAGE_SIZE));
+  const safePubsPage = Math.min(pubsPage, pubsPageCount);
+
+  // If the URL page param is past the end (because filters shrank the list),
+  // clamp it back so links stay valid.
+  useEffect(() => {
+    if (projectsPage !== safeProjectsPage) {
+      setFilter("projectsPage", safeProjectsPage === 1 ? "" : String(safeProjectsPage), true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectsPage, safeProjectsPage]);
+
+  useEffect(() => {
+    if (pubsPage !== safePubsPage) {
+      setFilter("pubsPage", safePubsPage === 1 ? "" : String(safePubsPage), true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pubsPage, safePubsPage]);
+
+  const paginatedProjects = useMemo(() => {
+    const start = (safeProjectsPage - 1) * PROJECTS_PAGE_SIZE;
+    return filteredProjects.slice(start, start + PROJECTS_PAGE_SIZE);
+  }, [filteredProjects, safeProjectsPage]);
+
+  const paginatedPublications = useMemo(() => {
+    const start = (safePubsPage - 1) * PUBLICATIONS_PAGE_SIZE;
+    return filteredPublications.slice(start, start + PUBLICATIONS_PAGE_SIZE);
+  }, [filteredPublications, safePubsPage]);
+
+  const goToProjectsPage = (n: number) => {
+    const clamped = Math.min(Math.max(1, n), projectsPageCount);
+    setFilter("projectsPage", clamped === 1 ? "" : String(clamped));
+    requestAnimationFrame(() => {
+      document
+        .getElementById("research-projects-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const goToPubsPage = (n: number) => {
+    const clamped = Math.min(Math.max(1, n), pubsPageCount);
+    setFilter("pubsPage", clamped === 1 ? "" : String(clamped));
+    requestAnimationFrame(() => {
+      document
+        .getElementById("research-publications-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   if (loadingProjects || loadingPubs) return <ResearchPageSkeleton />;
 
-  // ---- Localised labels for known status/type/impact values ----
+  // ---- Localised labels for known status/type values (status still shown on cards) ----
   const statusLabel = (value: string) => {
     const map: Record<string, [string, string]> = {
       active: ["Active", "Ativo"],
@@ -321,17 +363,6 @@ const ResearchPage = () => {
       thesis: ["Thesis", "Tese/Dissertação"],
       preprint: ["Preprint", "Preprint"],
       other: ["Other", "Outro"],
-    };
-    const pair = map[value];
-    if (!pair) return value;
-    return isPt ? pair[1] : pair[0];
-  };
-
-  const impactLabel = (value: string) => {
-    const map: Record<string, [string, string]> = {
-      High: ["High", "Alto"],
-      Medium: ["Medium", "Médio"],
-      Low: ["Low", "Baixo"],
     };
     const pair = map[value];
     if (!pair) return value;
@@ -399,19 +430,6 @@ const ResearchPage = () => {
               </select>
             )}
 
-            {statusOptions.length > 0 && (
-              <select
-                value={statusFilter}
-                onChange={(event) => setFilter("status", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
-              >
-                <option value="">{t("research.filterByStatus")}</option>
-                {statusOptions.map((s) => (
-                  <option key={s} value={s}>{statusLabel(s)}</option>
-                ))}
-              </select>
-            )}
-
             {typeOptions.length > 0 && (
               <select
                 value={typeFilter}
@@ -425,19 +443,6 @@ const ResearchPage = () => {
               </select>
             )}
 
-            {impactOptions.length > 0 && (
-              <select
-                value={impactFilter}
-                onChange={(event) => setFilter("impact", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
-              >
-                <option value="">{t("research.filterByImpact")}</option>
-                {impactOptions.map((i) => (
-                  <option key={i} value={i}>{impactLabel(i)}</option>
-                ))}
-              </select>
-            )}
-
             {hasAnyFilter && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
                 <X size={14} className="mr-1" /> {t("research.clearFilters")}
@@ -446,7 +451,10 @@ const ResearchPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
+        <div
+          id="research-projects-section"
+          className="flex items-center justify-between mb-6 scroll-mt-20"
+        >
           <h2 className="font-display text-2xl font-bold text-foreground">
             {t("section.projects")}
             <span className="ml-2 text-sm font-mono text-muted-foreground align-middle">
@@ -455,8 +463,8 @@ const ResearchPage = () => {
           </h2>
         </div>
         {filteredProjects.length > 0 ? (
-          <div className="grid auto-rows-fr md:grid-cols-2 gap-6 mb-20 items-stretch">
-            {filteredProjects.map((p, i) => (
+          <div className="grid auto-rows-fr md:grid-cols-2 gap-6 items-stretch">
+            {paginatedProjects.map((p, i) => (
               <div key={p.id} className="relative group h-full">
                 <Link to={`/research/${p.id}`} className="block h-full">
                   <motion.div
@@ -489,12 +497,26 @@ const ResearchPage = () => {
             ))}
           </div>
         ) : (
-          <p className="mb-20 rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
             {t("research.noProjectsFound")}
           </p>
         )}
 
-        <div className="flex items-center justify-between mb-6">
+        <PaginationControls
+          page={safeProjectsPage}
+          pageCount={projectsPageCount}
+          onChange={goToProjectsPage}
+          labels={{
+            prev: t("people.prev"),
+            next: t("people.next"),
+            pageOf: t("people.pageOf"),
+          }}
+        />
+
+        <div
+          id="research-publications-section"
+          className="flex items-center justify-between mb-6 mt-20 scroll-mt-20"
+        >
           <h2 className="font-display text-2xl font-bold text-foreground">
             {t("section.publications")}
             <span className="ml-2 text-sm font-mono text-muted-foreground align-middle">
@@ -503,7 +525,7 @@ const ResearchPage = () => {
           </h2>
         </div>
         <div className="grid auto-rows-fr gap-4">
-          {filteredPublications.map((pub, i) => (
+          {paginatedPublications.map((pub, i) => (
             <div key={pub.id} className="relative group h-full">
               <motion.a
                 href={pub.doi}
@@ -547,6 +569,17 @@ const ResearchPage = () => {
             {t("research.noPublicationsFound")}
           </p>
         )}
+
+        <PaginationControls
+          page={safePubsPage}
+          pageCount={pubsPageCount}
+          onChange={goToPubsPage}
+          labels={{
+            prev: t("people.prev"),
+            next: t("people.next"),
+            pageOf: t("people.pageOf"),
+          }}
+        />
       </div>
     </div>
   );
