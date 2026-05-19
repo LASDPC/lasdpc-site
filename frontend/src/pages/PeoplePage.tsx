@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,8 @@ import {
   Github,
   Twitter,
   Users,
+  Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -22,16 +24,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { mediaUrl } from "@/lib/media";
-import { CLASSIC_RESEARCH_AREAS, normalizeResearchArea } from "@/lib/researchAreas";
+import { normalizeResearchArea } from "@/lib/researchAreas";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
 };
 
-const ALUMNI_PAGE_SIZE = 30;
+const FORMER_MEMBERS_PAGE_SIZE = 30;
 const UNKNOWN_YEAR_BUCKET = -1; // sorts last (handled in code)
-type YearFilterMode = "entry" | "exit";
+const CURRENT_YEAR = new Date().getFullYear();
 
 const PeoplePageSkeleton = () => (
   <div className="py-10">
@@ -84,6 +86,36 @@ const exitYear = (person: User) => {
   return person.graduation_year ?? null;
 };
 
+const presenceBounds = (person: User) => {
+  const start = person.year_joined ?? null;
+  const end = exitYear(person);
+  if (start === null) {
+    if (end === null) return null;
+    return { start: end, end };
+  }
+  const resolvedEnd = person.role === "alumni" && end === null
+    ? start
+    : Math.max(start, end ?? CURRENT_YEAR);
+  return { start, end: resolvedEnd };
+};
+
+const wasPresentInYear = (person: User, year: number) => {
+  const bounds = presenceBounds(person);
+  return Boolean(bounds && year >= bounds.start && year <= bounds.end);
+};
+
+const presenceYearsForPerson = (person: User) => {
+  const bounds = presenceBounds(person);
+  if (!bounds) return [];
+  const years: number[] = [];
+  for (let year = bounds.start; year <= bounds.end; year += 1) {
+    years.push(year);
+  }
+  return years;
+};
+
+const isFormerMember = (person: User) => person.role === "alumni" || Boolean(exitYear(person));
+
 const exitSortValue = (person: User) => {
   const match = person.exit_date?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (match) return Number(`${match[1]}${match[2]}${match[3]}`);
@@ -91,15 +123,117 @@ const exitSortValue = (person: User) => {
   return year ? year * 10000 + 1231 : Number.NEGATIVE_INFINITY;
 };
 
-const yearForMode = (person: User, mode: YearFilterMode) =>
-  mode === "entry" ? person.year_joined ?? null : exitYear(person);
-
 const formatExitDate = (value?: string | null, isPt = false) => {
   if (!value) return "";
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return value;
   const [, year, month, day] = match;
   return isPt ? `${day}/${month}/${year}` : `${month}/${day}/${year}`;
+};
+
+const filterAreaOptions = (areas: string[], query: string) => {
+  const normalizedQuery = normalizeResearchArea(query);
+  if (!normalizedQuery) return areas;
+  return areas.filter((area) => normalizeResearchArea(area).includes(normalizedQuery));
+};
+
+interface AreaFilterComboboxProps {
+  value: string;
+  areas: string[];
+  onChange: (value: string, replace?: boolean) => void;
+  labels: {
+    placeholder: string;
+    clear: string;
+    noResults: string;
+  };
+}
+
+const AreaFilterCombobox = ({
+  value,
+  areas,
+  onChange,
+  labels,
+}: AreaFilterComboboxProps) => {
+  const [open, setOpen] = useState(false);
+  const filteredAreas = filterAreaOptions(areas, value);
+
+  const selectArea = (area: string) => {
+    onChange(area);
+    setOpen(false);
+  };
+
+  return (
+    <div
+      className="relative min-w-[260px] flex-1 sm:flex-none"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setOpen(false);
+        }
+      }}
+    >
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={value}
+          onFocus={() => setOpen(true)}
+          onChange={(event) => {
+            onChange(event.target.value, true);
+            setOpen(true);
+          }}
+          placeholder={labels.placeholder}
+          className="pl-9 pr-20"
+        />
+        <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
+          {value && (
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onChange("", true)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label={labels.clear}
+            >
+              <X size={14} />
+            </button>
+          )}
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => setOpen((current) => !current)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label={labels.placeholder}
+          >
+            <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 max-h-80 overflow-auto rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
+          {filteredAreas.length > 0 ? (
+            <div className="space-y-1">
+              {filteredAreas.map((area) => {
+                const selected = normalizeResearchArea(area) === normalizeResearchArea(value);
+                return (
+                  <button
+                    key={area}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => selectArea(area)}
+                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <span className="min-w-0 truncate">{area}</span>
+                    {selected && <Check size={14} className="shrink-0 text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="px-2 py-2 text-xs text-muted-foreground">{labels.noResults}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 function sortByEntryDate(items: User[]) {
@@ -111,10 +245,10 @@ function sortByEntryDate(items: User[]) {
   });
 }
 
-/** Group alumni by exit year, sort years descending, and place unknown dates
- * last. Returns an array of [year, students[]] pairs preserving order.
+/** Group former members by exit year, sort years descending, and place unknown
+ * dates last. Returns an array of [year, users[]] pairs preserving order.
  */
-function groupAlumniByExitYear(items: User[]): Array<[number, User[]]> {
+function groupFormerMembersByExitYear(items: User[]): Array<[number, User[]]> {
   const buckets = new Map<number, User[]>();
   for (const s of items) {
     const y = exitYear(s) ?? UNKNOWN_YEAR_BUCKET;
@@ -147,12 +281,14 @@ const PeoplePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const nameSearch = searchParams.get("name") ?? "";
-  const areaFilter = searchParams.get("area") ?? "";
-  const areaTextFilter = searchParams.get("areaText") ?? "";
+  const legacyAreaTextFilter = searchParams.get("areaText") ?? "";
+  const areaFilter = searchParams.get("area") ?? legacyAreaTextFilter;
   const yearFilter = searchParams.get("year") ?? "";
-  const yearFilterMode = (searchParams.get("yearMode") === "exit" ? "exit" : "entry") as YearFilterMode;
   const levelFilter = searchParams.get("level") ?? "";
-  const alumniPage = Math.max(1, Number(searchParams.get("alumniPage") || "1") || 1);
+  const formerPage = Math.max(
+    1,
+    Number(searchParams.get("formerPage") || searchParams.get("alumniPage") || "1") || 1,
+  );
 
   const setFilter = (key: string, value: string, replace = false) => {
     setSearchParams((prev) => {
@@ -162,19 +298,30 @@ const PeoplePage = () => {
       } else {
         next.delete(key);
       }
-      // Any filter change resets the alumni pagination so the user doesn't
-      // land on an empty page.
-      if (key !== "alumniPage") next.delete("alumniPage");
+      if (key === "area") next.delete("areaText");
+      if (key === "formerPage") next.delete("alumniPage");
+      // Any filter change resets the former-member pagination so the user
+      // doesn't land on an empty page.
+      if (key !== "formerPage") {
+        next.delete("formerPage");
+        next.delete("alumniPage");
+      }
       return next;
     }, { replace });
   };
 
-  const setYearFilterMode = (mode: YearFilterMode) => {
+  const setYearFilter = (value: string) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (mode === "entry") next.delete("yearMode");
-      else next.set("yearMode", mode);
-      next.delete("year");
+
+      if (value) {
+        next.set("year", value);
+      } else {
+        next.delete("year");
+      }
+
+      next.delete("yearMode");
+      next.delete("formerPage");
       next.delete("alumniPage");
       return next;
     });
@@ -182,51 +329,45 @@ const PeoplePage = () => {
 
   // Derived filter options
   const areaOptions = useMemo(() => {
-    const classicKeys = new Set(CLASSIC_RESEARCH_AREAS.map(normalizeResearchArea));
-    const values = new Map<string, { value: string; isClassic: boolean }>();
+    const values = new Map<string, string>();
 
-    const addArea = (value?: string | null, isClassic = false) => {
+    const addArea = (value?: string | null) => {
       const clean = value?.trim();
       if (!clean) return;
       const key = normalizeResearchArea(clean);
-      const previous = values.get(key);
-      values.set(key, {
-        value: previous?.value ?? clean,
-        isClassic: Boolean(previous?.isClassic || isClassic || classicKeys.has(key)),
-      });
+      if (!values.has(key)) values.set(key, clean);
     };
 
-    CLASSIC_RESEARCH_AREAS.forEach((area) => addArea(area, true));
-    researchAreaTerms.forEach((term) => addArea(term.value, Boolean(term.is_default)));
+    researchAreaTerms.forEach((term) => addArea(term.value));
     [...docentes, ...students].forEach((person) => personAreaValues(person).forEach((area) => addArea(area)));
 
-    const sorted = Array.from(values.values()).sort((a, b) =>
-      a.value.localeCompare(b.value, undefined, { sensitivity: "base" }),
+    const areas = Array.from(values.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
     );
     return {
-      classic: sorted.filter((item) => item.isClassic).map((item) => item.value),
-      other: sorted.filter((item) => !item.isClassic).map((item) => item.value),
+      areas,
+      knownKeys: new Set(areas.map(normalizeResearchArea)),
     };
   }, [docentes, students, researchAreaTerms]);
 
-  const entryYears = useMemo(() => {
+  const areaFilterMatchesKnownOption = areaOptions.knownKeys.has(normalizeResearchArea(areaFilter));
+
+  const matchesSelectedArea = useCallback((person: User) => {
+    if (!areaFilter) return true;
+    return areaFilterMatchesKnownOption
+      ? matchesAreaExact(person, areaFilter)
+      : matchesAreaSearch(person, areaFilter);
+  }, [areaFilter, areaFilterMatchesKnownOption]);
+
+  const presenceYears = useMemo(() => {
     const years = new Set<number>();
-    [...docentes, ...students].forEach(p => {
-      if (p.year_joined) years.add(p.year_joined);
+    [...docentes, ...students].forEach((person) => {
+      presenceYearsForPerson(person).forEach((year) => years.add(year));
     });
     return Array.from(years).sort((a, b) => b - a);
   }, [docentes, students]);
 
-  const exitYears = useMemo(() => {
-    const years = new Set<number>();
-    students.forEach(p => {
-      const year = exitYear(p);
-      if (year) years.add(year);
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [students]);
-
-  const yearOptions = yearFilterMode === "entry" ? entryYears : exitYears;
+  const hasYearOptions = presenceYears.length > 0;
 
   const studentLevels = useMemo(() => {
     const levels = new Map<string, string>();
@@ -241,67 +382,73 @@ const PeoplePage = () => {
       .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
   }, [students, isPt]);
 
-  const hasAnyFilter = nameSearch || areaFilter || areaTextFilter || yearFilter || levelFilter || yearFilterMode !== "entry";
+  const hasAnyFilter = nameSearch || areaFilter || yearFilter || levelFilter || searchParams.has("areaText");
 
   // Filtered data
   const filteredDocentes = useMemo(() => docentes.filter(d => {
     if (nameSearch && !d.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-    if (areaFilter && !matchesAreaExact(d, areaFilter)) return false;
-    if (areaTextFilter && !matchesAreaSearch(d, areaTextFilter)) return false;
-    if (yearFilter && yearForMode(d, yearFilterMode) !== Number(yearFilter)) return false;
+    if (!matchesSelectedArea(d)) return false;
+    if (yearFilter && !wasPresentInYear(d, Number(yearFilter))) return false;
     return true;
-  }), [docentes, nameSearch, areaFilter, areaTextFilter, yearFilter, yearFilterMode]);
+  }), [docentes, nameSearch, matchesSelectedArea, yearFilter]);
 
   // Apply free-text / area / year / level filters to every student first.
   const filteredStudents = useMemo(() => students.filter(s => {
     if (nameSearch && !s.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-    if (areaFilter && !matchesAreaExact(s, areaFilter)) return false;
-    if (areaTextFilter && !matchesAreaSearch(s, areaTextFilter)) return false;
-    if (yearFilter && yearForMode(s, yearFilterMode) !== Number(yearFilter)) return false;
+    if (!matchesSelectedArea(s)) return false;
+    if (yearFilter && !wasPresentInYear(s, Number(yearFilter))) return false;
     if (levelFilter && !matchesLevel(s, levelFilter)) return false;
     return true;
-  }), [students, nameSearch, areaFilter, areaTextFilter, yearFilter, yearFilterMode, levelFilter]);
+  }), [students, nameSearch, matchesSelectedArea, yearFilter, levelFilter]);
 
-  // Split by role so the page can render Active and Alumni separately.
+  const currentDocentes = useMemo(
+    () => filteredDocentes.filter((d) => !isFormerMember(d)),
+    [filteredDocentes],
+  );
+
+  // Split by status so the page can render current and former members separately.
   const activeStudents = useMemo(
-    () => sortByEntryDate(filteredStudents.filter((s) => s.role === "aluno_ativo")),
+    () => sortByEntryDate(filteredStudents.filter((s) => s.role === "aluno_ativo" && !isFormerMember(s))),
     [filteredStudents],
   );
-  const alumniStudents = useMemo(
-    () => filteredStudents.filter((s) => s.role === "alumni"),
-    [filteredStudents],
+  const formerMembers = useMemo(
+    () => [
+      ...filteredDocentes.filter(isFormerMember),
+      ...filteredStudents.filter(isFormerMember),
+    ],
+    [filteredDocentes, filteredStudents],
   );
 
-  // Group alumni by exit year. Pagination paginates over the year groups so
-  // each page is a coherent former-member view.
-  const alumniGroups = useMemo(
-    () => groupAlumniByExitYear(alumniStudents),
-    [alumniStudents],
+  // Group former members by exit year. Pagination paginates over the year
+  // groups so each page is a coherent former-member view.
+  const formerGroups = useMemo(
+    () => groupFormerMembersByExitYear(formerMembers),
+    [formerMembers],
   );
 
-  // Pagination across the flat alumni list, preserving the year grouping
+  // Pagination across the flat former-member list, preserving the year grouping
   // inside each page.
-  const alumniPageCount = Math.max(
+  const formerPageCount = Math.max(
     1,
-    Math.ceil(alumniStudents.length / ALUMNI_PAGE_SIZE),
+    Math.ceil(formerMembers.length / FORMER_MEMBERS_PAGE_SIZE),
   );
-  const safeAlumniPage = Math.min(alumniPage, alumniPageCount);
+  const safeFormerPage = Math.min(formerPage, formerPageCount);
 
   // If the page param is past the end (because filters shrank the list), pull
   // it back so links stay valid.
   useEffect(() => {
-    if (alumniPage !== safeAlumniPage) {
-      setFilter("alumniPage", String(safeAlumniPage), true);
+    if (formerPage !== safeFormerPage) {
+      setFilter("formerPage", safeFormerPage === 1 ? "" : String(safeFormerPage), true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alumniPage, safeAlumniPage]);
+  }, [formerPage, safeFormerPage]);
 
-  const paginatedAlumniGroups = useMemo(() => {
-    const start = (safeAlumniPage - 1) * ALUMNI_PAGE_SIZE;
-    const end = start + ALUMNI_PAGE_SIZE;
+  const paginatedFormerGroups = useMemo(() => {
+    const start = (safeFormerPage - 1) * FORMER_MEMBERS_PAGE_SIZE;
+    const end = start + FORMER_MEMBERS_PAGE_SIZE;
     const out: Array<[number, User[]]> = [];
     let offset = 0;
-    for (const [year, group] of alumniGroups) {
+    for (const [year, group] of formerGroups) {
       const groupStart = offset;
       const groupEnd = offset + group.length;
       if (groupEnd > start && groupStart < end) {
@@ -313,15 +460,15 @@ const PeoplePage = () => {
       if (offset >= end) break;
     }
     return out;
-  }, [alumniGroups, safeAlumniPage]);
+  }, [formerGroups, safeFormerPage]);
 
   const goToPage = (n: number) => {
-    const clamped = Math.min(Math.max(1, n), alumniPageCount);
-    setFilter("alumniPage", clamped === 1 ? "" : String(clamped));
-    // Scroll alumni heading back into view
+    const clamped = Math.min(Math.max(1, n), formerPageCount);
+    setFilter("formerPage", clamped === 1 ? "" : String(clamped));
+    // Scroll former-member heading back into view
     requestAnimationFrame(() => {
       document
-        .getElementById("alumni-section")
+        .getElementById("former-section")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
@@ -336,7 +483,7 @@ const PeoplePage = () => {
         ? "Data de saída não informada"
         : "Exit date unknown"
       : isPt
-        ? `Saíram em ${y}`
+        ? `Saída em ${y}`
         : `Left in ${y}`;
 
   return (
@@ -363,50 +510,26 @@ const PeoplePage = () => {
                 />
               </div>
             </div>
-            {(areaOptions.classic.length > 0 || areaOptions.other.length > 0) && (
-              <select
+            {areaOptions.areas.length > 0 && (
+              <AreaFilterCombobox
                 value={areaFilter}
-                onChange={(e) => setFilter("area", e.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[160px]"
-              >
-                <option value="">{t("people.filterByArea")}</option>
-                {areaOptions.classic.length > 0 && (
-                  <optgroup label={t("people.areaClassic")}>
-                    {areaOptions.classic.map(a => <option key={a} value={a}>{a}</option>)}
-                  </optgroup>
-                )}
-                {areaOptions.other.length > 0 && (
-                  <optgroup label={t("people.areaOther")}>
-                    {areaOptions.other.map(a => <option key={a} value={a}>{a}</option>)}
-                  </optgroup>
-                )}
-              </select>
-            )}
-            <div className="relative min-w-[180px]">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={areaTextFilter}
-                onChange={(e) => setFilter("areaText", e.target.value, true)}
-                placeholder={t("people.areaSearchPlaceholder")}
-                className="pl-9"
+                areas={areaOptions.areas}
+                onChange={(value, replace) => setFilter("area", value, replace)}
+                labels={{
+                  placeholder: t("people.areaSearchPlaceholder"),
+                  clear: t("people.clearAreaFilter"),
+                  noResults: t("people.noAreaResults"),
+                }}
               />
-            </div>
-            <select
-              value={yearFilterMode}
-              onChange={(e) => setYearFilterMode(e.target.value as YearFilterMode)}
-              className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[150px]"
-            >
-              <option value="entry">{t("people.filterByEntryYear")}</option>
-              <option value="exit">{t("people.filterByExitYear")}</option>
-            </select>
-            {yearOptions.length > 0 && (
+            )}
+            {hasYearOptions && (
               <select
                 value={yearFilter}
-                onChange={(e) => setFilter("year", e.target.value)}
+                onChange={(e) => setYearFilter(e.target.value)}
                 className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
               >
                 <option value="">{t("people.filterByYear")}</option>
-                {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                {presenceYears.map(y => <option key={y} value={String(y)}>{y}</option>)}
               </select>
             )}
             {studentLevels.length > 0 && (
@@ -432,11 +555,11 @@ const PeoplePage = () => {
           <h2 className="font-display text-3xl font-bold text-foreground">{t("section.faculty")}</h2>
         </div>
 
-        {filteredDocentes.length === 0 ? (
+        {currentDocentes.length === 0 ? (
           <p className="text-muted-foreground text-center py-8 mb-20">{t("people.noResults")}</p>
         ) : (
           <div className="grid auto-rows-fr md:grid-cols-2 gap-6 mb-20">
-            {filteredDocentes.map((d, i) => (
+            {currentDocentes.map((d, i) => (
               <div key={d.id} className="relative group h-full">
                 <motion.div
                   initial="hidden"
@@ -500,9 +623,9 @@ const PeoplePage = () => {
         ) : (
           <div className="grid auto-rows-fr sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-20">
             {activeStudents.map((s, i) => (
-              <StudentCard
+              <PersonCard
                 key={s.id}
-                student={s}
+                person={s}
                 index={i}
                 isPt={isPt}
                 onClick={() => navigate(`/profile/${s.id}`)}
@@ -511,48 +634,28 @@ const PeoplePage = () => {
           </div>
         )}
 
-        {/* Alumni section */}
+        {/* Former members section */}
         <div
-          id="alumni-section"
+          id="former-section"
           className="flex items-center justify-between mb-4 scroll-mt-20"
         >
           <h2 className="font-display text-3xl font-bold text-foreground flex items-center gap-2">
             {t("section.alumni")}
             <span className="text-sm font-mono text-muted-foreground align-middle">
-              ({alumniStudents.length})
+              ({formerMembers.length})
             </span>
           </h2>
         </div>
         <p className="text-muted-foreground mb-8 text-sm font-mono">
           {t("section.alumni.desc")}
         </p>
-        <p className="text-muted-foreground -mt-5 mb-8 max-w-4xl text-sm leading-relaxed">
-          {t("people.alumniInfo")}{" "}
-          <a
-            href="https://www5.usp.br/alumni-usp/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            alumni-usp
-          </a>
-          {", "}
-          <a
-            href="https://alumni.usp.br/plataforma-alumni-usp-completa-3-anos/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            plataforma
-          </a>
-        </p>
 
-        {alumniStudents.length === 0 ? (
+        {formerMembers.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">{t("people.noResults")}</p>
         ) : (
           <>
             <div className="space-y-10">
-              {paginatedAlumniGroups.map(([year, group]) => (
+              {paginatedFormerGroups.map(([year, group]) => (
                 <div key={year}>
                   <div className="flex items-center gap-3 mb-4">
                     <h3 className="font-display text-xl font-semibold text-foreground">
@@ -565,9 +668,9 @@ const PeoplePage = () => {
                   </div>
                   <div className="grid auto-rows-fr sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {group.map((s, i) => (
-                      <StudentCard
+                      <PersonCard
                         key={s.id}
-                        student={s}
+                        person={s}
                         index={i}
                         isPt={isPt}
                         onClick={() => navigate(`/profile/${s.id}`)}
@@ -579,26 +682,26 @@ const PeoplePage = () => {
             </div>
 
             {/* Pagination */}
-            {alumniPageCount > 1 && (
+            {formerPageCount > 1 && (
               <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => goToPage(safeAlumniPage - 1)}
-                  disabled={safeAlumniPage === 1}
+                  onClick={() => goToPage(safeFormerPage - 1)}
+                  disabled={safeFormerPage === 1}
                 >
                   <ChevronLeft size={16} className="mr-1" />
                   {t("people.prev")}
                 </Button>
 
-                {Array.from({ length: alumniPageCount }).map((_, idx) => {
+                {Array.from({ length: formerPageCount }).map((_, idx) => {
                   const p = idx + 1;
                   // Show first, last, current and neighbours; collapse the rest
-                  const isEdge = p === 1 || p === alumniPageCount;
-                  const isNear = Math.abs(p - safeAlumniPage) <= 1;
+                  const isEdge = p === 1 || p === formerPageCount;
+                  const isNear = Math.abs(p - safeFormerPage) <= 1;
                   if (!isEdge && !isNear) {
                     // Render a single ellipsis between groups
-                    if (p === 2 || p === alumniPageCount - 1) {
+                    if (p === 2 || p === formerPageCount - 1) {
                       return (
                         <span
                           key={`ellipsis-${p}`}
@@ -613,7 +716,7 @@ const PeoplePage = () => {
                   return (
                     <Button
                       key={p}
-                      variant={p === safeAlumniPage ? "default" : "outline"}
+                      variant={p === safeFormerPage ? "default" : "outline"}
                       size="sm"
                       onClick={() => goToPage(p)}
                       className="min-w-[36px]"
@@ -626,8 +729,8 @@ const PeoplePage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => goToPage(safeAlumniPage + 1)}
-                  disabled={safeAlumniPage === alumniPageCount}
+                  onClick={() => goToPage(safeFormerPage + 1)}
+                  disabled={safeFormerPage === formerPageCount}
                 >
                   {t("people.next")}
                   <ChevronRight size={16} className="ml-1" />
@@ -635,8 +738,8 @@ const PeoplePage = () => {
 
                 <span className="text-xs font-mono text-muted-foreground ml-3">
                   {t("people.pageOf")
-                    .replace("{current}", String(safeAlumniPage))
-                    .replace("{total}", String(alumniPageCount))}
+                    .replace("{current}", String(safeFormerPage))
+                    .replace("{total}", String(formerPageCount))}
                 </span>
               </div>
             )}
@@ -647,16 +750,20 @@ const PeoplePage = () => {
   );
 };
 
-interface StudentCardProps {
-  student: User;
+interface PersonCardProps {
+  person: User;
   index: number;
   isPt: boolean;
   onClick: () => void;
 }
 
-const StudentCard = ({ student: s, index: i, isPt, onClick }: StudentCardProps) => {
-  const exitLabel = s.exit_date
-    ? (isPt ? `Saiu em ${formatExitDate(s.exit_date, true)}` : `Left ${formatExitDate(s.exit_date)}`)
+const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
+  const subtitle = person.role === "docente"
+    ? (isPt ? person.titlePt || person.title : person.title || person.titlePt) || (isPt ? "Docente" : "Faculty")
+    : (isPt ? person.levelPt || person.level : person.level || person.levelPt);
+  const area = isPt ? person.areaPt || person.area : person.area || person.areaPt;
+  const exitLabel = person.exit_date
+    ? (isPt ? `Saiu em ${formatExitDate(person.exit_date, true)}` : `Left ${formatExitDate(person.exit_date)}`)
     : null;
 
   return (
@@ -670,25 +777,25 @@ const StudentCard = ({ student: s, index: i, isPt, onClick }: StudentCardProps) 
         className="h-full min-h-[154px] bg-card rounded-lg p-4 border border-border cursor-pointer hover:bg-accent/5 transition-colors flex flex-col overflow-hidden"
         onClick={onClick}
       >
-        <p className="font-semibold text-foreground line-clamp-2">{s.name}</p>
-        <p className="text-sm text-accent line-clamp-1">{isPt ? s.levelPt : s.level}</p>
-        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{isPt ? s.areaPt : s.area}</p>
-        {s.year_joined && (
+        <p className="font-semibold text-foreground line-clamp-2">{person.name}</p>
+        {subtitle && <p className="text-sm text-accent line-clamp-1">{subtitle}</p>}
+        {area && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{area}</p>}
+        {person.year_joined && (
           <p className="text-xs text-muted-foreground mt-1 shrink-0">
-            {isPt ? `Desde ${s.year_joined}` : `Since ${s.year_joined}`}
+            {isPt ? `Desde ${person.year_joined}` : `Since ${person.year_joined}`}
           </p>
         )}
-        {exitLabel && s.role === "alumni" && (
+        {exitLabel && (
           <p className="text-xs text-muted-foreground mt-0.5 shrink-0">{exitLabel}</p>
         )}
-        {!exitLabel && s.graduation_year && s.role === "alumni" && (
+        {!exitLabel && person.graduation_year && person.role === "alumni" && (
           <p className="text-xs text-muted-foreground mt-0.5 shrink-0">
-            {isPt ? `Formado em ${s.graduation_year}` : `Graduated ${s.graduation_year}`}
+            {isPt ? `Formado em ${person.graduation_year}` : `Graduated ${person.graduation_year}`}
           </p>
         )}
-        {s.research_areas && s.research_areas.length > 0 && (
+        {person.research_areas && person.research_areas.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-auto pt-2 max-h-12 overflow-hidden">
-            {s.research_areas.slice(0, 2).map((a) => (
+            {person.research_areas.slice(0, 2).map((a) => (
               <span
                 key={a}
                 className="px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded-full"

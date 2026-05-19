@@ -36,6 +36,7 @@ const docenteSchema = z.object({
   bio: z.string().optional(),
   bioPt: z.string().optional(),
   year_joined: z.coerce.number().int().min(1900).max(2100).optional().or(z.literal("")),
+  exit_date: z.string().optional(),
   linkedin: z.string().optional(),
   github: requiredText,
   twitter: z.string().optional(),
@@ -254,6 +255,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
       bio: initial?.bio ?? "",
       bioPt: initial?.bioPt ?? "",
       year_joined: initial?.year_joined ?? ("" as unknown as undefined),
+      exit_date: initial?.exit_date ?? "",
       linkedin: initial?.linkedin ?? "",
       github: initial?.github ?? "",
       twitter: initial?.twitter ?? "",
@@ -282,6 +284,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
         bioPt: v.bioPt || null,
         research_areas: researchAreas,
         year_joined: numberOrNull(v.year_joined),
+        exit_date: v.exit_date || null,
         skills,
         linkedin: v.linkedin || null,
         twitter: v.twitter || null,
@@ -334,6 +337,9 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>{pt ? "Ano de ingresso" : "Year joined"}</Label><Input type="number" {...register("year_joined")} placeholder="2020" /></div>
+          <div><Label>{pt ? "Data de saída" : "Exit date"}</Label><Input type="date" {...register("exit_date")} /></div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div><Label>{pt ? "Numero USP" : "USP Number"}</Label><Input {...register("usp_number")} /></div>
         </div>
       </div>

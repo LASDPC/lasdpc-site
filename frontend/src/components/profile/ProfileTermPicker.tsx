@@ -8,6 +8,13 @@ import { profileTermsService, type ProfileTermKind } from "@/services/profileTer
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase();
 
+const guidanceText = (kind: ProfileTermKind, isPt: boolean) => {
+  if (kind !== "research_area" && kind !== "skill") return null;
+  return isPt
+    ? "Prefira cadastrar termos em ingles e verifique primeiro se ja existe uma opcao relacionada. Isso ajuda a manter a busca global limpa e padronizada."
+    : "Prefer adding terms in English and first check whether a related option already exists. This keeps the global search clean and standardized.";
+};
+
 type ProfileTermPickerProps = {
   kind: ProfileTermKind;
   selected: string[];
@@ -41,6 +48,7 @@ export default function ProfileTermPicker({
   });
 
   const selectedKeys = useMemo(() => new Set(selected.map(normalize)), [selected]);
+  const guidance = guidanceText(kind, isPt);
   const options = useMemo(
     () => suggestions.map((item) => item.value).filter((value) => !selectedKeys.has(normalize(value))),
     [suggestions, selectedKeys],
@@ -112,6 +120,11 @@ export default function ProfileTermPicker({
         </div>
 
         <div className="mt-3 border-t border-border pt-3">
+          {guidance && (
+            <p className="mb-3 text-xs leading-5 text-muted-foreground">
+              {guidance}
+            </p>
+          )}
           {addingCustom ? (
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
