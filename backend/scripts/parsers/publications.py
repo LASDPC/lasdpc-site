@@ -20,6 +20,94 @@ PUBS_DIR = (
 
 
 # ---------------------------------------------------------------------------
+# Heuristic enrichment helpers (so seeded data already carries the new
+# filterable fields: tags, type, status, impact, area)
+# ---------------------------------------------------------------------------
+
+# Lightweight keyword map: any of these substrings (case-insensitive) in title or
+# venue tags the publication. The list is intentionally short - it only seeds
+# something useful; admins can refine via the edit form.
+_TAG_KEYWORDS: list[tuple[str, str]] = [
+    ("smart building", "Smart Building"),
+    ("smart-building", "Smart Building"),
+    ("iot", "IoT"),
+    ("internet of things", "IoT"),
+    ("cloud", "Cloud"),
+    ("edge", "Edge Computing"),
+    ("fog", "Fog Computing"),
+    ("hpc", "HPC"),
+    ("high performance", "HPC"),
+    ("parallel", "Parallel Computing"),
+    ("distributed", "Distributed Systems"),
+    ("blockchain", "Blockchain"),
+    ("machine learning", "Machine Learning"),
+    ("deep learning", "Deep Learning"),
+    ("neural", "Machine Learning"),
+    ("simulation", "Simulation"),
+    ("real-time", "Real-time Systems"),
+    ("real time", "Real-time Systems"),
+    ("scheduling", "Scheduling"),
+    ("operating system", "Operating Systems"),
+    ("sistemas operacionais", "Operating Systems"),
+    ("educational", "Educational Computing"),
+    ("rea ", "OER"),
+    ("oer ", "OER"),
+    ("ensino", "Education"),
+    ("game", "Games"),
+    ("jogo", "Games"),
+    ("energy", "Energy Efficiency"),
+    ("energia", "Energy Efficiency"),
+    ("metabolism", "Health"),
+    ("nutrition", "Health"),
+    ("saúde", "Health"),
+    ("blockchain", "Blockchain"),
+]
+
+
+def _infer_tags(*texts: str) -> list[str]:
+    haystack = " \n ".join(t.lower() for t in texts if t)
+    seen: list[str] = []
+    for needle, tag in _TAG_KEYWORDS:
+        if needle in haystack and tag not in seen:
+            seen.append(tag)
+    return seen[:6]
+
+
+def _infer_type(venue: str, title: str = "") -> str:
+    v = (venue or "").lower()
+    t = (title or "").lower()
+    if any(k in v for k in ("anais", "proceedings", "conf", "symposium", "workshop", "sbrc", "wscad")):
+        return "conference"
+    if any(k in v for k in ("journal", "revista", "transactions", "letters", "magazine")):
+        return "journal"
+    if any(k in v for k in ("book", "livro", "capítulo", "capitulo", "chapter")):
+        return "book"
+    if any(k in v for k in ("thesis", "tese", "dissertação", "dissertacao")) or any(
+        k in t for k in ("thesis", "tese", "dissertação", "dissertacao")
+    ):
+        return "thesis"
+    if "preprint" in v or "arxiv" in v:
+        return "preprint"
+    if v:
+        return "article"
+    return "other"
+
+
+def _enrich(doc: dict) -> dict:
+    """Fill the new filterable fields with sensible defaults derived from the
+    existing title/venue. Idempotent."""
+    title = doc.get("title", "") or ""
+    venue = doc.get("venue", "") or ""
+    doc.setdefault("tags", _infer_tags(title, venue))
+    doc.setdefault("type", _infer_type(venue, title))
+    doc.setdefault("status", "published")
+    doc.setdefault("impact", "Medium")
+    doc.setdefault("area", None)
+    doc.setdefault("areaPt", None)
+    return doc
+
+
+# ---------------------------------------------------------------------------
 # Smart-LaSDPC (2023-2024)
 # ---------------------------------------------------------------------------
 
@@ -176,4 +264,5 @@ def parse_historical() -> list[dict]:
 
 
 def parse_all() -> list[dict]:
-    return parse_smart_lasdpc() + parse_historical()
+    pubs = parse_smart_lasdpc() + parse_historical()
+    return [_enrich(p) for p in pubs]
