@@ -33,24 +33,23 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Vertical gradient that fades into the page background — no hard
-          bottom border, so the transition reads as a soft glow rather than a
-          banner. */}
+      {/* Soft blue glow that fades out *long before* the bottom of the
+          header so the transition into the page background reads as a
+          natural blend rather than a banner edge. Using an arbitrary
+          linear-gradient so we can place the transparent stop early and
+          leave the lower portion fully invisible. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 via-primary/[0.04] to-transparent"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--primary)/0.10)_0%,hsl(var(--primary)/0.05)_30%,hsl(var(--primary)/0.02)_60%,transparent_92%)]"
       />
-      {/* Decorative blurred orbs (subtle) */}
+      {/* Subtle blurred orb anchored near the top — kept far above the
+          header bottom so it can't create a visible color seam. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full bg-primary/10 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 -left-24 w-[360px] h-[360px] rounded-full bg-accent/[0.06] blur-3xl"
+        className="pointer-events-none absolute -top-40 -right-32 w-[440px] h-[440px] rounded-full bg-primary/[0.08] blur-3xl"
       />
 
-      <div className="container mx-auto px-4 py-10 md:py-12 relative">
+      <div className="container mx-auto px-4 pt-10 pb-16 md:pt-12 md:pb-20 relative">
         {eyebrow && (
           <p className="text-primary font-mono text-xs sm:text-sm font-medium tracking-widest uppercase mb-3">
             {eyebrow}
