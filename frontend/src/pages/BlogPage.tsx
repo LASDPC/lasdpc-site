@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ChevronDown, Newspaper, Search, X } from "lucide-react";
+import { Newspaper, Search, X } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useBlog } from "@/hooks/useBlog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import FilterCombobox from "@/components/FilterCombobox";
 import PaginationControls from "@/components/PaginationControls";
 import PageHeader from "@/components/PageHeader";
 import { mediaUrl } from "@/lib/media";
@@ -37,103 +38,6 @@ const BlogPageSkeleton = () => (
   </div>
 );
 
-// ---------------------------------------------------------------------------
-// Tag combobox (search + select), mirroring the TagCombobox on ResearchPage
-// ---------------------------------------------------------------------------
-
-interface TagComboboxProps {
-  value: string;
-  tags: string[];
-  onChange: (value: string, replace?: boolean) => void;
-  labels: { placeholder: string; clear: string; noResults: string };
-}
-
-const TagCombobox = ({ value, tags, onChange, labels }: TagComboboxProps) => {
-  const [open, setOpen] = useState(false);
-  const normalizedQuery = normalizeSearchText(value).trim();
-  const filtered = normalizedQuery
-    ? tags.filter((t) => normalizeSearchText(t).includes(normalizedQuery))
-    : tags;
-
-  const select = (tag: string) => {
-    onChange(tag);
-    setOpen(false);
-  };
-
-  return (
-    <div
-      className="relative min-w-[220px] flex-1 sm:flex-none"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setOpen(false);
-        }
-      }}
-    >
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={value}
-          onFocus={() => setOpen(true)}
-          onChange={(event) => {
-            onChange(event.target.value, true);
-            setOpen(true);
-          }}
-          placeholder={labels.placeholder}
-          className="pl-9 pr-20"
-        />
-        <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
-          {value && (
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => onChange("", true)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label={labels.clear}
-            >
-              <X size={14} />
-            </button>
-          )}
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label={labels.placeholder}
-          >
-            <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 max-h-80 overflow-auto rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
-          {filtered.length > 0 ? (
-            <div className="space-y-1">
-              {filtered.map((tag) => {
-                const selected = normalizeSearchText(tag) === normalizeSearchText(value);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => select(tag)}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <span className="min-w-0 truncate">{tag}</span>
-                    {selected && <Check size={14} className="shrink-0 text-primary" />}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{labels.noResults}</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Extract a 4-digit year from a free-text date string ("March 15, 2025",
 // "2025-03-15", "15/03/2025", etc). Returns null when no year can be found.
 const extractYear = (value?: string | null): number | null => {
@@ -142,6 +46,21 @@ const extractYear = (value?: string | null): number | null => {
   if (!match) return null;
   const year = Number(match[0]);
   return Number.isFinite(year) ? year : null;
+};
+
+const matchesYearFilter = (date: string, query: string) => {
+  const cleanQuery = query.trim();
+  if (!cleanQuery) return true;
+  const year = extractYear(date);
+  if (!year) return false;
+  const yearText = String(year);
+  return /^\d{4}$/.test(cleanQuery) ? yearText === cleanQuery : yearText.includes(cleanQuery);
+};
+
+const matchesTextFilter = (value: string | null | undefined, query: string) => {
+  const target = normalizeSearchText(query).trim();
+  if (!target) return true;
+  return Boolean(value && normalizeSearchText(value).includes(target));
 };
 
 const BlogPage = () => {
@@ -216,16 +135,6 @@ const BlogPage = () => {
   const hasAnyFilter =
     Boolean(searchQuery) || Boolean(tagFilter) || Boolean(yearFilter) || Boolean(authorFilter);
 
-  // ---- Filtering ----
-  const tagMatches = useCallback(
-    (tag?: string | null) => {
-      if (!tagFilter) return true;
-      const target = normalizeSearchText(tagFilter);
-      return Boolean(tag && normalizeSearchText(tag).includes(target));
-    },
-    [tagFilter],
-  );
-
   const filteredBlog = useMemo(
     () =>
       blog.filter((post) => {
@@ -244,12 +153,12 @@ const BlogPage = () => {
         ) {
           return false;
         }
-        if (!tagMatches(post.tag)) return false;
-        if (yearFilter && String(extractYear(post.date) ?? "") !== yearFilter) return false;
-        if (authorFilter && post.author !== authorFilter) return false;
+        if (!matchesTextFilter(post.tag, tagFilter)) return false;
+        if (!matchesYearFilter(post.date, yearFilter)) return false;
+        if (!matchesTextFilter(post.author, authorFilter)) return false;
         return true;
       }),
-    [blog, searchQuery, tagMatches, yearFilter, authorFilter],
+    [blog, searchQuery, tagFilter, yearFilter, authorFilter],
   );
 
   // ---- Pagination ----
@@ -316,9 +225,9 @@ const BlogPage = () => {
             </div>
 
             {tagOptions.length > 0 && (
-              <TagCombobox
+              <FilterCombobox
                 value={tagFilter}
-                tags={tagOptions}
+                options={tagOptions}
                 onChange={(value, replace) => setFilter("tag", value, replace)}
                 labels={{
                   placeholder: t("blog.filterByTag"),
@@ -329,29 +238,32 @@ const BlogPage = () => {
             )}
 
             {yearOptions.length > 0 && (
-              <select
+              <FilterCombobox
                 value={yearFilter}
-                onChange={(event) => setFilter("year", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
-              >
-                <option value="">{t("blog.filterByYear")}</option>
-                {yearOptions.map((y) => (
-                  <option key={y} value={String(y)}>{y}</option>
-                ))}
-              </select>
+                options={yearOptions.map(String)}
+                onChange={(value, replace) => setFilter("year", value, replace)}
+                inputMode="numeric"
+                className="min-w-[140px]"
+                labels={{
+                  placeholder: t("blog.filterByYear"),
+                  clear: t("blog.clearYearFilter"),
+                  noResults: t("blog.noYearResults"),
+                }}
+              />
             )}
 
             {authorOptions.length > 0 && (
-              <select
+              <FilterCombobox
                 value={authorFilter}
-                onChange={(event) => setFilter("author", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[160px]"
-              >
-                <option value="">{t("blog.filterByAuthor")}</option>
-                {authorOptions.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
+                options={authorOptions}
+                onChange={(value, replace) => setFilter("author", value, replace)}
+                className="min-w-[180px]"
+                labels={{
+                  placeholder: t("blog.filterByAuthor"),
+                  clear: t("blog.clearAuthorFilter"),
+                  noResults: t("blog.noAuthorResults"),
+                }}
+              />
             )}
 
             {hasAnyFilter && (

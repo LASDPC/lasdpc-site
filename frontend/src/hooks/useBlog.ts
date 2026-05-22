@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { blogService, type BlogPostInput } from "@/services/blog";
+import { blogService, type BlogListFilters, type BlogPostInput } from "@/services/blog";
 
-export function useBlog() {
-  return useQuery({ queryKey: ["blog"], queryFn: blogService.list });
+export function useBlog(filters?: BlogListFilters) {
+  return useQuery({ queryKey: ["blog", filters ?? {}], queryFn: () => blogService.list(filters) });
 }
 
 export function useBlogPost(id: string) {
