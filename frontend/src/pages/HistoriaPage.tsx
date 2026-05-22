@@ -357,8 +357,8 @@ export default function HistoriaPage() {
                 </p>
               </div>
 
-              <div className="mt-7 flex flex-wrap items-center gap-2">
-                <div className="rounded-lg border border-border bg-background/85 px-4 py-3 backdrop-blur">
+              <div className="mt-7">
+                <div className="inline-block rounded-lg border border-border bg-background/85 px-4 py-3 backdrop-blur">
                   <span className="block font-mono text-xs font-semibold uppercase text-muted-foreground">
                     {activeItem.metricLabel}
                   </span>
@@ -366,14 +366,6 @@ export default function HistoriaPage() {
                     {activeItem.metric}
                   </span>
                 </div>
-                {activeItem.subjects.map((subject) => (
-                  <span
-                    key={subject}
-                    className="rounded-md border border-border bg-background/80 px-3 py-2 text-xs font-semibold text-foreground backdrop-blur"
-                  >
-                    {subject}
-                  </span>
-                ))}
               </div>
             </div>
           </motion.div>
@@ -403,16 +395,6 @@ export default function HistoriaPage() {
                 {activeItem.title}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{activeItem.summary}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {activeItem.subjects.map((subject) => (
-                  <span
-                    key={subject}
-                    className="rounded-md border border-border bg-secondary/70 px-2.5 py-1 text-xs font-medium text-secondary-foreground"
-                  >
-                    {subject}
-                  </span>
-                ))}
-              </div>
             </div>
           </aside>
         </div>
@@ -528,16 +510,6 @@ export default function HistoriaPage() {
                         </div>
                       </div>
 
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {item.subjects.map((subject) => (
-                          <span
-                            key={subject}
-                            className="rounded-md border border-border bg-secondary/70 px-2.5 py-1 text-xs font-medium text-secondary-foreground"
-                          >
-                            {subject}
-                          </span>
-                        ))}
-                      </div>
                     </div>
                   </div>
 

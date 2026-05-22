@@ -398,7 +398,7 @@ const PeoplePage = () => {
       <div className="container mx-auto px-4 py-10">
 
         {/* Filter bar */}
-        <div className="mb-10 bg-card border border-border rounded-xl p-4">
+        <div className="mb-6 bg-card border border-border rounded-xl p-4">
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">

@@ -59,7 +59,7 @@ const PageHeader = ({
           </h1>
         </div>
         {subtitle && (
-          <div className="mt-3 text-muted-foreground text-sm sm:text-base max-w-2xl">
+          <div className="mt-3 text-foreground text-sm sm:text-base max-w-2xl">
             {subtitle}
           </div>
         )}
