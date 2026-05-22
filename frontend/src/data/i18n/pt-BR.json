@@ -81,6 +81,12 @@
   "blog.searchPlaceholder": "Buscar posts...",
   "blog.clearSearch": "Limpar busca do blog",
   "blog.noPostsFound": "Nenhum post encontrado.",
+  "blog.filterByTag": "Tag",
+  "blog.clearTagFilter": "Limpar filtro de tag",
+  "blog.noTagResults": "Nenhuma tag encontrada.",
+  "blog.filterByYear": "Ano",
+  "blog.filterByAuthor": "Autor",
+  "blog.clearFilters": "Limpar filtros",
 
   "history.title": "História",
   "history.subtitle": "Uma linha do tempo da origem do LaSDPC, sua evolução e as direções atuais de pesquisa.",
