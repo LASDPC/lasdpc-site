@@ -8,6 +8,56 @@ import { useBlog } from "@/hooks/useBlog";
 import { useStats } from "@/hooks/useStats";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/PageHeader";
+import LabSlider, { type LabSlide } from "@/components/LabSlider";
+
+// Placeholder photos — swap with real lab photography when available.
+const LAB_SLIDES: LabSlide[] = [
+  {
+    src: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1600&h=900&fit=crop",
+    title: "High-performance computing",
+    titlePt: "Computação de alto desempenho",
+    description:
+      "Distributed clusters powering simulations, AI training, and scientific workloads.",
+    descriptionPt:
+      "Clusters distribuídos para simulações, treinamento de IA e cargas científicas.",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1600&h=900&fit=crop",
+    title: "Collaborative research",
+    titlePt: "Pesquisa colaborativa",
+    description:
+      "Faculty, graduate, and undergraduate students sharing the lab day-to-day.",
+    descriptionPt:
+      "Docentes, pós-graduandos e alunos de graduação compartilhando o cotidiano do laboratório.",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1600&h=900&fit=crop",
+    title: "Distributed systems & AI",
+    titlePt: "Sistemas distribuídos & IA",
+    description:
+      "Research on edge, cloud, scheduling, and large-scale machine learning.",
+    descriptionPt:
+      "Pesquisa em edge, nuvem, escalonamento e aprendizado de máquina em larga escala.",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1600&h=900&fit=crop",
+    title: "ICMC-USP, São Carlos",
+    titlePt: "ICMC-USP, São Carlos",
+    description:
+      "The lab is based at the Institute of Mathematics and Computer Sciences.",
+    descriptionPt:
+      "O laboratório fica no Instituto de Ciências Matemáticas e de Computação.",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1600&h=900&fit=crop",
+    title: "Teaching the next generation",
+    titlePt: "Formando a próxima geração",
+    description:
+      "Courses, internships, and outreach connecting research to undergraduate teaching.",
+    descriptionPt:
+      "Disciplinas, estágios e extensão conectando a pesquisa ao ensino de graduação.",
+  },
+];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -25,20 +75,26 @@ const blogImages = [
 const HomePageSkeleton = () => (
   <div>
     {/* Hero skeleton */}
-    <section className="min-h-[75vh] flex items-center bg-card border-b border-border">
-      <div className="container mx-auto px-4">
+    <section className="bg-card">
+      <div className="container mx-auto px-4 pt-10 pb-16 md:pt-12 md:pb-20">
         <div className="max-w-3xl space-y-5">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-14 w-full max-w-xl" />
-          <Skeleton className="h-14 w-3/4 max-w-lg" />
-          <Skeleton className="h-6 w-full max-w-2xl" />
-          <Skeleton className="h-6 w-2/3 max-w-lg" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded" />
+            <Skeleton className="h-10 w-72" />
+          </div>
+          <Skeleton className="h-5 w-full max-w-xl" />
+          <Skeleton className="h-5 w-5/6 max-w-lg" />
           <div className="flex gap-4 pt-2">
             <Skeleton className="h-12 w-40 rounded-lg" />
             <Skeleton className="h-12 w-36 rounded-lg" />
           </div>
         </div>
       </div>
+    </section>
+
+    {/* Slider skeleton */}
+    <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-12 sm:mb-16">
+      <Skeleton className="aspect-[16/9] w-full rounded-2xl" />
     </section>
 
     {/* Stats skeleton */}
@@ -170,6 +226,12 @@ const HomePage = () => {
           </Link>
         </div>
       </PageHeader>
+
+      {/* Photo slider — sits flush with the header so the page opens with a
+          bold visual right below the title. */}
+      <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-12 sm:mb-16">
+        <LabSlider slides={LAB_SLIDES} isPt={isPt} />
+      </section>
 
       {/* Stats */}
       <section className="py-16 bg-card border-b border-border">
