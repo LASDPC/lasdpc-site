@@ -152,18 +152,56 @@ const DocsPage = () => {
       )}
 
       {/* Main content */}
-      <div className="flex-1 min-w-0">
-        <div className="px-4 sm:px-6 md:px-10 py-6 md:py-10 max-w-3xl">
-          {/* Page header */}
-          <div className="flex items-center gap-3 mb-6 md:mb-8">
-            <FileText className="h-7 w-7 md:h-8 md:w-8 text-primary shrink-0" />
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              {isPt ? "Documentação" : "Documentation"}
-            </h1>
-          </div>
+      <div className="flex-1 min-w-0 flex flex-col">
+        {isEmpty ? (
+          // Empty state: center on the full content area (no sidebar in this case).
+          <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 md:py-16">
+            <div className="w-full max-w-xl">
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <FileText className="h-7 w-7 md:h-8 md:w-8 text-primary shrink-0" />
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+                  {isPt ? "Documentação" : "Documentation"}
+                </h1>
+              </div>
+              <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 sm:p-12 flex flex-col items-center text-center">
+                <div className="rounded-full bg-primary/10 text-primary p-4 mb-5">
+                  <Inbox size={32} />
+                </div>
+                <h2 className="font-display text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                  {isPt ? "Nenhuma documentação ainda" : "No documentation yet"}
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-md mb-6">
+                  {isPt
+                    ? "Ainda não há páginas de documentação disponíveis. Volte mais tarde."
+                    : "There are no documentation pages available yet. Check back later."}
+                </p>
+                {user?.is_admin && (
+                  <Button asChild>
+                    <Link to="/admin/edit/doc">
+                      <FilePlus size={16} className="mr-2" />
+                      {isPt ? "Criar primeira doc" : "Create first doc"}
+                    </Link>
+                  </Button>
+                )}
 
-          {/* Mobile doc selector + user box (hidden when empty) */}
-          {!isEmpty && (
+                {/* Mobile-only user box on empty state */}
+                <div className="md:hidden mt-8 w-full rounded-md border border-border bg-card p-3 text-left">
+                  {renderUserBox()}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 sm:px-6 md:px-10 py-6 md:py-10 max-w-3xl">
+            {/* Page header */}
+            <div className="flex items-center gap-3 mb-6 md:mb-8">
+              <FileText className="h-7 w-7 md:h-8 md:w-8 text-primary shrink-0" />
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+                {isPt ? "Documentação" : "Documentation"}
+              </h1>
+            </div>
+
+            {/* Mobile doc selector + user box */}
             <div className="md:hidden mb-6 space-y-3">
               <select
                 value={effectiveDocId}
@@ -190,57 +228,29 @@ const DocsPage = () => {
                 {renderUserBox()}
               </div>
             </div>
-          )}
 
-          {/* Empty state */}
-          {isEmpty ? (
-            <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 sm:p-12 flex flex-col items-center text-center">
-              <div className="rounded-full bg-primary/10 text-primary p-4 mb-5">
-                <Inbox size={32} />
-              </div>
-              <h2 className="font-display text-xl sm:text-2xl font-semibold text-foreground mb-2">
-                {isPt ? "Nenhuma documentação ainda" : "No documentation yet"}
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-md mb-6">
-                {isPt
-                  ? "Ainda não há páginas de documentação disponíveis. Volte mais tarde."
-                  : "There are no documentation pages available yet. Check back later."}
-              </p>
-              {user?.is_admin && (
-                <Button asChild>
-                  <Link to="/admin/edit/docs">
-                    <FilePlus size={16} className="mr-2" />
-                    {isPt ? "Criar primeira doc" : "Create first doc"}
-                  </Link>
-                </Button>
-              )}
-
-              {/* Mobile-only user box on empty state */}
-              <div className="md:hidden mt-8 w-full rounded-md border border-border bg-card p-3 text-left">
-                {renderUserBox()}
-              </div>
-            </div>
-          ) : activeDoc ? (
-            <article className="prose prose-sm sm:prose-base max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
-              {/* Toolbar */}
-              <div className="flex items-center justify-between mb-6 not-prose">
-                <div>
-                  <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    {categoryIcons[activeDoc.category]}
-                    {categoryLabels[activeDoc.category]?.[isPt ? "pt" : "en"]}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {isPt ? "Atualizado em" : "Updated"} {activeDoc.updatedAt}
-                  </p>
+            {activeDoc && (
+              <article className="prose prose-sm sm:prose-base max-w-none dark:prose-invert prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-a:text-primary prose-th:text-foreground prose-td:text-foreground">
+                {/* Toolbar */}
+                <div className="flex items-center justify-between mb-6 not-prose">
+                  <div>
+                    <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      {categoryIcons[activeDoc.category]}
+                      {categoryLabels[activeDoc.category]?.[isPt ? "pt" : "en"]}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isPt ? "Atualizado em" : "Updated"} {activeDoc.updatedAt}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
-                {isPt ? activeDoc.contentPt : activeDoc.content}
-              </ReactMarkdown>
-            </article>
-          ) : null}
-        </div>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
+                  {isPt ? activeDoc.contentPt : activeDoc.content}
+                </ReactMarkdown>
+              </article>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
