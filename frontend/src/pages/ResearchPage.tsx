@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FlaskConical, Search, X, ChevronDown, Check } from "lucide-react";
+import { FlaskConical, Search, X } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import FilterCombobox from "@/components/FilterCombobox";
 import PaginationControls from "@/components/PaginationControls";
 import PageHeader from "@/components/PageHeader";
 import { matchesSearchTerm, normalizeSearchText } from "@/lib/search";
@@ -19,6 +20,13 @@ const fadeUp = {
 
 const PROJECTS_PAGE_SIZE = 6;
 const PUBLICATIONS_PAGE_SIZE = 10;
+
+const matchesPublicationYear = (year: number, query: string) => {
+  const cleanQuery = query.trim();
+  if (!cleanQuery) return true;
+  const yearText = String(year);
+  return /^\d{4}$/.test(cleanQuery) ? yearText === cleanQuery : yearText.includes(cleanQuery);
+};
 
 const ResearchPageSkeleton = () => (
   <div className="py-10">
@@ -42,103 +50,6 @@ const ResearchPageSkeleton = () => (
     </div>
   </div>
 );
-
-// ---------------------------------------------------------------------------
-// Tag combobox (search + select), mirroring the AreaFilterCombobox on PeoplePage
-// ---------------------------------------------------------------------------
-
-interface TagComboboxProps {
-  value: string;
-  tags: string[];
-  onChange: (value: string, replace?: boolean) => void;
-  labels: { placeholder: string; clear: string; noResults: string };
-}
-
-const TagCombobox = ({ value, tags, onChange, labels }: TagComboboxProps) => {
-  const [open, setOpen] = useState(false);
-  const normalizedQuery = normalizeSearchText(value).trim();
-  const filtered = normalizedQuery
-    ? tags.filter((t) => normalizeSearchText(t).includes(normalizedQuery))
-    : tags;
-
-  const select = (tag: string) => {
-    onChange(tag);
-    setOpen(false);
-  };
-
-  return (
-    <div
-      className="relative min-w-[220px] flex-1 sm:flex-none"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setOpen(false);
-        }
-      }}
-    >
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={value}
-          onFocus={() => setOpen(true)}
-          onChange={(event) => {
-            onChange(event.target.value, true);
-            setOpen(true);
-          }}
-          placeholder={labels.placeholder}
-          className="pl-9 pr-20"
-        />
-        <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
-          {value && (
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => onChange("", true)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label={labels.clear}
-            >
-              <X size={14} />
-            </button>
-          )}
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label={labels.placeholder}
-          >
-            <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 max-h-80 overflow-auto rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
-          {filtered.length > 0 ? (
-            <div className="space-y-1">
-              {filtered.map((tag) => {
-                const selected = normalizeSearchText(tag) === normalizeSearchText(value);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => select(tag)}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <span className="min-w-0 truncate">{tag}</span>
-                    {selected && <Check size={14} className="shrink-0 text-primary" />}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{labels.noResults}</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ResearchPage = () => {
   const { lang, t } = useLang();
@@ -277,7 +188,7 @@ const ResearchPage = () => {
         ) {
           return false;
         }
-        if (yearFilter && String(publication.year) !== yearFilter) return false;
+        if (!matchesPublicationYear(publication.year, yearFilter)) return false;
         if (typeFilter && publication.type !== typeFilter) return false;
         if (!tagMatches([...(publication.tags ?? []), publication.area, publication.areaPt])) return false;
         return true;
@@ -406,9 +317,9 @@ const ResearchPage = () => {
             </div>
 
             {tagOptions.length > 0 && (
-              <TagCombobox
+              <FilterCombobox
                 value={tagFilter}
-                tags={tagOptions}
+                options={tagOptions}
                 onChange={(value, replace) => setFilter("tag", value, replace)}
                 labels={{
                   placeholder: t("research.filterByTag"),
@@ -419,16 +330,18 @@ const ResearchPage = () => {
             )}
 
             {yearOptions.length > 0 && (
-              <select
+              <FilterCombobox
                 value={yearFilter}
-                onChange={(event) => setFilter("year", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
-              >
-                <option value="">{t("research.filterByYear")}</option>
-                {yearOptions.map((y) => (
-                  <option key={y} value={String(y)}>{y}</option>
-                ))}
-              </select>
+                options={yearOptions.map(String)}
+                onChange={(value, replace) => setFilter("year", value, replace)}
+                inputMode="numeric"
+                className="min-w-[140px]"
+                labels={{
+                  placeholder: t("research.filterByYear"),
+                  clear: t("research.clearYearFilter"),
+                  noResults: t("research.noYearResults"),
+                }}
+              />
             )}
 
             {typeOptions.length > 0 && (

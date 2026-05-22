@@ -467,11 +467,8 @@ export default function HistoriaPage() {
               </div>
             </div>
 
-            <div className="min-w-0 sm:flex sm:items-baseline sm:gap-3">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
-                {copy.chapterLabel}
-              </p>
-              <p className="mt-0.5 text-sm font-semibold leading-snug text-foreground sm:mt-0">
+            <div className="min-w-0 text-center">
+              <p className="text-base font-bold leading-snug text-foreground sm:text-lg">
                 {activeItem.title}
               </p>
             </div>

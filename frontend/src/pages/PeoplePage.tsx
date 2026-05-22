@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -12,8 +12,6 @@ import {
   Github,
   Twitter,
   Users,
-  Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -23,6 +21,7 @@ import { profileTermsService } from "@/services/profileTerms";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import FilterCombobox from "@/components/FilterCombobox";
 import PageHeader from "@/components/PageHeader";
 import { mediaUrl } from "@/lib/media";
 import { normalizeResearchArea } from "@/lib/researchAreas";
@@ -105,6 +104,13 @@ const wasPresentInYear = (person: User, year: number) => {
   return Boolean(bounds && year >= bounds.start && year <= bounds.end);
 };
 
+const matchesPresenceYear = (person: User, query: string) => {
+  const cleanQuery = query.trim();
+  if (!cleanQuery) return true;
+  if (/^\d{4}$/.test(cleanQuery)) return wasPresentInYear(person, Number(cleanQuery));
+  return presenceYearsForPerson(person).some((year) => String(year).includes(cleanQuery));
+};
+
 const presenceYearsForPerson = (person: User) => {
   const bounds = presenceBounds(person);
   if (!bounds) return [];
@@ -130,111 +136,6 @@ const formatExitDate = (value?: string | null, isPt = false) => {
   if (!match) return value;
   const [, year, month, day] = match;
   return isPt ? `${day}/${month}/${year}` : `${month}/${day}/${year}`;
-};
-
-const filterAreaOptions = (areas: string[], query: string) => {
-  const normalizedQuery = normalizeResearchArea(query);
-  if (!normalizedQuery) return areas;
-  return areas.filter((area) => normalizeResearchArea(area).includes(normalizedQuery));
-};
-
-interface AreaFilterComboboxProps {
-  value: string;
-  areas: string[];
-  onChange: (value: string, replace?: boolean) => void;
-  labels: {
-    placeholder: string;
-    clear: string;
-    noResults: string;
-  };
-}
-
-const AreaFilterCombobox = ({
-  value,
-  areas,
-  onChange,
-  labels,
-}: AreaFilterComboboxProps) => {
-  const [open, setOpen] = useState(false);
-  const filteredAreas = filterAreaOptions(areas, value);
-
-  const selectArea = (area: string) => {
-    onChange(area);
-    setOpen(false);
-  };
-
-  return (
-    <div
-      className="relative min-w-[260px] flex-1 sm:flex-none"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setOpen(false);
-        }
-      }}
-    >
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={value}
-          onFocus={() => setOpen(true)}
-          onChange={(event) => {
-            onChange(event.target.value, true);
-            setOpen(true);
-          }}
-          placeholder={labels.placeholder}
-          className="pl-9 pr-20"
-        />
-        <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
-          {value && (
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => onChange("", true)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label={labels.clear}
-            >
-              <X size={14} />
-            </button>
-          )}
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label={labels.placeholder}
-          >
-            <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 max-h-80 overflow-auto rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-lg">
-          {filteredAreas.length > 0 ? (
-            <div className="space-y-1">
-              {filteredAreas.map((area) => {
-                const selected = normalizeResearchArea(area) === normalizeResearchArea(value);
-                return (
-                  <button
-                    key={area}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => selectArea(area)}
-                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <span className="min-w-0 truncate">{area}</span>
-                    {selected && <Check size={14} className="shrink-0 text-primary" />}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{labels.noResults}</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
 };
 
 function sortByEntryDate(items: User[]) {
@@ -311,7 +212,7 @@ const PeoplePage = () => {
     }, { replace });
   };
 
-  const setYearFilter = (value: string) => {
+  const setYearFilter = (value: string, replace = false) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
 
@@ -325,7 +226,7 @@ const PeoplePage = () => {
       next.delete("formerPage");
       next.delete("alumniPage");
       return next;
-    });
+    }, { replace });
   };
 
   // Derived filter options
@@ -389,7 +290,7 @@ const PeoplePage = () => {
   const filteredDocentes = useMemo(() => docentes.filter(d => {
     if (nameSearch && !d.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
     if (!matchesSelectedArea(d)) return false;
-    if (yearFilter && !wasPresentInYear(d, Number(yearFilter))) return false;
+    if (!matchesPresenceYear(d, yearFilter)) return false;
     return true;
   }), [docentes, nameSearch, matchesSelectedArea, yearFilter]);
 
@@ -397,7 +298,7 @@ const PeoplePage = () => {
   const filteredStudents = useMemo(() => students.filter(s => {
     if (nameSearch && !s.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
     if (!matchesSelectedArea(s)) return false;
-    if (yearFilter && !wasPresentInYear(s, Number(yearFilter))) return false;
+    if (!matchesPresenceYear(s, yearFilter)) return false;
     if (levelFilter && !matchesLevel(s, levelFilter)) return false;
     return true;
   }), [students, nameSearch, matchesSelectedArea, yearFilter, levelFilter]);
@@ -511,10 +412,11 @@ const PeoplePage = () => {
               </div>
             </div>
             {areaOptions.areas.length > 0 && (
-              <AreaFilterCombobox
+              <FilterCombobox
                 value={areaFilter}
-                areas={areaOptions.areas}
+                options={areaOptions.areas}
                 onChange={(value, replace) => setFilter("area", value, replace)}
+                className="min-w-[260px]"
                 labels={{
                   placeholder: t("people.areaSearchPlaceholder"),
                   clear: t("people.clearAreaFilter"),
@@ -523,14 +425,18 @@ const PeoplePage = () => {
               />
             )}
             {hasYearOptions && (
-              <select
+              <FilterCombobox
                 value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
-              >
-                <option value="">{t("people.filterByYear")}</option>
-                {presenceYears.map(y => <option key={y} value={String(y)}>{y}</option>)}
-              </select>
+                options={presenceYears.map(String)}
+                onChange={setYearFilter}
+                inputMode="numeric"
+                className="min-w-[160px]"
+                labels={{
+                  placeholder: t("people.filterByYear"),
+                  clear: t("people.clearYearFilter"),
+                  noResults: t("people.noYearResults"),
+                }}
+              />
             )}
             {studentLevels.length > 0 && (
               <select
