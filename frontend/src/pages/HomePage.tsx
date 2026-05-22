@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
-import { ArrowRight, Cpu, Users, BookOpen } from "lucide-react";
+import { ArrowRight, Cpu, Users, BookOpen, Globe } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
 import { useBlog } from "@/hooks/useBlog";
 import { useStats } from "@/hooks/useStats";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/PageHeader";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -146,30 +147,29 @@ const HomePage = () => {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="min-h-[75vh] flex items-center bg-card border-b border-border">
-        <div className="container mx-auto px-4">
-          <motion.div initial="hidden" animate="visible" className="max-w-3xl">
-            <motion.p variants={fadeUp} custom={0} className="text-primary font-mono text-sm font-medium tracking-widest uppercase mb-4">
-              LASDPC - ICMC-USP
-            </motion.p>
-            <motion.h1 variants={fadeUp} custom={1} className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
+      {/* Hero — uses the shared PageHeader so the home title matches every
+          other section page. */}
+      <PageHeader
+        icon={Globe}
+        title="LASDPC - ICMC-USP"
+        subtitle={
+          <>
+            <span className="block font-display text-2xl sm:text-3xl font-semibold text-foreground mb-2">
               {t("hero.title")}
-            </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-muted-foreground text-lg sm:text-xl leading-relaxed mb-8 max-w-2xl">
-              {t("hero.subtitle")}
-            </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-wrap gap-4">
-              <Link to="/research" className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
-                {t("hero.cta.explore")} <ArrowRight size={18} />
-              </Link>
-              <Link to="/contact" className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-3 rounded-lg font-semibold hover:bg-primary hover:text-primary-foreground transition-colors">
-                {t("hero.cta.contact")}
-              </Link>
-            </motion.div>
-          </motion.div>
+            </span>
+            <span className="block">{t("hero.subtitle")}</span>
+          </>
+        }
+      >
+        <div className="flex flex-wrap gap-4">
+          <Link to="/research" className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+            {t("hero.cta.explore")} <ArrowRight size={18} />
+          </Link>
+          <Link to="/contact" className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-3 rounded-lg font-semibold hover:bg-primary hover:text-primary-foreground transition-colors">
+            {t("hero.cta.contact")}
+          </Link>
         </div>
-      </section>
+      </PageHeader>
 
       {/* Stats */}
       <section className="py-16 bg-card border-b border-border">

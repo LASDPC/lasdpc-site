@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 import { MapPin, Mail, Phone, Github, Linkedin, Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/PageHeader";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -16,13 +17,9 @@ const ContactPage = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-3 mb-12">
-          <Mail className="h-8 w-8 text-primary" />
-          <h1 className="font-display text-4xl font-bold text-foreground">{t("section.contact")}</h1>
-        </div>
-
+    <div>
+      <PageHeader icon={Mail} title={t("section.contact")} />
+      <div className="container mx-auto px-4 py-10">
         <div className="grid lg:grid-cols-2 gap-12">
           <motion.div initial="hidden" animate="visible">
             <form onSubmit={(e) => { e.preventDefault(); alert(isPt ? "Mensagem simulada enviada!" : "Mock message sent!"); }} className="space-y-5">

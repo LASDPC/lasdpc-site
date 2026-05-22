@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Landmark } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import lasdpcLogo from "@/assets/lasdpc-logo.png";
 
 type HistoryEventKey = "1990" | "gsdpc" | "evolution" | "training" | "today";
@@ -53,18 +54,14 @@ export default function HistoriaPage() {
   };
 
   return (
-    <div className="py-10">
-    <div className="container mx-auto px-4">
-      <div className="flex items-center gap-3 mb-12">
-        <Landmark className="h-8 w-8 text-primary" />
-        <h1 className="font-display text-4xl font-bold text-foreground" data-testid="history-title">
-          {t("history.title")}
-        </h1>
-      </div>
-      <p className="text-muted-foreground max-w-2xl mb-10" data-testid="history-subtitle">
-        {t("history.subtitle")}
-      </p>
-
+    <div>
+    <PageHeader
+      icon={Landmark}
+      title={t("history.title")}
+      titleTestId="history-title"
+      subtitle={<span data-testid="history-subtitle">{t("history.subtitle")}</span>}
+    />
+    <div className="container mx-auto px-4 py-10">
       <div className="relative">
         {/* Center line */}
         <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5 bg-primary/20" />

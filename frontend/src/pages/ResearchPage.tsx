@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PaginationControls from "@/components/PaginationControls";
+import PageHeader from "@/components/PageHeader";
 import { matchesSearchTerm, normalizeSearchText } from "@/lib/search";
 
 const fadeUp = {
@@ -370,13 +371,9 @@ const ResearchPage = () => {
   };
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-3 mb-12">
-          <FlaskConical className="h-8 w-8 text-primary" />
-          <h1 className="font-display text-4xl font-bold text-foreground">{t("section.research")}</h1>
-        </div>
-
+    <div>
+      <PageHeader icon={FlaskConical} title={t("section.research")} />
+      <div className="container mx-auto px-4 py-10">
         {/* Faceted filter bar (mirrors PeoplePage) */}
         <div className="mb-10 bg-card border border-border rounded-xl p-4">
           <div className="flex flex-wrap gap-3 items-end">

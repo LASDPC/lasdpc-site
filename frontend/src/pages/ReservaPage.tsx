@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Server, CalendarDays, CalendarClock } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 
 const ReservaPage = () => {
   const { lang, t } = useLang();
@@ -17,15 +18,12 @@ const ReservaPage = () => {
   }
 
   return (
-    <div className="py-10">
-    <div className="container mx-auto px-4">
-      <div className="flex items-center gap-3 mb-12">
-        <CalendarDays className="h-8 w-8 text-primary" />
-        <h1 className="font-display text-4xl font-bold text-foreground">
-          {isPt ? "Reservas" : "Reservations"}
-        </h1>
-      </div>
-
+    <div>
+    <PageHeader
+      icon={CalendarDays}
+      title={isPt ? "Reservas" : "Reservations"}
+    />
+    <div className="container mx-auto px-4 py-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <Link
           to="/infrastructure"
