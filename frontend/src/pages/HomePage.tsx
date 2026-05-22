@@ -83,11 +83,6 @@ const HomePageSkeleton = () => (
             <Skeleton className="h-10 w-72" />
           </div>
           <Skeleton className="h-5 w-full max-w-xl" />
-          <Skeleton className="h-5 w-5/6 max-w-lg" />
-          <div className="flex gap-4 pt-2">
-            <Skeleton className="h-12 w-40 rounded-lg" />
-            <Skeleton className="h-12 w-36 rounded-lg" />
-          </div>
         </div>
       </div>
     </section>
@@ -95,6 +90,18 @@ const HomePageSkeleton = () => (
     {/* Slider skeleton */}
     <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-12 sm:mb-16">
       <Skeleton className="aspect-[16/9] w-full rounded-2xl" />
+    </section>
+
+    {/* Intro actions skeleton */}
+    <section className="container mx-auto px-4 mb-12 sm:mb-16">
+      <div className="max-w-2xl space-y-5">
+        <Skeleton className="h-5 w-full" />
+        <Skeleton className="h-5 w-5/6" />
+        <div className="flex gap-4 pt-1">
+          <Skeleton className="h-12 w-40 rounded-lg" />
+          <Skeleton className="h-12 w-36 rounded-lg" />
+        </div>
+      </div>
     </section>
 
     {/* Stats skeleton */}
@@ -203,20 +210,27 @@ const HomePage = () => {
 
   return (
     <div>
-      {/* Hero — uses the shared PageHeader so the home title matches every
-          other section page. */}
+      {/* Hero — keep only the main identity and hero line above the slider. */}
       <PageHeader
         icon={Globe}
         title="LASDPC - ICMC-USP"
         subtitle={
-          <>
-            <span className="block font-medium text-foreground mb-1">
-              {t("hero.title")}
-            </span>
-            <span className="block">{t("hero.subtitle")}</span>
-          </>
+          <span className="block font-medium text-foreground">
+            {t("hero.title")}
+          </span>
         }
-      >
+      />
+
+      {/* Photo slider — sits immediately after the hero statement. */}
+      <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-8">
+        <LabSlider slides={LAB_SLIDES} isPt={isPt} />
+      </section>
+
+      {/* Supporting intro and actions stay below the slider. */}
+      <section className="container mx-auto px-4 mb-12 sm:mb-16">
+        <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mb-5">
+          {t("hero.subtitle")}
+        </p>
         <div className="flex flex-wrap gap-4">
           <Link to="/research" className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
             {t("hero.cta.explore")} <ArrowRight size={18} />
@@ -225,12 +239,6 @@ const HomePage = () => {
             {t("hero.cta.contact")}
           </Link>
         </div>
-      </PageHeader>
-
-      {/* Photo slider — sits flush with the header so the page opens with a
-          bold visual right below the title. */}
-      <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-12 sm:mb-16">
-        <LabSlider slides={LAB_SLIDES} isPt={isPt} />
       </section>
 
       {/* Stats */}
