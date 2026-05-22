@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpenText,
@@ -37,7 +37,6 @@ const eventMeta: Record<
     metric: Localized;
     metricLabel: Localized;
     subjects: Localized[];
-    accent: string;
   }
 > = {
   "1990": {
@@ -54,7 +53,6 @@ const eventMeta: Record<
       { pt: "sistemas distribuídos", en: "distributed systems" },
       { pt: "programação concorrente", en: "concurrent programming" },
     ],
-    accent: "from-sky-500/85 to-emerald-500/75",
   },
   gsdpc: {
     icon: Network,
@@ -70,7 +68,6 @@ const eventMeta: Record<
       { pt: "continuidade", en: "continuity" },
       { pt: "colaboração", en: "collaboration" },
     ],
-    accent: "from-emerald-500/85 to-cyan-500/75",
   },
   evolution: {
     icon: Cpu,
@@ -86,7 +83,6 @@ const eventMeta: Record<
       { pt: "redes", en: "networks" },
       { pt: "avaliação de desempenho", en: "performance evaluation" },
     ],
-    accent: "from-amber-500/85 to-sky-500/75",
   },
   training: {
     icon: GraduationCap,
@@ -102,7 +98,6 @@ const eventMeta: Record<
       { pt: "egressos", en: "alumni" },
       { pt: "iniciação científica", en: "undergraduate research" },
     ],
-    accent: "from-rose-500/80 to-amber-500/75",
   },
   today: {
     icon: BrainCircuit,
@@ -118,7 +113,6 @@ const eventMeta: Record<
       { pt: "computação verde", en: "green computing" },
       { pt: "educação aberta", en: "open education" },
     ],
-    accent: "from-violet-500/80 to-emerald-500/75",
   },
 };
 
@@ -136,8 +130,8 @@ const pageCopy = {
     researchTitle: "Linhas que conectam passado e presente",
     researchBody:
       "A base em sistemas paralelos e distribuídos se desdobrou em nuvem, desempenho, aplicações adaptativas, educação computacional e novas formas de computação em escala.",
-    expandDetails: "Abrir narrativa",
-    collapseDetails: "Fechar narrativa",
+    expandDetails: "Ver detalhes",
+    collapseDetails: "Ocultar detalhes",
     impactCards: [
       {
         icon: Users,
@@ -179,8 +173,8 @@ const pageCopy = {
     researchTitle: "Threads connecting past and present",
     researchBody:
       "The foundation in parallel and distributed systems unfolded into cloud computing, performance, adaptive applications, educational computing, and new forms of computing at scale.",
-    expandDetails: "Open narrative",
-    collapseDetails: "Close narrative",
+    expandDetails: "Show details",
+    collapseDetails: "Hide details",
     impactCards: [
       {
         icon: Users,
@@ -230,7 +224,6 @@ export default function HistoriaPage() {
           metric: pick(meta.metric, isPt),
           metricLabel: pick(meta.metricLabel, isPt),
           subjects: meta.subjects.map((subject) => pick(subject, isPt)),
-          accent: meta.accent,
           year:
             id === "1990"
               ? "1990"
@@ -252,7 +245,11 @@ export default function HistoriaPage() {
     [isPt, t]
   );
 
-  const activeItem = items.find((item) => item.id === activeId) ?? items[0];
+  const activeIndex = Math.max(
+    0,
+    items.findIndex((item) => item.id === activeId)
+  );
+  const activeItem = items[activeIndex] ?? items[0];
   const ActiveIcon = activeItem.icon;
 
   const toggle = (id: HistoryEventKey) => {
@@ -265,8 +262,30 @@ export default function HistoriaPage() {
     });
   };
 
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const centeredEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        const nextId = centeredEntry?.target.getAttribute("data-history-id") as HistoryEventKey | null;
+        if (nextId) setActiveId(nextId);
+      },
+      { rootMargin: "-32% 0px -48% 0px", threshold: [0.2, 0.45, 0.7] }
+    );
+
+    items.forEach((item) => {
+      const node = document.querySelector<HTMLElement>(`[data-history-id="${item.id}"]`);
+      if (node) observer.observe(node);
+    });
+
+    return () => observer.disconnect();
+  }, [items]);
+
   return (
-    <div className="overflow-hidden">
+    <div>
       <PageHeader
         icon={Landmark}
         title={t("history.title")}
@@ -287,7 +306,7 @@ export default function HistoriaPage() {
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--background)/0.95)_0%,hsl(var(--background)/0.72)_45%,hsl(var(--background)/0.18)_100%)]" />
-            <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", activeItem.accent)} />
+            <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
 
             <div className="relative flex min-h-[420px] max-w-2xl flex-col justify-end p-5 sm:p-8">
               <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-md border border-border bg-background/85 px-3 py-2 text-xs font-semibold uppercase text-muted-foreground backdrop-blur">
@@ -305,22 +324,22 @@ export default function HistoriaPage() {
                 </p>
               </div>
 
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                {items.slice(0, 3).map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveId(item.id)}
-                    className={cn(
-                      "rounded-lg border p-3 text-left transition-colors",
-                      activeId === item.id
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background/80 text-foreground hover:border-primary/50"
-                    )}
+              <div className="mt-7 flex flex-wrap items-center gap-2">
+                <div className="rounded-lg border border-border bg-background/85 px-4 py-3 backdrop-blur">
+                  <span className="block font-mono text-xs font-semibold uppercase text-muted-foreground">
+                    {activeItem.metricLabel}
+                  </span>
+                  <span className="mt-1 block font-display text-2xl font-bold text-foreground">
+                    {activeItem.metric}
+                  </span>
+                </div>
+                {activeItem.subjects.map((subject) => (
+                  <span
+                    key={subject}
+                    className="rounded-md border border-border bg-background/80 px-3 py-2 text-xs font-semibold text-foreground backdrop-blur"
                   >
-                    <span className="block font-mono text-xs opacity-80">{item.year}</span>
-                    <span className="mt-1 block text-sm font-semibold leading-snug">{item.metricLabel}</span>
-                  </button>
+                    {subject}
+                  </span>
                 ))}
               </div>
             </div>
@@ -335,58 +354,116 @@ export default function HistoriaPage() {
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{copy.storyBody}</p>
             </div>
 
-            <div className="grid gap-3">
-              {items.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.id === activeId;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveId(item.id)}
-                    className={cn(
-                      "group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                      isActive
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:border-primary/50"
-                    )}
+            <div className="rounded-lg border border-border bg-background p-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <ActiveIcon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {copy.spotlight}
+                  </p>
+                  <p className="mt-1 font-display text-lg font-bold text-foreground">{activeItem.year}</p>
+                </div>
+              </div>
+              <h3 className="mt-5 font-display text-xl font-bold leading-tight text-foreground">
+                {activeItem.title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{activeItem.summary}</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {activeItem.subjects.map((subject) => (
+                  <span
+                    key={subject}
+                    className="rounded-md border border-border bg-secondary/70 px-2.5 py-1 text-xs font-medium text-secondary-foreground"
                   >
-                    <span
-                      className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-md",
-                        isActive ? "bg-primary-foreground/15" : "bg-primary/10 text-primary"
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block font-mono text-xs opacity-75">{item.year}</span>
-                      <span className="block truncate text-sm font-semibold">{item.title}</span>
-                    </span>
-                    <span className="font-mono text-xs opacity-65">{item.metric}</span>
-                  </button>
-                );
-              })}
+                    {subject}
+                  </span>
+                ))}
+              </div>
             </div>
           </aside>
         </div>
       </section>
 
-      <section className="border-y border-border bg-secondary/40 py-12">
-        <div className="container mx-auto grid gap-8 px-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <div className="lg:sticky lg:top-24 lg:self-start">
+      <div className="sticky top-16 z-30 border-y border-border bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-4">
+            <div className="hidden min-w-0 sm:block">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
+                {copy.chapterLabel}
+              </p>
+              <p className="max-w-[260px] truncate text-sm font-semibold text-foreground">{activeItem.title}</p>
+            </div>
+
+            <div className="relative flex-1 py-2">
+              <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-border" />
+              <motion.div
+                layout
+                className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-primary"
+                style={{ width: `${(activeIndex / Math.max(items.length - 1, 1)) * 100}%` }}
+              />
+
+              <div className="relative grid grid-cols-5 gap-1">
+                {items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = item.id === activeId;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveId(item.id)}
+                      className="group flex min-w-0 flex-col items-center gap-1"
+                      aria-label={item.title}
+                      aria-current={isActive ? "step" : undefined}
+                    >
+                      <span
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-full border transition-colors",
+                          isActive
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background text-muted-foreground group-hover:border-primary group-hover:text-primary"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span
+                        className={cn(
+                          "hidden max-w-full truncate px-1 text-[11px] font-semibold md:block",
+                          isActive ? "text-primary" : "text-muted-foreground"
+                        )}
+                      >
+                        {item.year}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="border-b border-border bg-secondary/40">
+        <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="rounded-lg border border-border bg-background p-5 lg:sticky lg:top-36 lg:self-start">
             <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
               {copy.chapterLabel}
             </p>
             <h2 className="mt-3 font-display text-2xl font-bold text-foreground">{copy.chapterIntro}</h2>
-            <div className="mt-6 hidden h-1 overflow-hidden rounded-full bg-border lg:block">
-              <motion.div
-                layout
-                className="h-full rounded-full bg-accent"
-                style={{
-                  width: `${((items.findIndex((item) => item.id === activeId) + 1) / items.length) * 100}%`,
-                }}
-              />
+            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-5">
+              <div>
+                <p className="font-mono text-xs font-semibold uppercase text-muted-foreground">
+                  {activeItem.metricLabel}
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-foreground">{activeItem.metric}</p>
+              </div>
+              <div>
+                <p className="font-mono text-xs font-semibold uppercase text-muted-foreground">
+                  {activeItem.year}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-snug text-foreground">{activeItem.title}</p>
+              </div>
             </div>
           </div>
 
@@ -409,6 +486,7 @@ export default function HistoriaPage() {
                     isActive ? "border-primary shadow-sm" : "border-border hover:border-primary/40"
                   )}
                   data-testid={`history-item-${item.id}`}
+                  data-history-id={item.id}
                   onMouseEnter={() => setActiveId(item.id)}
                 >
                   <button
@@ -425,7 +503,6 @@ export default function HistoriaPage() {
                         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_10%,hsl(var(--foreground)/0.74)_100%)]" />
-                      <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", item.accent)} />
                       <div className="absolute bottom-4 left-4 right-4 text-white">
                         <span className="font-mono text-xs font-semibold uppercase opacity-85">{item.year}</span>
                         <p className="mt-1 text-2xl font-bold leading-none">{item.metric}</p>
@@ -464,14 +541,14 @@ export default function HistoriaPage() {
                     <p className="text-xs text-muted-foreground">{item.imageCaption}</p>
                     <Button
                       variant={isOpen ? "default" : "outline"}
-                      size="sm"
+                      size="icon"
                       onClick={() => toggle(item.id)}
                       className="shrink-0"
                       data-testid={`history-toggle-${item.id}`}
                       aria-expanded={isOpen}
+                      aria-label={isOpen ? copy.collapseDetails : copy.expandDetails}
                     >
-                      {isOpen ? copy.collapseDetails : copy.expandDetails}
-                      {isOpen ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
+                      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
                   </div>
 
