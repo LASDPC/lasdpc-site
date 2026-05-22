@@ -74,6 +74,7 @@ const BlogPage = () => {
   const tagFilter = searchParams.get("tag") ?? "";
   const yearFilter = searchParams.get("year") ?? "";
   const authorFilter = searchParams.get("author") ?? "";
+  const categoryFilter = searchParams.get("category") ?? "";
   const page = Math.max(1, Number(searchParams.get("page") || "1") || 1);
 
   const setFilter = useCallback(
@@ -132,8 +133,21 @@ const BlogPage = () => {
     );
   }, [blog]);
 
+  const categoryOptions = useMemo(() => {
+    const set = new Map<string, string>();
+    blog.forEach((post) => {
+      const clean = post.category?.trim();
+      if (!clean) return;
+      const key = normalizeSearchText(clean);
+      if (!set.has(key)) set.set(key, clean);
+    });
+    return Array.from(set.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
+    );
+  }, [blog]);
+
   const hasAnyFilter =
-    Boolean(searchQuery) || Boolean(tagFilter) || Boolean(yearFilter) || Boolean(authorFilter);
+    Boolean(searchQuery) || Boolean(tagFilter) || Boolean(yearFilter) || Boolean(authorFilter) || Boolean(categoryFilter);
 
   const filteredBlog = useMemo(
     () =>
@@ -149,6 +163,7 @@ const BlogPage = () => {
             post.tag,
             post.author,
             post.date,
+            post.category,
           ])
         ) {
           return false;
@@ -156,9 +171,10 @@ const BlogPage = () => {
         if (!matchesTextFilter(post.tag, tagFilter)) return false;
         if (!matchesYearFilter(post.date, yearFilter)) return false;
         if (!matchesTextFilter(post.author, authorFilter)) return false;
+        if (categoryFilter && !matchesTextFilter(post.category, categoryFilter)) return false;
         return true;
       }),
-    [blog, searchQuery, tagFilter, yearFilter, authorFilter],
+    [blog, searchQuery, tagFilter, yearFilter, authorFilter, categoryFilter],
   );
 
   // ---- Pagination ----
@@ -264,6 +280,19 @@ const BlogPage = () => {
                   noResults: t("blog.noAuthorResults"),
                 }}
               />
+            )}
+
+            {categoryOptions.length > 0 && (
+              <select
+                value={categoryFilter}
+                onChange={(event) => setFilter("category", event.target.value)}
+                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
+              >
+                <option value="">{t("blog.filterByCategory")}</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             )}
 
             {hasAnyFilter && (

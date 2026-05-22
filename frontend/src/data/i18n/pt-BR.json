@@ -92,6 +92,7 @@
   "blog.filterByAuthor": "Autor",
   "blog.clearAuthorFilter": "Limpar filtro de autor",
   "blog.noAuthorResults": "Nenhum autor encontrado.",
+  "blog.filterByCategory": "Categoria",
   "blog.clearFilters": "Limpar filtros",
   "blog.subtitle": "Notas, anúncios e histórias do laboratório - atualizações de pesquisa, eventos e trabalhos dos alunos.",
   "people.subtitle": "Os docentes, alunos e ex-membros que formam o LaSDPC.",

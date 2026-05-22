@@ -14,6 +14,7 @@ class BlogPostBase(BaseModel):
     tag: str
     author: str
     coverImage: Optional[str] = None
+    category: Optional[str] = None
 
 
 class BlogPostCreate(BlogPostBase):

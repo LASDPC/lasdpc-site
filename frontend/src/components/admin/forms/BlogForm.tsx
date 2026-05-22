@@ -22,6 +22,7 @@ const schema = z.object({
   tag: z.string().min(1),
   author: z.string().min(1),
   coverImage: z.string().optional(),
+  category: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -122,10 +123,11 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
         )}
       />
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div><Label>{pt ? "Data" : "Date"}</Label><Input type="date" {...register("date")} /></div>
         <div><Label>Tag</Label><Input {...register("tag")} placeholder={pt ? "Conferência" : "Conference"} /></div>
         <div><Label>{pt ? "Autor" : "Author"}</Label><Input {...register("author")} /></div>
+        <div><Label>{pt ? "Categoria" : "Category"}</Label><Input {...register("category")} placeholder={pt ? "Pesquisa" : "Research"} /></div>
       </div>
       <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
     </form>

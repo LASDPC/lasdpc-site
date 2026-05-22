@@ -12,6 +12,7 @@ export interface BlogPost {
   tag: string;
   author: string;
   coverImage?: string;
+  category?: string;
 }
 
 export type BlogPostInput = Omit<BlogPost, "id">;
@@ -21,6 +22,7 @@ export interface BlogListFilters {
   tag?: string;
   year?: string;
   author?: string;
+  category?: string;
 }
 
 const blogListUrl = (filters: BlogListFilters = {}) => {

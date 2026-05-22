@@ -92,6 +92,7 @@
   "blog.filterByAuthor": "Author",
   "blog.clearAuthorFilter": "Clear author filter",
   "blog.noAuthorResults": "No matching authors.",
+  "blog.filterByCategory": "Category",
   "blog.clearFilters": "Clear filters",
   "blog.subtitle": "Notes, announcements, and stories from the lab - research updates, events, and student work.",
   "people.subtitle": "The faculty, students, and alumni who make up LaSDPC.",

@@ -10,7 +10,7 @@ from models.blog import BlogPostCreate, BlogPostUpdate, BlogPostOut
 
 router = APIRouter()
 
-SEARCH_FIELDS = ("title", "titlePt", "excerpt", "excerptPt", "content", "contentPt", "tag", "author", "date")
+SEARCH_FIELDS = ("title", "titlePt", "excerpt", "excerptPt", "content", "contentPt", "tag", "author", "date", "category")
 
 
 def _to_out(doc: dict) -> BlogPostOut:
@@ -21,7 +21,13 @@ def _regex_filter(value: str) -> dict:
     return {"$regex": re.escape(value.strip()), "$options": "i"}
 
 
-def _build_filter(q: Optional[str], tag: Optional[str], year: Optional[str], author: Optional[str]) -> dict:
+def _build_filter(
+    q: Optional[str],
+    tag: Optional[str],
+    year: Optional[str],
+    author: Optional[str],
+    category: Optional[str] = None,
+) -> dict:
     filters: dict = {}
     if q and q.strip():
         query = _regex_filter(q)
@@ -32,6 +38,8 @@ def _build_filter(q: Optional[str], tag: Optional[str], year: Optional[str], aut
         filters["date"] = _regex_filter(year)
     if author and author.strip():
         filters["author"] = _regex_filter(author)
+    if category and category.strip():
+        filters["category"] = _regex_filter(category)
     return filters
 
 
@@ -41,9 +49,10 @@ async def list_posts(
     tag: Optional[str] = Query(default=None),
     year: Optional[str] = Query(default=None),
     author: Optional[str] = Query(default=None),
+    category: Optional[str] = Query(default=None),
 ):
     db = get_db()
-    items = await db.blog_posts.find(_build_filter(q, tag, year, author)).to_list(1000)
+    items = await db.blog_posts.find(_build_filter(q, tag, year, author, category)).to_list(1000)
     return [_to_out(d) for d in items]
 
 
