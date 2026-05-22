@@ -478,27 +478,7 @@ export default function HistoriaPage() {
       </div>
 
       <section ref={chapterSectionRef} className="border-b border-border bg-secondary/40">
-        <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <div className="rounded-lg border border-border bg-background p-5 lg:sticky lg:top-36 lg:self-start">
-            <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
-              {copy.chapterLabel}
-            </p>
-            <h2 className="mt-3 font-display text-2xl font-bold text-foreground">{copy.chapterIntro}</h2>
-            <div className="mt-6 border-t border-border pt-5">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <ActiveIcon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="font-mono text-xs font-semibold uppercase text-muted-foreground">
-                    {activeItem.year}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold leading-snug text-foreground">{activeItem.title}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div className="container mx-auto max-w-5xl px-4 py-10">
           <div className="space-y-4">
             {items.map((item, i) => {
               const Icon = item.icon;
@@ -511,7 +491,7 @@ export default function HistoriaPage() {
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
-                  transition={{ delay: i * 0.04, duration: 0.35, ease: "easeOut" }}
+                  transition={{ delay: i * 0.02, duration: 0.2, ease: "easeOut" }}
                   className={cn(
                     "overflow-hidden rounded-lg border bg-background transition-colors",
                     isActive ? "border-primary shadow-sm" : "border-border hover:border-primary/40"
@@ -610,7 +590,7 @@ export default function HistoriaPage() {
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
-                transition={{ delay: index * 0.03, duration: 0.25 }}
+                transition={{ delay: index * 0.015, duration: 0.18, ease: "easeOut" }}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
@@ -639,7 +619,7 @@ export default function HistoriaPage() {
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
-                  transition={{ delay: index * 0.06, duration: 0.35 }}
+                  transition={{ delay: index * 0.02, duration: 0.2, ease: "easeOut" }}
                   className="rounded-lg border border-border bg-background p-5"
                 >
                   <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">

@@ -17,8 +17,8 @@ import { Clock, CheckCircle, XCircle, Server, KeyRound, Ban } from "lucide-react
 import { mediaUrl } from "@/lib/media";
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
+  hidden: { opacity: 0, y: 12 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.025, duration: 0.2, ease: "easeOut" } }),
 };
 
 const UsageBar = ({ label, value }: { label: string; value: number }) => (

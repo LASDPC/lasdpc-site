@@ -60,8 +60,8 @@ const LAB_SLIDES: LabSlide[] = [
 ];
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
+  hidden: { opacity: 0, y: 14 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.025, duration: 0.22, ease: "easeOut" } }),
 };
 
 const timelineKeys = ["1998", "2005", "2012", "2018", "2023"] as const;
@@ -105,7 +105,7 @@ const HomePageSkeleton = () => (
     </section>
 
     {/* Stats skeleton */}
-    <section className="py-16 bg-card border-b border-border">
+    <section className="py-16">
       <div className="container mx-auto px-4 grid grid-cols-3 gap-8">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-3">
@@ -242,7 +242,7 @@ const HomePage = () => {
       </section>
 
       {/* Stats */}
-      <section className="py-16 bg-card border-b border-border">
+      <section className="py-16">
         <div className="container mx-auto px-4 grid grid-cols-3 gap-8">
           {[
             { icon: <Users size={28} />, value: String(stats?.researchers ?? 0), label: isPt ? "Pesquisadores" : "Researchers" },
@@ -278,7 +278,7 @@ const HomePage = () => {
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-60px" }}
-                    transition={{ delay: i * 0.08, duration: 0.5, ease: "easeOut" }}
+                    transition={{ delay: i * 0.02, duration: 0.22, ease: "easeOut" }}
                     className="relative flex items-start md:items-center"
                   >
                     {/* Dot */}
