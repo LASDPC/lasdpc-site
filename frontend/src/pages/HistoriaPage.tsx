@@ -420,15 +420,8 @@ export default function HistoriaPage() {
 
       <div className="sticky top-16 z-30 border-y border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-4">
-            <div className="hidden min-w-0 sm:block">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
-                {copy.chapterLabel}
-              </p>
-              <p className="max-w-[260px] truncate text-sm font-semibold text-foreground">{activeItem.title}</p>
-            </div>
-
-            <div className="relative flex-1 py-2">
+          <div className="space-y-2">
+            <div className="relative w-full py-2">
               <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-border" />
               <motion.div
                 className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 origin-left rounded-full bg-primary"
@@ -472,6 +465,15 @@ export default function HistoriaPage() {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="min-w-0 sm:flex sm:items-baseline sm:gap-3">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
+                {copy.chapterLabel}
+              </p>
+              <p className="mt-0.5 text-sm font-semibold leading-snug text-foreground sm:mt-0">
+                {activeItem.title}
+              </p>
             </div>
           </div>
         </div>

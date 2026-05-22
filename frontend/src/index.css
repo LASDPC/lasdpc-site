@@ -174,9 +174,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* Fluid button press effect */
 button, [role="button"], a {
-  transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, scale 0.15s ease, opacity 0.15s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 button:active, [role="button"]:active {
-  transform: scale(0.97);
+  scale: 0.97;
 }
