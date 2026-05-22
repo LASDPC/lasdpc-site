@@ -1,0 +1,46 @@
+name: Deploy na VM Local
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Puxar o código mais recente
+        uses: actions/checkout@v4
+
+      - name: Sincronizar arquivos para a pasta de produção
+        run: |
+          echo "Sincronizando arquivos novos..."
+          rsync -av --delete \
+            --exclude 'backend/.env' \
+            --exclude 'frontend/.env' \
+            --exclude 'backend/venv' \
+            --exclude 'frontend/node_modules' \
+            ./ /home/lasdpc/lasdpc-site/
+
+      - name: Atualizar Infraestrutura (MongoDB e MinIO)
+        run: |
+          echo "Garantindo que a infra via Docker está de pé..."
+          cd /home/lasdpc/lasdpc-site
+          docker compose up -d
+
+      - name: Atualizar e Buildar Frontend (React)
+        run: |
+          echo "Atualizando o Frontend..."
+          cd /home/lasdpc/lasdpc-site/frontend
+          npm install
+          npm run build
+
+      - name: Atualizar e Reiniciar Backend (FastAPI)
+        run: |
+          echo "Atualizando e reiniciando o Backend..."
+          cd /home/lasdpc/lasdpc-site/backend
+          source venv/bin/activate
+          pip install -r requirements.txt
+          
+          # Reinicia o serviço mantido pelo systemd sem pedir senha
+          sudo systemctl restart lasdpc-backend.service
