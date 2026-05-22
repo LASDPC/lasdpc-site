@@ -87,6 +87,13 @@
   "blog.filterByYear": "Ano",
   "blog.filterByAuthor": "Autor",
   "blog.clearFilters": "Limpar filtros",
+  "blog.subtitle": "Notas, anúncios e histórias do laboratório — atualizações de pesquisa, eventos e trabalhos dos alunos.",
+  "people.subtitle": "Os docentes, alunos e ex-membros que formam o LaSDPC.",
+  "research.subtitle": "Projetos ativos e publicações recentes em nossas linhas de pesquisa em HPC, IA e sistemas distribuídos.",
+  "contact.subtitle": "Entre em contato com o laboratório — dúvidas, parcerias e visitas são bem-vindas.",
+  "reserva.subtitle": "Agende tempo no cluster, reserve salas e consulte o calendário compartilhado do laboratório.",
+  "docs.subtitle": "Guias internos, políticas e tutoriais para membros do laboratório e colaboradores.",
+  "home.subtitle": "Laboratório de Sistemas Distribuídos e Programação Concorrente do ICMC-USP — pesquisa em HPC, IA, sistemas distribuídos e computação em nuvem.",
 
   "history.title": "História",
   "history.subtitle": "Uma linha do tempo da origem do LaSDPC, sua evolução e as direções atuais de pesquisa.",

@@ -285,13 +285,7 @@ const BlogPage = () => {
       <PageHeader
         icon={Newspaper}
         title={t("section.blog")}
-        subtitle={
-          <span className="italic text-sm">
-            {isPt
-              ? "Nota: futura integração com LinkedIn/Instagram para publicação automática."
-              : "Note: future LinkedIn/Instagram integration for auto-publishing."}
-          </span>
-        }
+        subtitle={t("blog.subtitle")}
       />
       <div className="container mx-auto px-4 py-10">
         {/* Faceted filter bar (mirrors ResearchPage) */}

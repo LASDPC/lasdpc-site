@@ -372,7 +372,11 @@ const ResearchPage = () => {
 
   return (
     <div>
-      <PageHeader icon={FlaskConical} title={t("section.research")} />
+      <PageHeader
+        icon={FlaskConical}
+        title={t("section.research")}
+        subtitle={t("research.subtitle")}
+      />
       <div className="container mx-auto px-4 py-10">
         {/* Faceted filter bar (mirrors PeoplePage) */}
         <div className="mb-10 bg-card border border-border rounded-xl p-4">

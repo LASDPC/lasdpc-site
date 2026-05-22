@@ -489,7 +489,11 @@ const PeoplePage = () => {
 
   return (
     <div>
-      <PageHeader icon={Users} title={t("nav.people")} />
+      <PageHeader
+        icon={Users}
+        title={t("nav.people")}
+        subtitle={t("people.subtitle")}
+      />
       <div className="container mx-auto px-4 py-10">
 
         {/* Filter bar */}

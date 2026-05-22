@@ -119,6 +119,9 @@ const DocsPage = () => {
       <PageHeader
         icon={FileText}
         title={isPt ? "Documentação" : "Documentation"}
+        subtitle={isPt
+          ? "Guias internos, políticas e tutoriais para membros do laboratório e colaboradores."
+          : "Internal guides, policies, and tutorials for lab members and collaborators."}
       />
 
       {isEmpty ? (

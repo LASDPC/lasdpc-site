@@ -154,7 +154,7 @@ const HomePage = () => {
         title="LASDPC - ICMC-USP"
         subtitle={
           <>
-            <span className="block font-display text-2xl sm:text-3xl font-semibold text-foreground mb-2">
+            <span className="block font-medium text-foreground mb-1">
               {t("hero.title")}
             </span>
             <span className="block">{t("hero.subtitle")}</span>

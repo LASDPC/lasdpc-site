@@ -18,7 +18,11 @@ const ContactPage = () => {
 
   return (
     <div>
-      <PageHeader icon={Mail} title={t("section.contact")} />
+      <PageHeader
+        icon={Mail}
+        title={t("section.contact")}
+        subtitle={t("contact.subtitle")}
+      />
       <div className="container mx-auto px-4 py-10">
         <div className="grid lg:grid-cols-2 gap-12">
           <motion.div initial="hidden" animate="visible">
