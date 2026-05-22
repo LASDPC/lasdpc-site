@@ -1,12 +1,10 @@
 import type { ComponentType } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   BookOpenText,
   BrainCircuit,
   CalendarDays,
-  ChevronDown,
-  ChevronUp,
   Cpu,
   GraduationCap,
   Landmark,
@@ -17,7 +15,6 @@ import {
 
 import { useLang } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 
 type HistoryEventKey = "1990" | "gsdpc" | "evolution" | "training" | "today";
@@ -130,8 +127,6 @@ const pageCopy = {
     researchTitle: "Linhas que conectam passado e presente",
     researchBody:
       "A base em sistemas paralelos e distribuídos se desdobrou em nuvem, desempenho, aplicações adaptativas, educação computacional e novas formas de computação em escala.",
-    expandDetails: "Ver detalhes",
-    collapseDetails: "Ocultar detalhes",
     impactCards: [
       {
         icon: Users,
@@ -173,8 +168,6 @@ const pageCopy = {
     researchTitle: "Threads connecting past and present",
     researchBody:
       "The foundation in parallel and distributed systems unfolded into cloud computing, performance, adaptive applications, educational computing, and new forms of computing at scale.",
-    expandDetails: "Show details",
-    collapseDetails: "Hide details",
     impactCards: [
       {
         icon: Users,
@@ -209,8 +202,9 @@ export default function HistoriaPage() {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
   const copy = isPt ? pageCopy.pt : pageCopy.en;
+  const chapterSectionRef = useRef<HTMLElement | null>(null);
   const [activeId, setActiveId] = useState<HistoryEventKey>("1990");
-  const [openIds, setOpenIds] = useState<Set<HistoryEventKey>>(() => new Set());
+  const [chapterProgress, setChapterProgress] = useState(0);
 
   const items = useMemo(
     () =>
@@ -252,36 +246,75 @@ export default function HistoriaPage() {
   const activeItem = items[activeIndex] ?? items[0];
   const ActiveIcon = activeItem.icon;
 
-  const toggle = (id: HistoryEventKey) => {
+  const scrollToChapter = (id: HistoryEventKey) => {
     setActiveId(id);
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    const node = document.querySelector<HTMLElement>(`[data-history-id="${id}"]`);
+    if (!node) return;
+
+    window.scrollTo({
+      top: node.getBoundingClientRect().top + window.scrollY - 150,
+      behavior: "smooth",
     });
   };
 
   useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") return;
+    if (typeof window === "undefined") return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const centeredEntry = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        const nextId = centeredEntry?.target.getAttribute("data-history-id") as HistoryEventKey | null;
-        if (nextId) setActiveId(nextId);
-      },
-      { rootMargin: "-32% 0px -48% 0px", threshold: [0.2, 0.45, 0.7] }
-    );
+    let frameId: number | null = null;
+    const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
-    items.forEach((item) => {
-      const node = document.querySelector<HTMLElement>(`[data-history-id="${item.id}"]`);
-      if (node) observer.observe(node);
-    });
+    const updateChapterState = () => {
+      const section = chapterSectionRef.current;
+      if (!section) return;
 
-    return () => observer.disconnect();
+      const rect = section.getBoundingClientRect();
+      const readableTop = Math.min(window.innerHeight * 0.42, 420);
+      const progressSpan = Math.max(rect.height - window.innerHeight * 0.58, 1);
+      const nextProgress = clamp((readableTop - rect.top) / progressSpan);
+
+      setChapterProgress((current) =>
+        Math.abs(current - nextProgress) > 0.002 ? nextProgress : current
+      );
+
+      let closestId: HistoryEventKey | null = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      items.forEach((item) => {
+        const node = document.querySelector<HTMLElement>(`[data-history-id="${item.id}"]`);
+        if (!node) return;
+
+        const itemRect = node.getBoundingClientRect();
+        const itemCenter = itemRect.top + Math.min(itemRect.height, 360) / 2;
+        const distance = Math.abs(itemCenter - readableTop);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestId = item.id;
+        }
+      });
+
+      if (closestId) {
+        setActiveId((current) => (current === closestId ? current : closestId));
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        updateChapterState();
+      });
+    };
+
+    updateChapterState();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
   }, [items]);
 
   return (
@@ -398,9 +431,9 @@ export default function HistoriaPage() {
             <div className="relative flex-1 py-2">
               <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-border" />
               <motion.div
-                layout
-                className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-primary"
-                style={{ width: `${(activeIndex / Math.max(items.length - 1, 1)) * 100}%` }}
+                className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 origin-left rounded-full bg-primary"
+                animate={{ scaleX: chapterProgress }}
+                transition={{ type: "spring", stiffness: 140, damping: 28, mass: 0.8 }}
               />
 
               <div className="relative grid grid-cols-5 gap-1">
@@ -412,7 +445,7 @@ export default function HistoriaPage() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setActiveId(item.id)}
+                      onClick={() => scrollToChapter(item.id)}
                       className="group flex min-w-0 flex-col items-center gap-1"
                       aria-label={item.title}
                       aria-current={isActive ? "step" : undefined}
@@ -444,25 +477,24 @@ export default function HistoriaPage() {
         </div>
       </div>
 
-      <section className="border-b border-border bg-secondary/40">
+      <section ref={chapterSectionRef} className="border-b border-border bg-secondary/40">
         <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[280px_minmax(0,1fr)]">
           <div className="rounded-lg border border-border bg-background p-5 lg:sticky lg:top-36 lg:self-start">
             <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
               {copy.chapterLabel}
             </p>
             <h2 className="mt-3 font-display text-2xl font-bold text-foreground">{copy.chapterIntro}</h2>
-            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-5">
-              <div>
-                <p className="font-mono text-xs font-semibold uppercase text-muted-foreground">
-                  {activeItem.metricLabel}
-                </p>
-                <p className="mt-1 font-display text-2xl font-bold text-foreground">{activeItem.metric}</p>
-              </div>
-              <div>
-                <p className="font-mono text-xs font-semibold uppercase text-muted-foreground">
-                  {activeItem.year}
-                </p>
-                <p className="mt-1 text-sm font-semibold leading-snug text-foreground">{activeItem.title}</p>
+            <div className="mt-6 border-t border-border pt-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <ActiveIcon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-mono text-xs font-semibold uppercase text-muted-foreground">
+                    {activeItem.year}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold leading-snug text-foreground">{activeItem.title}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -470,7 +502,6 @@ export default function HistoriaPage() {
           <div className="space-y-4">
             {items.map((item, i) => {
               const Icon = item.icon;
-              const isOpen = openIds.has(item.id);
               const isActive = activeId === item.id;
 
               return (
@@ -487,14 +518,8 @@ export default function HistoriaPage() {
                   )}
                   data-testid={`history-item-${item.id}`}
                   data-history-id={item.id}
-                  onMouseEnter={() => setActiveId(item.id)}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setActiveId(item.id)}
-                    className="grid w-full text-left md:grid-cols-[190px_minmax(0,1fr)]"
-                    aria-pressed={isActive}
-                  >
+                  <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
                     <div className="relative min-h-[170px] overflow-hidden bg-muted md:min-h-full">
                       <img
                         src={item.photo}
@@ -535,53 +560,30 @@ export default function HistoriaPage() {
                         ))}
                       </div>
                     </div>
-                  </button>
-
-                  <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3 sm:px-6">
-                    <p className="text-xs text-muted-foreground">{item.imageCaption}</p>
-                    <Button
-                      variant={isOpen ? "default" : "outline"}
-                      size="icon"
-                      onClick={() => toggle(item.id)}
-                      className="shrink-0"
-                      data-testid={`history-toggle-${item.id}`}
-                      aria-expanded={isOpen}
-                      aria-label={isOpen ? copy.collapseDetails : copy.expandDetails}
-                    >
-                      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
                   </div>
 
-                  <AnimatePresence initial={false}>
-                    {isOpen ? (
-                      <motion.div
-                        key="expanded"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="overflow-hidden"
-                        data-testid={`history-expanded-${item.id}`}
-                      >
-                        <div className="grid gap-5 border-t border-border bg-card/50 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_240px]">
-                          <div className="space-y-3">
-                            {item.paragraphs.map((paragraph, idx) => (
-                              <p key={idx} className="text-sm leading-relaxed text-foreground">
-                                {paragraph}
-                              </p>
-                            ))}
-                          </div>
-                          <div className="rounded-lg border border-border bg-background p-4">
-                            <Icon className="h-6 w-6 text-primary" />
-                            <p className="mt-3 font-mono text-xs font-semibold uppercase text-muted-foreground">
-                              {item.metricLabel}
-                            </p>
-                            <p className="mt-1 font-display text-3xl font-bold text-foreground">{item.metric}</p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>
+                  <div
+                    className="grid gap-5 border-t border-border bg-card/50 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_240px]"
+                    data-testid={`history-expanded-${item.id}`}
+                  >
+                    <div>
+                      <p className="text-xs text-muted-foreground">{item.imageCaption}</p>
+                      <div className="mt-4 space-y-3">
+                        {item.paragraphs.map((paragraph, idx) => (
+                          <p key={idx} className="text-sm leading-relaxed text-foreground">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-border bg-background p-4">
+                      <Icon className="h-6 w-6 text-primary" />
+                      <p className="mt-3 font-mono text-xs font-semibold uppercase text-muted-foreground">
+                        {item.metricLabel}
+                      </p>
+                      <p className="mt-1 font-display text-3xl font-bold text-foreground">{item.metric}</p>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}

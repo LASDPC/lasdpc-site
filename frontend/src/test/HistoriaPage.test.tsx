@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { ComponentProps, PropsWithChildren } from "react";
 
@@ -74,16 +74,14 @@ describe("HistoriaPage", () => {
     expect(screen.getByTestId("history-item-gsdpc")).toBeInTheDocument();
   });
 
-  it("expands and collapses an item", () => {
+  it("renders item details without requiring expansion", () => {
     render(
       <MemoryRouter>
         <HistoriaPage />
       </MemoryRouter>
     );
-    const toggle = screen.getByTestId("history-toggle-1990");
-    fireEvent.click(toggle);
     expect(screen.getByTestId("history-expanded-1990")).toBeInTheDocument();
-    fireEvent.click(toggle);
-    expect(screen.queryByTestId("history-expanded-1990")).not.toBeInTheDocument();
+    expect(screen.getByText("1990 P1")).toBeInTheDocument();
+    expect(screen.queryByTestId("history-toggle-1990")).not.toBeInTheDocument();
   });
 });

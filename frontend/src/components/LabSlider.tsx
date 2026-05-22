@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface LabSlide {
-  /** Image URL — placeholders OK while real lab photos are not in yet. */
+  /** Image URL - placeholders OK while real lab photos are not in yet. */
   src: string;
   /** Bilingual caption shown over the image. */
   title: string;
@@ -57,7 +57,7 @@ const LabSlider = ({
     };
   }, [emblaApi, onSelect]);
 
-  // Hand-rolled autoplay — pause when the user hovers the slider, focuses
+  // Hand-rolled autoplay - pause when the user hovers the slider, focuses
   // inside it, or hides the tab.
   useEffect(() => {
     if (!emblaApi || !autoplayInterval) return;

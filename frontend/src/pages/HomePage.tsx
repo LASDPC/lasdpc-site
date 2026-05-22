@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/PageHeader";
 import LabSlider, { type LabSlide } from "@/components/LabSlider";
 
-// Placeholder photos — swap with real lab photography when available.
+// Placeholder photos - swap with real lab photography when available.
 const LAB_SLIDES: LabSlide[] = [
   {
     src: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1600&h=900&fit=crop",
@@ -210,7 +210,7 @@ const HomePage = () => {
 
   return (
     <div>
-      {/* Hero — keep only the main identity and hero line above the slider. */}
+      {/* Hero - keep only the main identity and hero line above the slider. */}
       <PageHeader
         icon={Globe}
         title="LASDPC - ICMC-USP"
@@ -221,7 +221,7 @@ const HomePage = () => {
         }
       />
 
-      {/* Photo slider — sits immediately after the hero statement. */}
+      {/* Photo slider - sits immediately after the hero statement. */}
       <section className="container mx-auto max-w-5xl px-4 -mt-16 mb-8">
         <LabSlider slides={LAB_SLIDES} isPt={isPt} />
       </section>

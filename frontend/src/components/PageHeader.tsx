@@ -33,7 +33,7 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   return (
     <div className={`relative ${className}`}>
-      {/* Single soft vertical glow — no orbs, so there is no curved edge
+      {/* Single soft vertical glow - no orbs, so there is no curved edge
           anywhere in the header. The gradient is fully transparent well
           before the bottom of the band, which means the transition into
           the page background is a continuous fade with no perceivable
