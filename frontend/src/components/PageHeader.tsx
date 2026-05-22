@@ -32,21 +32,15 @@ const PageHeader = ({
   titleTestId,
 }: PageHeaderProps) => {
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      {/* Soft blue glow that fades out *long before* the bottom of the
-          header so the transition into the page background reads as a
-          natural blend rather than a banner edge. Using an arbitrary
-          linear-gradient so we can place the transparent stop early and
-          leave the lower portion fully invisible. */}
+    <div className={`relative ${className}`}>
+      {/* Single soft vertical glow — no orbs, so there is no curved edge
+          anywhere in the header. The gradient is fully transparent well
+          before the bottom of the band, which means the transition into
+          the page background is a continuous fade with no perceivable
+          boundary. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--primary)/0.10)_0%,hsl(var(--primary)/0.05)_30%,hsl(var(--primary)/0.02)_60%,transparent_92%)]"
-      />
-      {/* Subtle blurred orb anchored near the top — kept far above the
-          header bottom so it can't create a visible color seam. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 -right-32 w-[440px] h-[440px] rounded-full bg-primary/[0.08] blur-3xl"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--primary)/0.09)_0%,hsl(var(--primary)/0.04)_35%,hsl(var(--primary)/0.015)_65%,transparent_90%)]"
       />
 
       <div className="container mx-auto px-4 pt-10 pb-16 md:pt-12 md:pb-20 relative">
