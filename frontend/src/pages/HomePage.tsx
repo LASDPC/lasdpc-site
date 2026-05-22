@@ -88,7 +88,7 @@ const HomePageSkeleton = () => (
     </section>
 
     {/* Slider skeleton */}
-    <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-12 sm:mb-16">
+    <section className="container mx-auto max-w-5xl px-4 -mt-16 mb-12 sm:mb-16">
       <Skeleton className="aspect-[16/9] w-full rounded-2xl" />
     </section>
 
@@ -222,7 +222,7 @@ const HomePage = () => {
       />
 
       {/* Photo slider — sits immediately after the hero statement. */}
-      <section className="container mx-auto px-4 -mt-4 sm:-mt-6 mb-8">
+      <section className="container mx-auto max-w-5xl px-4 -mt-16 mb-8">
         <LabSlider slides={LAB_SLIDES} isPt={isPt} />
       </section>
 
