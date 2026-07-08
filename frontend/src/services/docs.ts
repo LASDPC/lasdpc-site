@@ -2,11 +2,9 @@ import { api } from "@/lib/api";
 
 export interface Doc {
   id: string;
-  category: string;
-  title: string;
-  titlePt: string;
+  /** Slash-separated virtual path ending in .md, e.g. "reunioes/2026/ata-2026-07-08.md" */
+  path: string;
   content: string;
-  contentPt: string;
   updatedAt: string;
 }
 

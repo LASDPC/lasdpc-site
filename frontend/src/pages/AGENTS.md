@@ -46,11 +46,11 @@ which data it loads, and what key user interactions exist.
 - Does not require authentication and avoids heavy data fetching.
 
 ## DocsPage.tsx
-- Documentation hub that lists available documents and allows users to open/download them.
-- Uses hooks/services to fetch doc metadata from the backend and render a searchable/browsable list.
-- Admins can create/edit docs via admin affordances that link into `AdminEditPage`.
-- Supports language-aware fields where applicable, matching the site’s i18n behavior.
-- Emphasizes clear hierarchy: categories/labels, titles, and short descriptions.
+- VS Code-style file explorer for internal Markdown docs (meeting notes etc.), gated behind login.
+- Docs are flat records with a slash-separated `path` (e.g. `reunioes/2026/ata.md`); the sidebar folder tree is derived client-side via `lib/docTree.ts` and rendered by `components/docs/DocTree.tsx`.
+- Clicking a file renders its Markdown (`react-markdown` + `remark-gfm`); the pencil button switches to inline editing with `MarkdownEditor`, including rename/move via the path field.
+- Admins can create files from a dialog (folders are implicit in the path) and delete the active file with confirmation.
+- Content is single-language by design — no EN/PT paired fields for docs.
 - Handles loading states and empty states without breaking layout.
 
 ## HomePage.tsx

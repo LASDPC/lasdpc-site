@@ -889,8 +889,8 @@ const AdminDashboardPage = () => {
               editLabel={isPt ? "Editar" : "Edit"}
               rows={docs.map((doc) => ({
                 id: doc.id,
-                title: isPt ? doc.titlePt : doc.title,
-                detail: doc.category,
+                title: doc.path,
+                detail: doc.updatedAt,
                 editTo: `/admin/edit/doc/${doc.id}`,
               }))}
             />

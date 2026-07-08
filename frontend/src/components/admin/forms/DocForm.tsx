@@ -5,14 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Doc } from "@/services/docs";
+import { normalizeDocPath } from "@/lib/docTree";
 import MarkdownEditor from "./MarkdownEditor";
 
 const schema = z.object({
-  category: z.string().min(1),
-  title: z.string().min(1),
-  titlePt: z.string().min(1),
+  path: z
+    .string()
+    .min(1)
+    .refine((v) => normalizeDocPath(v) !== null, { message: "invalid" }),
   content: z.string().min(1),
-  contentPt: z.string().min(1),
   updatedAt: z.string().min(1),
 });
 
@@ -31,31 +32,37 @@ const DocForm = ({ initial, onSubmit, loading, lang }: DocFormProps) => {
   const pt = lang === "pt";
   const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initial ?? { updatedAt: new Date().toISOString().split("T")[0], category: "guides" },
+    defaultValues: initial ?? { path: "", content: "", updatedAt: new Date().toISOString().split("T")[0] },
   });
 
+  const submit = (values: FormValues) => {
+    onSubmit({ ...values, path: normalizeDocPath(values.path)! });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div><Label>{pt ? "Categoria" : "Category"}</Label><select {...register("category")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"><option value="guides">{pt ? "Guias" : "Guides"}</option><option value="policies">{pt ? "Políticas" : "Policies"}</option><option value="tutorials">{pt ? "Tutoriais" : "Tutorials"}</option></select></div>
+        <div>
+          <Label>{pt ? "Caminho do arquivo" : "File path"}</Label>
+          <Input {...register("path")} placeholder="reunioes/2026/ata.md" className="font-mono" />
+          {errors.path && (
+            <p className="text-xs text-destructive mt-1">
+              {pt ? "Caminho inválido (ex.: reunioes/2026/ata.md)" : "Invalid path (e.g. meetings/2026/notes.md)"}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            {pt
+              ? "Use / para organizar em pastas — elas são criadas automaticamente."
+              : "Use / to organize into folders — they are created automatically."}
+          </p>
+        </div>
         <div><Label>{pt ? "Atualizado em" : "Updated At"}</Label><Input type="date" {...register("updatedAt")} /></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} />{errors.title && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
-        <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} />{errors.titlePt && <p className="text-xs text-destructive mt-1">{pt ? "Obrigatório" : "Required"}</p>}</div>
       </div>
       <Controller
         name="content"
         control={control}
         render={({ field }) => (
-          <MarkdownEditor label={pt ? "Conteúdo EN (Markdown)" : "Content EN (Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
-        )}
-      />
-      <Controller
-        name="contentPt"
-        control={control}
-        render={({ field }) => (
-          <MarkdownEditor label={pt ? "Conteúdo PT (Markdown)" : "Content PT (Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
+          <MarkdownEditor label={pt ? "Conteúdo (Markdown)" : "Content (Markdown)"} value={field.value || ""} onChange={field.onChange} proseClassName={DOCS_PROSE} />
         )}
       />
       <Button type="submit" disabled={loading} className="w-full">{loading ? "..." : initial ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
