@@ -4,6 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+.header-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.header-logo > svg > path:nth-of-type(1) {
+  stroke: hsl(var(--foreground));
+}
+
+.header-logo > svg > path:nth-of-type(2) {
+  fill: hsl(var(--primary));
+}
+
+.header-logo > svg > path:nth-of-type(3) {
+  fill: hsl(var(--accent));
+}
+
 .visual-markdown .ProseMirror > :first-child {
   margin-top: 0;
 }
@@ -335,13 +353,17 @@
 
   .usp-institutional-mark {
     display: inline-block;
-    background: hsl(var(--primary));
-    mask-position: center;
-    mask-repeat: no-repeat;
-    mask-size: contain;
-    -webkit-mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-size: contain;
+    color: hsl(var(--primary));
+  }
+
+  .usp-institutional-mark svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .usp-institutional-mark svg path {
+    fill: currentColor;
   }
 
   .dark .vanta-light-tint,

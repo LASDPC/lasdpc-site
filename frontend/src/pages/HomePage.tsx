@@ -22,7 +22,7 @@ import { usePublications } from "@/hooks/usePublications";
 import { useBlog } from "@/hooks/useBlog";
 import { useStats } from "@/hooks/useStats";
 import { Skeleton } from "@/components/ui/skeleton";
-import uspLogo from "@/assets/usp.svg";
+import uspLogoMarkup from "@/assets/usp.svg?raw";
 import { mediaUrl } from "@/lib/media";
 import VantaGlobeBackground from "@/components/VantaGlobeBackground";
 
@@ -139,7 +139,7 @@ const HomePage = () => {
                 role="img"
                 aria-label="Universidade de São Paulo"
                 className="usp-institutional-mark h-5 w-14 shrink-0"
-                style={{ maskImage: `url(${uspLogo})`, WebkitMaskImage: `url(${uspLogo})` }}
+                dangerouslySetInnerHTML={{ __html: uspLogoMarkup }}
               />
             </motion.div>
             <motion.h1 variants={reveal} custom={1} className="max-w-4xl font-display text-[clamp(3.25rem,7.6vw,7.25rem)] font-bold leading-[0.9] tracking-[-0.065em] text-foreground">

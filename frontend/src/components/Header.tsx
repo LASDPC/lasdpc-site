@@ -5,7 +5,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sun, Moon, Contrast, Menu, X, Languages, AArrowUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "@/assets/lasdpc-logo.png";
+import logoMarkup from "@/assets/logo-laspdc.svg?raw";
 import UserAvatarButton from "@/components/UserAvatarButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { mediaUrl } from "@/lib/media";
@@ -63,15 +63,12 @@ const Header = () => {
     <>
       <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5">
         <div className="mx-auto flex h-16 max-w-[1480px] items-center rounded-2xl border border-border/70 bg-background/90 px-3 shadow-[0_16px_42px_-26px_hsl(220_40%_2%/0.28)] backdrop-blur-2xl dark:bg-background/80 dark:shadow-[0_16px_42px_-26px_hsl(220_40%_2%/0.7)] sm:px-4">
-          <Link to="/" className="group flex shrink-0 items-center gap-2.5 rounded-xl pr-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <span className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-xl bg-primary/10 ring-1 ring-primary/15">
-              <img src={logo} alt="" className="h-8 w-8 object-contain transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110" />
-              <span className="absolute inset-x-2 bottom-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent" />
-            </span>
-            <span className="hidden leading-none sm:block">
-              <span className="block font-display text-base font-bold tracking-[-0.03em] text-foreground">LaSDPC</span>
-              <span className="mt-1 block font-mono text-[8px] uppercase tracking-[0.24em] text-muted-foreground">ICMC · USP</span>
-            </span>
+          <Link to="/" aria-label={isPt ? "LaSDPC — início" : "LaSDPC — home"} className="group flex shrink-0 items-center rounded-xl pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:pr-2">
+            <span
+              aria-hidden="true"
+              className="header-logo block h-[35px] w-[113px] transition-transform duration-300 group-hover:scale-[1.03] sm:h-12 sm:w-[162px]"
+              dangerouslySetInnerHTML={{ __html: logoMarkup }}
+            />
           </Link>
 
           <nav className="mx-auto hidden items-center rounded-xl bg-secondary/55 p-1 lg:flex" aria-label={isPt ? "Navegação principal" : "Main navigation"}>

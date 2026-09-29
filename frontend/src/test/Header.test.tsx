@@ -53,8 +53,6 @@ vi.mock("@/components/UserAvatarButton", () => ({
   default: () => <div data-testid="user-avatar-button" />,
 }));
 
-vi.mock("@/assets/lasdpc-logo.png", () => ({ default: "logo.png" }));
-
 import Header from "@/components/Header";
 
 describe("Header - authenticated user", () => {

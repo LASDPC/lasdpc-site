@@ -36,7 +36,10 @@ export async function uploadMedia(
   if (!publicUpload && token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(endpoint, { method: "POST", headers, body: formData });
-  if (!res.ok) throw new Error("Upload failed");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(typeof body.detail === "string" ? body.detail : `Upload failed (${res.status})`);
+  }
   return (await res.json()) as { key: string };
 }
 
