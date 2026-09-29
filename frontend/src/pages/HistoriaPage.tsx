@@ -1,606 +1,409 @@
-import type { ComponentType } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
+  ArrowDown,
+  ArrowRight,
   BookOpenText,
   BrainCircuit,
   CalendarDays,
+  ChevronDown,
   Cpu,
   GraduationCap,
-  Landmark,
   Network,
-  Sparkles,
   Users,
 } from "lucide-react";
 
 import { useLang } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import PageHeader from "@/components/PageHeader";
 
-type HistoryEventKey = "1990" | "gsdpc" | "evolution" | "training" | "today";
 type Localized = { pt: string; en: string };
-type HistoryIcon = ComponentType<{ className?: string; size?: number }>;
+type HistoryEventKey = "1990" | "gsdpc" | "evolution" | "training" | "today";
 
 const EVENT_KEYS: HistoryEventKey[] = ["1990", "gsdpc", "evolution", "training", "today"];
-
 const pick = (value: Localized, isPt: boolean) => (isPt ? value.pt : value.en);
 
-const eventMeta: Record<
-  HistoryEventKey,
-  {
-    icon: HistoryIcon;
-    photo: string;
-    photoAlt: Localized;
-    metric: Localized;
-    metricLabel: Localized;
-    subjects: Localized[];
-  }
-> = {
+const eventMeta = {
   "1990": {
     icon: CalendarDays,
-    photo: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1400&h=1050&fit=crop",
-    photoAlt: {
-      pt: "Sala de trabalho universitária representando o começo do laboratório",
-      en: "University workspace representing the lab's early days",
-    },
-    metric: { pt: "1990", en: "1990" },
-    metricLabel: { pt: "ano de origem", en: "origin year" },
+    era: { pt: "1990", en: "1990" },
+    metric: "1990",
+    metricLabel: { pt: "O começo", en: "The beginning" },
+    photo: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1500&q=85",
+    photoAlt: { pt: "Espaço de trabalho que ilustra o início do laboratório", en: "Workspace illustrating the lab's early years" },
     subjects: [
-      { pt: "ICMC/USP", en: "ICMC/USP" },
-      { pt: "sistemas distribuídos", en: "distributed systems" },
-      { pt: "programação concorrente", en: "concurrent programming" },
+      { pt: "ICMC · USP", en: "ICMC · USP" },
+      { pt: "Sistemas distribuídos", en: "Distributed systems" },
+      { pt: "Programação concorrente", en: "Concurrent programming" },
     ],
   },
   gsdpc: {
     icon: Network,
-    photo: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1400&h=1050&fit=crop",
-    photoAlt: {
-      pt: "Corredor de servidores representando infraestrutura de pesquisa distribuída",
-      en: "Server corridor representing distributed research infrastructure",
-    },
-    metric: { pt: "GSDPC", en: "GSDPC" },
-    metricLabel: { pt: "grupo de pesquisa", en: "research group" },
+    era: { pt: "As origens", en: "Early years" },
+    metric: "GSDPC",
+    metricLabel: { pt: "Grupo de pesquisa", en: "Research group" },
+    photo: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1500&q=85",
+    photoAlt: { pt: "Servidores que ilustram a pesquisa em sistemas distribuídos", en: "Servers illustrating distributed systems research" },
     subjects: [
-      { pt: "base de pesquisa", en: "research home" },
-      { pt: "continuidade", en: "continuity" },
-      { pt: "colaboração", en: "collaboration" },
+      { pt: "Grupo de pesquisa", en: "Research group" },
+      { pt: "Continuidade", en: "Continuity" },
+      { pt: "Colaboração", en: "Collaboration" },
     ],
   },
   evolution: {
     icon: Cpu,
-    photo: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400&h=1050&fit=crop",
-    photoAlt: {
-      pt: "Placa eletrônica representando a evolução dos sistemas paralelos e distribuídos",
-      en: "Circuit board representing the evolution of parallel and distributed systems",
-    },
-    metric: { pt: "1990-2000", en: "1990-2000" },
-    metricLabel: { pt: "expansão técnica", en: "technical expansion" },
+    era: { pt: "Década de 1990", en: "The 1990s" },
+    metric: "90s",
+    metricLabel: { pt: "Expansão técnica", en: "Technical growth" },
+    photo: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1500&q=85",
+    photoAlt: { pt: "Placa eletrônica que ilustra a evolução da computação", en: "Circuit board illustrating the evolution of computing" },
     subjects: [
-      { pt: "algoritmos paralelos", en: "parallel algorithms" },
-      { pt: "redes", en: "networks" },
-      { pt: "avaliação de desempenho", en: "performance evaluation" },
+      { pt: "Algoritmos paralelos", en: "Parallel algorithms" },
+      { pt: "Redes", en: "Networks" },
+      { pt: "Desempenho", en: "Performance" },
     ],
   },
   training: {
     icon: GraduationCap,
-    photo: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&h=1050&fit=crop",
-    photoAlt: {
-      pt: "Grupo de estudantes trabalhando junto em uma mesa",
-      en: "Group of students working together at a table",
-    },
-    metric: { pt: "130+", en: "130+" },
-    metricLabel: { pt: "mestres e doutores", en: "MSc and PhD alumni" },
+    era: { pt: "Ao longo do tempo", en: "Through the years" },
+    metric: "130+",
+    metricLabel: { pt: "Mestres e doutores", en: "MSc and PhD alumni" },
+    photo: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1500&q=85",
+    photoAlt: { pt: "Estudantes colaborando, como ilustração da formação de pesquisadores", en: "Students collaborating, illustrating researcher training" },
     subjects: [
-      { pt: "formação", en: "training" },
-      { pt: "egressos", en: "alumni" },
-      { pt: "iniciação científica", en: "undergraduate research" },
+      { pt: "Formação", en: "Mentorship" },
+      { pt: "Egressos", en: "Alumni" },
+      { pt: "Iniciação científica", en: "Undergraduate research" },
     ],
   },
   today: {
     icon: BrainCircuit,
-    photo: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1400&h=1050&fit=crop",
-    photoAlt: {
-      pt: "Equipe de tecnologia trabalhando em notebooks em um laboratório moderno",
-      en: "Technology team working on laptops in a modern lab",
-    },
-    metric: { pt: "Hoje", en: "Today" },
-    metricLabel: { pt: "pesquisa em movimento", en: "research in motion" },
+    era: { pt: "Hoje", en: "Today" },
+    metric: "→",
+    metricLabel: { pt: "Em movimento", en: "Moving forward" },
+    photo: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1500&q=85",
+    photoAlt: { pt: "Equipe em atividade, ilustrando as pesquisas atuais", en: "Team at work, illustrating current research" },
     subjects: [
-      { pt: "nuvem", en: "cloud" },
-      { pt: "computação verde", en: "green computing" },
-      { pt: "educação aberta", en: "open education" },
+      { pt: "Nuvem", en: "Cloud" },
+      { pt: "Computação verde", en: "Green computing" },
+      { pt: "Educação aberta", en: "Open education" },
     ],
   },
-};
+} as const;
 
-const pageCopy = {
+const copy = {
   pt: {
-    spotlight: "Marco em destaque",
-    chapterLabel: "Capítulos",
-    chapterIntro: "A trajetória do LaSDPC contada por marcos, pessoas e linhas de pesquisa.",
-    storyTitle: "Uma história que continua compilando",
-    storyBody:
-      "O laboratório nasceu de uma missão acadêmica clara e cresceu como um espaço de pesquisa aplicada, formação de pessoas e experimentação em sistemas distribuídos.",
-    impactTitle: "O que ficou mais forte com o tempo",
-    impactSubtitle:
-      "A evolução do laboratório combina origem acadêmica, grupo de pesquisa, infraestrutura, formação de pessoas e temas atuais em uma mesma trajetória.",
-    researchTitle: "Linhas que conectam passado e presente",
-    researchBody:
-      "A base em sistemas paralelos e distribuídos se desdobrou em nuvem, desempenho, aplicações adaptativas, educação computacional e novas formas de computação em escala.",
-    impactCards: [
-      {
-        icon: Users,
-        title: "Comunidade",
-        body: "Gerações de docentes, pós-graduandos e estudantes de iniciação científica criando continuidade.",
-      },
-      {
-        icon: Cpu,
-        title: "Sistemas",
-        body: "Pesquisa com engenharia, experimentação e avaliação de desempenho como assinatura do laboratório.",
-      },
-      {
-        icon: Sparkles,
-        title: "Futuro",
-        body: "Novas frentes em nuvem, aplicações adaptativas, computação verde e educação aberta.",
-      },
-    ],
-    researchThreads: [
-      "Computação paralela",
-      "Sistemas distribuídos",
-      "Escalonamento",
-      "Computação em nuvem",
-      "Web services",
-      "Redes de sensores",
-      "Computação móvel",
-      "Objetos de aprendizagem",
-    ],
+    eyebrow: "1990 — presente · ICMC/USP",
+    headlineA: "O futuro tem",
+    headlineB: "uma história.",
+    heroDescription: "Uma trajetória construída por pessoas, perguntas e descobertas. Conheça os marcos que fizeram do LaSDPC um espaço de pesquisa em constante evolução.",
+    explore: "Explorar a trajetória",
+    meetPeople: "Conheça as pessoas",
+    visualLabel: "O primeiro capítulo",
+    illustrative: "Imagem ilustrativa",
+    yearsLabel: "Desde",
+    alumniLabel: "Mestres e doutores formados",
+    chaptersLabel: "Capítulos para explorar",
+    introEyebrow: "Nossa trajetória",
+    introTitle: "Cada geração deixa uma nova conexão.",
+    introBody: "A história do laboratório é feita de ideias que mudaram com a tecnologia e de uma comunidade que segue pesquisando, ensinando e colaborando.",
+    navLabel: "Navegação pelos capítulos da história",
+    chapterLabel: "Capítulo",
+    more: "Ler o capítulo completo",
+    less: "Recolher capítulo",
+    threadsEyebrow: "Ideias que atravessam o tempo",
+    threadsTitle: "As perguntas mudam. A curiosidade permanece.",
+    threadsBody: "Da computação paralela às aplicações em nuvem, estas linhas mostram como a base do laboratório se desdobrou em novas pesquisas.",
+    endingEyebrow: "A história continua",
+    endingTitle: "O próximo capítulo está sendo escrito agora.",
+    endingBody: "Conheça quem faz parte dessa trajetória e explore as pesquisas que estão moldando o que vem a seguir.",
+    researchLink: "Explorar pesquisas",
+    peopleLink: "Conhecer a equipe",
+    threads: ["Computação paralela", "Sistemas distribuídos", "Escalonamento", "Computação em nuvem", "Redes de sensores", "Educação aberta"],
   },
   en: {
-    spotlight: "Featured milestone",
-    chapterLabel: "Chapters",
-    chapterIntro: "LaSDPC's journey told through milestones, people, and research threads.",
-    storyTitle: "A history that keeps compiling",
-    storyBody:
-      "The lab began with a clear academic mission and grew into a place for applied research, mentoring, and experimentation in distributed systems.",
-    impactTitle: "What grew stronger over time",
-    impactSubtitle:
-      "The lab's evolution combines academic origins, research group continuity, infrastructure, training, and current themes into one connected trajectory.",
-    researchTitle: "Threads connecting past and present",
-    researchBody:
-      "The foundation in parallel and distributed systems unfolded into cloud computing, performance, adaptive applications, educational computing, and new forms of computing at scale.",
-    impactCards: [
-      {
-        icon: Users,
-        title: "Community",
-        body: "Generations of faculty, graduate students, and undergraduate researchers creating continuity.",
-      },
-      {
-        icon: Cpu,
-        title: "Systems",
-        body: "Research shaped by engineering, experimentation, and performance evaluation.",
-      },
-      {
-        icon: Sparkles,
-        title: "Future",
-        body: "New fronts in cloud, adaptive applications, green computing, and open education.",
-      },
-    ],
-    researchThreads: [
-      "Parallel computing",
-      "Distributed systems",
-      "Scheduling",
-      "Cloud computing",
-      "Web services",
-      "Sensor networks",
-      "Mobile computing",
-      "Learning objects",
-    ],
+    eyebrow: "1990 — present · ICMC/USP",
+    headlineA: "The future has",
+    headlineB: "a history.",
+    heroDescription: "A journey shaped by people, questions, and discoveries. Explore the milestones that made LaSDPC a place of research in constant evolution.",
+    explore: "Explore the timeline",
+    meetPeople: "Meet the people",
+    visualLabel: "The first chapter",
+    illustrative: "Illustrative image",
+    yearsLabel: "Since",
+    alumniLabel: "MSc and PhD alumni",
+    chaptersLabel: "Chapters to explore",
+    introEyebrow: "Our journey",
+    introTitle: "Every generation creates a new connection.",
+    introBody: "The lab's history is made of ideas that evolved with technology and a community that keeps researching, teaching, and collaborating.",
+    navLabel: "Navigate history chapters",
+    chapterLabel: "Chapter",
+    more: "Read the full chapter",
+    less: "Close chapter",
+    threadsEyebrow: "Ideas through the years",
+    threadsTitle: "The questions change. Curiosity remains.",
+    threadsBody: "From parallel computing to cloud applications, these subjects show how the lab's foundations developed into new research.",
+    endingEyebrow: "The story continues",
+    endingTitle: "The next chapter is being written now.",
+    endingBody: "Meet the people behind this journey and explore the research shaping what comes next.",
+    researchLink: "Explore research",
+    peopleLink: "Meet the team",
+    threads: ["Parallel computing", "Distributed systems", "Scheduling", "Cloud computing", "Sensor networks", "Open education"],
   },
 };
 
 export default function HistoriaPage() {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
-  const copy = isPt ? pageCopy.pt : pageCopy.en;
-  const chapterSectionRef = useRef<HTMLElement | null>(null);
+  const content = isPt ? copy.pt : copy.en;
+  const prefersReducedMotion = useReducedMotion();
+  const chaptersRef = useRef<HTMLElement>(null);
   const [activeId, setActiveId] = useState<HistoryEventKey>("1990");
-  const [chapterProgress, setChapterProgress] = useState(0);
+  const [expandedId, setExpandedId] = useState<HistoryEventKey | null>("1990");
+  const [progress, setProgress] = useState(0);
 
-  const items = useMemo(
-    () =>
-      EVENT_KEYS.map((id) => {
-        const meta = eventMeta[id];
-        return {
-          id,
-          icon: meta.icon,
-          photo: meta.photo,
-          photoAlt: pick(meta.photoAlt, isPt),
-          metric: pick(meta.metric, isPt),
-          metricLabel: pick(meta.metricLabel, isPt),
-          subjects: meta.subjects.map((subject) => pick(subject, isPt)),
-          year:
-            id === "1990"
-              ? "1990"
-              : id === "gsdpc"
-                ? "1990"
-                : id === "evolution"
-                  ? "1990-2000"
-                  : t("history.todayLabel") || "Hoje",
-          title: t(`history.events.${id}.title`),
-          summary: t(`history.events.${id}.summary`),
-          paragraphs: [
-            t(`history.events.${id}.p1`),
-            t(`history.events.${id}.p2`),
-            t(`history.events.${id}.p3`),
-          ].filter((p) => p && !p.startsWith("history.events.")),
-          imageCaption: t(`history.events.${id}.imageCaption`),
-        };
-      }),
-    [isPt, t]
-  );
-
-  const activeIndex = Math.max(
-    0,
-    items.findIndex((item) => item.id === activeId)
-  );
-  const activeItem = items[activeIndex] ?? items[0];
-  const ActiveIcon = activeItem.icon;
+  const items = useMemo(() => EVENT_KEYS.map((id, index) => {
+    const meta = eventMeta[id];
+    return {
+      id,
+      index,
+      icon: meta.icon,
+      era: pick(meta.era, isPt),
+      metric: meta.metric,
+      metricLabel: pick(meta.metricLabel, isPt),
+      photo: meta.photo,
+      photoAlt: pick(meta.photoAlt, isPt),
+      subjects: meta.subjects.map((subject) => pick(subject, isPt)),
+      title: t(`history.events.${id}.title`),
+      summary: t(`history.events.${id}.summary`),
+      paragraphs: [1, 2, 3].map((number) => t(`history.events.${id}.p${number}`)),
+    };
+  }), [isPt, t]);
 
   const scrollToChapter = (id: HistoryEventKey) => {
     setActiveId(id);
-    const node = document.querySelector<HTMLElement>(`[data-history-id="${id}"]`);
-    if (!node) return;
-
-    window.scrollTo({
-      top: node.getBoundingClientRect().top + window.scrollY - 150,
-      behavior: "smooth",
+    document.getElementById(`history-${id}`)?.scrollIntoView({
+      behavior: prefersReducedMotion ? "instant" : "smooth",
+      block: "start",
     });
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    let frameId: number | null = null;
-    const clamp = (value: number) => Math.min(1, Math.max(0, value));
-
-    const updateChapterState = () => {
-      const section = chapterSectionRef.current;
+    let frame: number | null = null;
+    const update = () => {
+      frame = null;
+      const section = chaptersRef.current;
       if (!section) return;
-
       const rect = section.getBoundingClientRect();
-      const readableTop = Math.min(window.innerHeight * 0.42, 420);
-      const progressSpan = Math.max(rect.height - window.innerHeight * 0.58, 1);
-      const nextProgress = clamp((readableTop - rect.top) / progressSpan);
+      const visibleLine = Math.min(window.innerHeight * 0.45, 420);
+      const available = Math.max(rect.height - window.innerHeight * 0.35, 1);
+      const nextProgress = Math.max(0, Math.min(1, (visibleLine - rect.top) / available));
+      setProgress((current) => Math.abs(current - nextProgress) > 0.005 ? nextProgress : current);
 
-      setChapterProgress((current) =>
-        Math.abs(current - nextProgress) > 0.002 ? nextProgress : current
-      );
-
-      let closestId: HistoryEventKey | null = null;
-      let closestDistance = Number.POSITIVE_INFINITY;
-
-      items.forEach((item) => {
-        const node = document.querySelector<HTMLElement>(`[data-history-id="${item.id}"]`);
-        if (!node) return;
-
-        const itemRect = node.getBoundingClientRect();
-        const itemCenter = itemRect.top + Math.min(itemRect.height, 360) / 2;
-        const distance = Math.abs(itemCenter - readableTop);
-
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestId = item.id;
+      let nearest: HistoryEventKey = "1990";
+      let distance = Infinity;
+      for (const item of items) {
+        const node = document.getElementById(`history-${item.id}`);
+        if (!node) continue;
+        const currentDistance = Math.abs(node.getBoundingClientRect().top - visibleLine);
+        if (currentDistance < distance) {
+          distance = currentDistance;
+          nearest = item.id;
         }
-      });
-
-      if (closestId) {
-        setActiveId((current) => (current === closestId ? current : closestId));
       }
+      if (rect.top < window.innerHeight && rect.bottom > 0) setActiveId(nearest);
     };
-
-    const scheduleUpdate = () => {
-      if (frameId !== null) return;
-      frameId = window.requestAnimationFrame(() => {
-        frameId = null;
-        updateChapterState();
-      });
+    const schedule = () => {
+      if (frame === null) frame = window.requestAnimationFrame(update);
     };
-
-    updateChapterState();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
     return () => {
-      if (frameId !== null) window.cancelAnimationFrame(frameId);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
     };
   }, [items]);
 
+  const reveal = {
+    initial: { opacity: 0, y: prefersReducedMotion ? 0 : 28 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: "-60px" },
+    transition: { duration: prefersReducedMotion ? 0 : 0.65, ease: "easeOut" as const },
+  };
+
   return (
-    <div>
-      <PageHeader
-        icon={Landmark}
-        title={t("history.title")}
-        titleTestId="history-title"
-        subtitle={<span data-testid="history-subtitle">{t("history.subtitle")}</span>}
-      />
-
-      <section className="container mx-auto px-4 pb-12">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] lg:items-stretch">
-          <motion.div
-            layout
-            className="relative min-h-[420px] overflow-hidden rounded-lg border border-border bg-card shadow-sm"
-          >
-            <img
-              key={activeItem.photo}
-              src={activeItem.photo}
-              alt={activeItem.photoAlt}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--background)/0.95)_0%,hsl(var(--background)/0.72)_45%,hsl(var(--background)/0.18)_100%)]" />
-            <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
-
-            <div className="relative flex min-h-[420px] max-w-2xl flex-col justify-end p-5 sm:p-8">
-              <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-md border border-border bg-background/85 px-3 py-2 text-xs font-semibold uppercase text-muted-foreground backdrop-blur">
-                <ActiveIcon className="h-4 w-4 text-primary" />
-                {copy.spotlight}
-              </div>
-
-              <div className="max-w-xl">
-                <p className="font-mono text-sm font-semibold text-accent">{activeItem.year}</p>
-                <h2 className="mt-2 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl">
-                  {activeItem.title}
-                </h2>
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  {activeItem.summary}
-                </p>
-              </div>
-
-              <div className="mt-7">
-                <div className="inline-block rounded-lg border border-border bg-background/85 px-4 py-3 backdrop-blur">
-                  <span className="block font-mono text-xs font-semibold uppercase text-muted-foreground">
-                    {activeItem.metricLabel}
-                  </span>
-                  <span className="mt-1 block font-display text-2xl font-bold text-foreground">
-                    {activeItem.metric}
-                  </span>
-                </div>
-              </div>
+    <div className="overflow-hidden">
+      <section className="history-hero relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-24 top-0 h-[42rem] w-[42rem] rounded-full bg-primary/[0.07] blur-3xl dark:bg-primary/[0.08]" aria-hidden="true" />
+        <div className="container relative mx-auto grid min-h-[650px] items-center gap-12 px-4 pb-16 pt-14 lg:grid-cols-[1.03fr_0.97fr] lg:gap-16 lg:pb-20 lg:pt-20">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.65 }}>
+            <p className="mb-7 font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary">{content.eyebrow}</p>
+            <h1 data-testid="history-title" className="max-w-3xl font-display text-[clamp(3.5rem,7vw,7rem)] font-bold leading-[0.92] tracking-[-0.065em] text-foreground">
+              {content.headlineA} <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{content.headlineB}</span>
+            </h1>
+            <p data-testid="history-subtitle" className="mt-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">{content.heroDescription}</p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <a href="#chapters" className="group inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_16px_34px_-18px_hsl(var(--primary))] transition-transform hover:-translate-y-0.5">
+                {content.explore}<ArrowDown size={16} className="transition-transform group-hover:translate-y-1" />
+              </a>
+              <Link to="/people" className="group inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-6 py-3.5 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-card">
+                {content.meetPeople}<ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
           </motion.div>
 
-          <aside className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-lg border border-border bg-card p-5">
-              <p className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
-                {copy.chapterLabel}
-              </p>
-              <h2 className="mt-3 font-display text-2xl font-bold text-foreground">{copy.storyTitle}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{copy.storyBody}</p>
+          <motion.figure initial={{ opacity: 0, x: prefersReducedMotion ? 0 : 32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: 0.12 }} className="relative mx-auto w-full max-w-[620px] lg:ml-auto">
+            <div className="absolute -left-5 -top-5 h-28 w-28 rounded-tl-[3rem] border-l border-t border-primary/35 sm:-left-8 sm:-top-8" aria-hidden="true" />
+            <div className="relative aspect-[1.12] overflow-hidden rounded-[2rem] border border-border/75 bg-secondary shadow-[0_35px_90px_-50px_hsl(220_40%_2%/0.45)] sm:aspect-[1.05]">
+              <img src={items[0].photo} alt={items[0].photoAlt} className="absolute inset-0 h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/20 to-transparent" />
+              <div className="absolute right-7 top-4 font-display text-[7rem] font-bold leading-none tracking-[-0.09em] text-white/15 sm:right-10 sm:text-[9rem]" aria-hidden="true">90</div>
+              <figcaption className="absolute inset-x-0 bottom-0 p-7 text-white sm:p-10">
+                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">{content.visualLabel}</span>
+                <p className="mt-3 max-w-md font-display text-2xl font-semibold leading-tight sm:text-3xl">{items[0].title}</p>
+                <span className="mt-5 block text-xs text-white/65">{content.illustrative}</span>
+              </figcaption>
             </div>
-
-            <div className="rounded-lg border border-border bg-background p-5">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <ActiveIcon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {copy.spotlight}
-                  </p>
-                  <p className="mt-1 font-display text-lg font-bold text-foreground">{activeItem.year}</p>
-                </div>
-              </div>
-              <h3 className="mt-5 font-display text-xl font-bold leading-tight text-foreground">
-                {activeItem.title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{activeItem.summary}</p>
+            <div className="absolute -bottom-4 -right-3 flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-3 shadow-lg sm:-bottom-6 sm:-right-5">
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              <span className="font-mono text-xs font-bold tracking-[0.14em] text-foreground">ICMC · USP</span>
             </div>
-          </aside>
+          </motion.figure>
         </div>
       </section>
 
-      <div className="sticky top-16 z-30 border-y border-border bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-3">
-          <div className="space-y-2">
-            <div className="relative w-full py-2">
-              <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-border" />
-              <motion.div
-                className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 origin-left rounded-full bg-primary"
-                animate={{ scaleX: chapterProgress }}
-                transition={{ type: "spring", stiffness: 140, damping: 28, mass: 0.8 }}
-              />
-
-              <div className="relative grid grid-cols-5 gap-1">
-                {items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = item.id === activeId;
-
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => scrollToChapter(item.id)}
-                      className="group flex min-w-0 flex-col items-center gap-1"
-                      aria-label={item.title}
-                      aria-current={isActive ? "step" : undefined}
-                    >
-                      <span
-                        className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-full border transition-colors",
-                          isActive
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-background text-muted-foreground group-hover:border-primary group-hover:text-primary"
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span
-                        className={cn(
-                          "hidden max-w-full truncate px-1 text-[11px] font-semibold md:block",
-                          isActive ? "text-primary" : "text-muted-foreground"
-                        )}
-                      >
-                        {item.year}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+      <section className="container mx-auto px-4 pb-14 sm:pb-16" aria-label={isPt ? "A história em números" : "History in numbers"}>
+        <div className="grid gap-7 border-y border-border/80 py-7 sm:grid-cols-3 sm:gap-0 sm:py-9">
+          {[
+            { value: "1990", label: content.yearsLabel },
+            { value: "130+", label: content.alumniLabel },
+            { value: "05", label: content.chaptersLabel },
+          ].map((fact, index) => (
+            <div key={fact.label} className={cn("flex items-center gap-4 sm:flex-col sm:items-start sm:gap-1 sm:px-8", index > 0 && "sm:border-l sm:border-border/80", index === 0 && "sm:pl-0")}>
+              <span className="font-display text-4xl font-bold tracking-[-0.06em] text-foreground sm:text-5xl">{fact.value}</span>
+              <span className="text-sm font-medium text-muted-foreground">{fact.label}</span>
             </div>
-
-            <div className="min-w-0 text-center">
-              <p className="text-base font-bold leading-snug text-foreground sm:text-lg">
-                {activeItem.title}
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
-      </div>
+      </section>
 
-      <section ref={chapterSectionRef} className="border-b border-border bg-secondary/40">
-        <div className="container mx-auto max-w-5xl px-4 py-10">
-          <div className="space-y-4">
-            {items.map((item, i) => {
-              const Icon = item.icon;
+      <section className="container mx-auto px-4 pb-12 sm:pb-16">
+        <motion.div {...reveal} className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+          <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-accent">{content.introEyebrow}</p>
+          <div>
+            <h2 className="max-w-3xl font-display text-3xl font-bold leading-[1.08] tracking-[-0.05em] text-foreground sm:text-5xl">{content.introTitle}</h2>
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">{content.introBody}</p>
+          </div>
+        </motion.div>
+      </section>
+
+      <nav className="sticky top-20 z-30 border-y border-border/75 bg-background/90 backdrop-blur-2xl" aria-label={content.navLabel}>
+        <div className="container mx-auto overflow-x-auto px-4">
+          <div className="flex min-w-[660px] items-stretch">
+            {items.map((item) => {
               const isActive = activeId === item.id;
-
               return (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ delay: i * 0.02, duration: 0.2, ease: "easeOut" }}
-                  className={cn(
-                    "overflow-hidden rounded-lg border bg-background transition-colors",
-                    isActive ? "border-primary shadow-sm" : "border-border hover:border-primary/40"
-                  )}
-                  data-testid={`history-item-${item.id}`}
-                  data-history-id={item.id}
-                >
-                  <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
-                    <div className="relative min-h-[170px] overflow-hidden bg-muted md:min-h-full">
-                      <img
-                        src={item.photo}
-                        alt={item.photoAlt}
-                        loading="lazy"
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_10%,hsl(var(--foreground)/0.74)_100%)]" />
-                      <div className="absolute bottom-4 left-4 right-4 text-white">
-                        <span className="font-mono text-xs font-semibold uppercase opacity-85">{item.year}</span>
-                        <p className="mt-1 text-2xl font-bold leading-none">{item.metric}</p>
-                        <p className="mt-1 text-xs font-medium opacity-85">{item.metricLabel}</p>
-                      </div>
-                    </div>
-
-                    <div className="p-5 sm:p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0">
-                          <div className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                            <Icon className="h-4 w-4" />
-                            {item.year}
-                          </div>
-                          <h3 className="mt-3 font-display text-xl font-bold leading-tight text-foreground">
-                            {item.title}
-                          </h3>
-                          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  <div
-                    className="grid gap-5 border-t border-border bg-card/50 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_240px]"
-                    data-testid={`history-expanded-${item.id}`}
-                  >
-                    <div>
-                      <p className="text-xs text-muted-foreground">{item.imageCaption}</p>
-                      <div className="mt-4 space-y-3">
-                        {item.paragraphs.map((paragraph, idx) => (
-                          <p key={idx} className="text-sm leading-relaxed text-foreground">
-                            {paragraph}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-lg border border-border bg-background p-4">
-                      <Icon className="h-6 w-6 text-primary" />
-                      <p className="mt-3 font-mono text-xs font-semibold uppercase text-muted-foreground">
-                        {item.metricLabel}
-                      </p>
-                      <p className="mt-1 font-display text-3xl font-bold text-foreground">{item.metric}</p>
-                    </div>
-                  </div>
-                </motion.div>
+                <button key={item.id} type="button" onClick={() => scrollToChapter(item.id)} aria-current={isActive ? "step" : undefined} className={cn("group relative flex min-w-0 flex-1 items-center gap-3 px-3 py-4 text-left transition-colors hover:bg-primary/[0.05] sm:px-5", isActive && "bg-primary/[0.06]")}>
+                  <span className={cn("font-mono text-[11px] font-bold transition-colors", isActive ? "text-accent" : "text-muted-foreground")}>0{item.index + 1}</span>
+                  <span className={cn("truncate text-xs font-semibold transition-colors sm:text-sm", isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>{item.era}</span>
+                  {isActive && <motion.span layoutId="history-active-chapter" className="absolute inset-x-2 bottom-0 h-[3px] rounded-full bg-gradient-to-r from-primary to-accent" transition={{ type: "spring", stiffness: 350, damping: 30 }} />}
+                </button>
               );
             })}
           </div>
         </div>
+        <motion.div className="absolute bottom-0 left-0 h-px w-full origin-left bg-primary/40" animate={{ scaleX: progress }} transition={{ duration: 0.25 }} aria-hidden="true" />
+      </nav>
+
+      <section id="chapters" ref={chaptersRef} className="container mx-auto px-4 py-8 sm:py-12">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const expanded = expandedId === item.id;
+          return (
+            <article key={item.id} id={`history-${item.id}`} data-history-id={item.id} data-testid={`history-item-${item.id}`} className="scroll-mt-44 border-b border-border/80 py-12 first:pt-6 last:border-b-0 sm:py-16 lg:py-20">
+              <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+                <motion.figure {...reveal} className={cn("relative min-w-0", item.index % 2 === 1 && "lg:order-2")}>
+                  <div className="group relative aspect-[1.18] overflow-hidden rounded-[1.6rem] border border-border/70 bg-secondary sm:aspect-[1.28]">
+                    <img src={item.photo} alt={item.photoAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                    <span className="absolute left-6 top-5 font-display text-[5rem] font-bold leading-none tracking-[-0.08em] text-white/20 sm:left-8 sm:text-[7rem]" aria-hidden="true">0{item.index + 1}</span>
+                    <figcaption className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4 text-white sm:bottom-8 sm:left-8 sm:right-8">
+                      <div>
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">{item.metricLabel}</span>
+                        <p className="mt-1 font-display text-3xl font-bold sm:text-4xl">{item.metric}</p>
+                      </div>
+                      <span className="text-right text-[11px] text-white/70">{content.illustrative}</span>
+                    </figcaption>
+                  </div>
+                </motion.figure>
+
+                <motion.div {...reveal} className={cn("min-w-0", item.index % 2 === 1 && "lg:order-1")}>
+                  <div className="mb-5 flex items-center gap-3">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><Icon size={20} /></span>
+                    <span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-primary">{content.chapterLabel} 0{item.index + 1} <span className="mx-1 text-muted-foreground">/</span> {item.era}</span>
+                  </div>
+                  <h3 className="max-w-xl font-display text-3xl font-bold leading-[1.07] tracking-[-0.045em] text-foreground sm:text-4xl lg:text-5xl">{item.title}</h3>
+                  <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">{item.summary}</p>
+                  <p className="mt-5 max-w-xl text-sm leading-relaxed text-foreground/85 sm:text-base">{item.paragraphs[0]}</p>
+
+                  <div id={`history-details-${item.id}`}>
+                    <AnimatePresence initial={false}>
+                      {expanded && (
+                        <motion.div key="details" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.35 }} className="overflow-hidden" data-testid={`history-expanded-${item.id}`}>
+                          <div className="space-y-4 pt-4">
+                            {item.paragraphs.slice(1).map((paragraph) => <p key={paragraph} className="max-w-xl text-sm leading-relaxed text-foreground/85 sm:text-base">{paragraph}</p>)}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <button type="button" onClick={() => setExpandedId(expanded ? null : item.id)} aria-expanded={expanded} aria-controls={`history-details-${item.id}`} className="group mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-accent">
+                    {expanded ? content.less : content.more}<ChevronDown size={17} className={cn("transition-transform", expanded && "rotate-180")} />
+                  </button>
+                  <div className="mt-7 flex flex-wrap gap-x-4 gap-y-2 border-t border-border/80 pt-5">
+                    {item.subjects.map((subject) => <span key={subject} className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-accent" />{subject}</span>)}
+                  </div>
+                </motion.div>
+              </div>
+            </article>
+          );
+        })}
       </section>
 
-      <section className="container mx-auto px-4 py-14">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+      <section className="container mx-auto px-4 py-14 sm:py-20">
+        <motion.div {...reveal} className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-wider text-accent">
-              {copy.impactTitle}
-            </p>
-            <h2 className="mt-3 font-display text-3xl font-bold leading-tight text-foreground">
-              {copy.researchTitle}
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">{copy.researchBody}</p>
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-accent">{content.threadsEyebrow}</p>
+            <h2 className="mt-5 max-w-lg font-display text-3xl font-bold leading-[1.07] tracking-[-0.045em] text-foreground sm:text-5xl">{content.threadsTitle}</h2>
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">{content.threadsBody}</p>
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {copy.researchThreads.map((thread, index) => (
-              <motion.div
-                key={thread}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ delay: index * 0.015, duration: 0.18, ease: "easeOut" }}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
-                  <BookOpenText className="h-4 w-4" />
-                </span>
-                <span className="text-sm font-semibold text-foreground">{thread}</span>
-              </motion.div>
+          <div className="grid sm:grid-cols-2 sm:gap-x-8">
+            {content.threads.map((thread, index) => (
+              <div key={thread} className="group flex items-center gap-4 border-b border-border/80 py-5">
+                <span className="font-mono text-xs font-bold text-primary/65">0{index + 1}</span>
+                <span className="font-display text-lg font-semibold text-foreground transition-transform duration-300 group-hover:translate-x-1 sm:text-xl">{thread}</span>
+                <BookOpenText size={17} className="ml-auto shrink-0 text-accent/70" />
+              </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      <section className="border-t border-border bg-card py-14">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-3xl font-bold text-foreground">{copy.impactTitle}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">{copy.impactSubtitle}</p>
+      <section className="relative overflow-hidden bg-primary py-16 text-primary-foreground sm:py-20">
+        <div className="pointer-events-none absolute -right-32 -top-48 h-[34rem] w-[34rem] rounded-full border border-white/15" aria-hidden="true" />
+        <div className="pointer-events-none absolute -right-12 -top-28 h-[25rem] w-[25rem] rounded-full border border-white/15" aria-hidden="true" />
+        <div className="container relative mx-auto grid gap-8 px-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="max-w-3xl">
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground/75">{content.endingEyebrow}</p>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.05em] sm:text-5xl lg:text-6xl">{content.endingTitle}</h2>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-primary-foreground/80">{content.endingBody}</p>
           </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {copy.impactCards.map((card, index) => {
-              const Icon = card.icon;
-              return (
-                <motion.div
-                  key={card.title}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-40px" }}
-                  transition={{ delay: index * 0.02, duration: 0.2, ease: "easeOut" }}
-                  className="rounded-lg border border-border bg-background p-5"
-                >
-                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <h3 className="mt-4 font-display text-lg font-bold text-foreground">{card.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{card.body}</p>
-                </motion.div>
-              );
-            })}
+          <div className="flex flex-wrap gap-3">
+            <Link to="/research" className="group inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-primary transition-transform hover:-translate-y-0.5">{content.researchLink}<ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></Link>
+            <Link to="/people" className="group inline-flex items-center gap-2 rounded-xl border border-white/35 px-5 py-3.5 text-sm font-bold text-white transition-colors hover:bg-white/10">{content.peopleLink}<Users size={16} /></Link>
           </div>
         </div>
       </section>

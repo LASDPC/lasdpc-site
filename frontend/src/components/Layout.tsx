@@ -15,7 +15,7 @@ const ScrollToTop = () => {
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="site-shell relative isolate min-h-screen overflow-x-clip bg-background">
     <ScrollToTop />
-    <VantaGlobeBackground />
+    <HomeBackground />
     <a
       href="#main-content"
       className="fixed left-4 top-3 z-[100] -translate-y-24 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0"
@@ -29,5 +29,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     </div>
   </div>
 );
+
+const HomeBackground = () => {
+  const { pathname } = useLocation();
+  return pathname === "/" ? <VantaGlobeBackground /> : null;
+};
 
 export default Layout;
