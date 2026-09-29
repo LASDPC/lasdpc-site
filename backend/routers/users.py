@@ -35,8 +35,8 @@ def _user_out(doc: dict) -> UserOut:
     )
 
 
-def _is_photo_only_update(update_data: dict) -> bool:
-    return set(update_data.keys()) == {"photo"}
+def _is_media_only_update(update_data: dict) -> bool:
+    return bool(update_data) and set(update_data).issubset({"photo", "banner"})
 
 
 def _validate_student_academic_level(doc: dict) -> None:
@@ -350,9 +350,8 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     normalize_profile_payload(update_data)
     updated_doc = {**existing, **update_data}
-    if not _is_photo_only_update(update_data):
-        validate_required_profile(updated_doc)
-        _validate_student_academic_level(updated_doc)
+    if not _is_media_only_update(update_data):
+        validate_required_profile(updated_doc, required_fields=("lattes",))
     result = await db.users.update_one({"_id": oid}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

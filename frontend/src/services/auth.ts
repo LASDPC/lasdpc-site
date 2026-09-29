@@ -18,6 +18,7 @@ export interface User {
   scholar?: string | null;
   page?: string | null;
   photo?: string | null;
+  banner?: string | null;
   level?: string | null;
   levelPt?: string | null;
   advisor_id?: string | null;
@@ -68,6 +69,7 @@ export interface UserCreateData {
   scholar?: string;
   page?: string;
   photo?: string;
+  banner?: string;
   level?: string;
   levelPt?: string;
   advisor_id?: string;

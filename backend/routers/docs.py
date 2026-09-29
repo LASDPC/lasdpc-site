@@ -1,9 +1,11 @@
+import re
+
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from core.database import get_db
 from core.dependencies import get_current_user, require_admin
-from models.doc import DocCreate, DocUpdate, DocOut
+from models.doc import DocCreate, DocUpdate, DocOut, FolderCreate, FolderOut
 
 router = APIRouter()
 
@@ -18,6 +20,45 @@ async def _ensure_path_free(db, path: str, exclude_id: ObjectId | None = None):
         query["_id"] = {"$ne": exclude_id}
     if await db.docs.find_one(query):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A doc with this path already exists")
+    if await db.doc_folders.find_one({"path": path}):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A folder with this path already exists")
+
+
+@router.get("/folders", response_model=list[FolderOut])
+async def list_folders(_user: dict = Depends(get_current_user)):
+    db = get_db()
+    items = await db.doc_folders.find().sort("path", 1).to_list(1000)
+    return [FolderOut(id=str(item["_id"]), path=item["path"]) for item in items]
+
+
+@router.post("/folders", response_model=FolderOut, status_code=status.HTTP_201_CREATED)
+async def create_folder(body: FolderCreate, _admin: dict = Depends(require_admin)):
+    db = get_db()
+    path = body.path
+    if (await db.doc_folders.find_one({"path": path})
+            or await db.doc_folders.find_one({"path": {"$regex": f"^{re.escape(path)}/"}})
+            or await db.docs.find_one({"path": {"$regex": f"^{re.escape(path)}/"}})):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Folder already exists")
+    if await db.docs.find_one({"path": path}):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A doc with this path already exists")
+    result = await db.doc_folders.insert_one({"path": path})
+    return FolderOut(id=str(result.inserted_id), path=path)
+
+
+@router.delete("/folders/{folder_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_folder(folder_id: str, _admin: dict = Depends(require_admin)):
+    db = get_db()
+    try:
+        oid = ObjectId(folder_id)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found") from None
+    folder = await db.doc_folders.find_one({"_id": oid})
+    if not folder:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found")
+    descendants = {"$regex": f"^{re.escape(folder['path'])}/"}
+    if await db.docs.find_one({"path": descendants}) or await db.doc_folders.find_one({"path": descendants}):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Folder is not empty")
+    await db.doc_folders.delete_one({"_id": oid})
 
 
 @router.get("", response_model=list[DocOut])

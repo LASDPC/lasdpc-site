@@ -65,8 +65,8 @@ def clean_list(values: Optional[list[str]]) -> list[str]:
     return sorted(out, key=lambda item: item.casefold())
 
 
-def validate_required_profile(doc: dict) -> None:
-    missing = [field for field in REQUIRED_PROFILE_FIELDS if not clean_text(doc.get(field))]
+def validate_required_profile(doc: dict, required_fields: tuple[str, ...] = REQUIRED_PROFILE_FIELDS) -> None:
+    missing = [field for field in required_fields if not clean_text(doc.get(field))]
     relationship_type = clean_text(doc.get("lab_relationship_type"))
     if relationship_type and relationship_type not in LAB_RELATIONSHIP_TYPES:
         raise HTTPException(
@@ -81,7 +81,7 @@ def validate_required_profile(doc: dict) -> None:
 
 
 def normalize_profile_payload(doc: dict) -> None:
-    for field in ("lattes", "orcid", "scholar", "github", "photo", "affiliation_name"):
+    for field in ("lattes", "orcid", "scholar", "github", "photo", "banner", "affiliation_name"):
         if field in doc and doc[field] is not None:
             doc[field] = clean_text(str(doc[field])) or None
     if "lab_relationship_type" in doc and doc["lab_relationship_type"] is not None:

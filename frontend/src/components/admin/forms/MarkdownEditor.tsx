@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { lazy, Suspense, useRef, useState, useEffect, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bold, Italic, Heading2, Code, Link2, ImagePlus, Columns2, PanelLeft, PanelRight, Minimize2, Maximize2, Crosshair } from "lucide-react";
@@ -7,12 +7,16 @@ import remarkGfm from "remark-gfm";
 import { urlTransform } from "@/lib/markdown";
 import { uploadMedia } from "@/services/uploads";
 
+const VisualMarkdownEditor = lazy(() => import("./VisualMarkdownEditor"));
+
 interface MarkdownEditorProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
   enableImageUpload?: boolean;
   proseClassName?: string;
+  visualEditing?: boolean;
+  lang?: "en" | "pt";
 }
 
 const DEFAULT_PROSE =
@@ -26,6 +30,8 @@ const MarkdownEditor = ({
   onChange,
   enableImageUpload = true,
   proseClassName = DEFAULT_PROSE,
+  visualEditing = false,
+  lang = "en",
 }: MarkdownEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +44,7 @@ const MarkdownEditor = ({
   const [editorHeight, setEditorHeight] = useState(300);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [editorMode, setEditorMode] = useState<"visual" | "markdown">(visualEditing ? "visual" : "markdown");
 
   useEffect(() => {
     return () => {
@@ -145,8 +152,30 @@ const MarkdownEditor = ({
 
   return (
     <div>
+      {visualEditing && (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <Label>{label}</Label>
+          <div className="flex rounded-md border border-border bg-secondary/40 p-1" role="group" aria-label={lang === "pt" ? "Modo de edição" : "Editing mode"}>
+            <Button type="button" variant={editorMode === "visual" ? "secondary" : "ghost"} size="sm"
+              aria-pressed={editorMode === "visual"} onClick={() => setEditorMode("visual")}>
+              Visual
+            </Button>
+            <Button type="button" variant={editorMode === "markdown" ? "secondary" : "ghost"} size="sm"
+              aria-pressed={editorMode === "markdown"} onClick={() => setEditorMode("markdown")}>
+              Markdown
+            </Button>
+          </div>
+        </div>
+      )}
+      {visualEditing && editorMode === "visual" ? (
+        <Suspense fallback={<div className="min-h-[320px] animate-pulse rounded-lg border border-border bg-secondary/40" />}>
+          <VisualMarkdownEditor value={value} onChange={onChange} lang={lang}
+            enableImageUpload={enableImageUpload} proseClassName={proseClassName} label={label} />
+        </Suspense>
+      ) : (
+      <>
       <div className="flex items-center justify-between mb-1">
-        <Label>{label}</Label>
+        {!visualEditing && <Label>{label}</Label>}
         <div className="flex items-center gap-0.5">
           <Button
             type="button"
@@ -202,7 +231,7 @@ const MarkdownEditor = ({
           </Button>
         </div>
       </div>
-      <div className={`grid gap-4 ${viewMode === "split" ? "grid-cols-2" : "grid-cols-1"}`}>
+      <div className={`grid gap-4 ${viewMode === "split" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
         {/* Editor */}
         {showEditor && (
           <div className={`flex flex-col ${collapsed ? "h-[360px] overflow-y-auto" : ""}`}>
@@ -280,6 +309,8 @@ const MarkdownEditor = ({
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 };

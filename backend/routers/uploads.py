@@ -53,6 +53,12 @@ async def upload_public_registration_photo(file: UploadFile):
     return await _store_upload(file, prefix="profile")
 
 
+@router.post("/banner")
+async def upload_profile_banner(file: UploadFile, _user: dict = Depends(get_current_user)):
+    """Upload de capa do perfil de usuário autenticado."""
+    return await _store_upload(file, prefix="banner")
+
+
 @router.post("/{prefix}")
 async def upload_with_prefix(
     prefix: Literal["blog", "markdown"],

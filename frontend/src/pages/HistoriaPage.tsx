@@ -158,6 +158,8 @@ export default function HistoriaPage() {
   const content = isPt ? copy.pt : copy.en;
   const prefersReducedMotion = useReducedMotion();
   const chaptersRef = useRef<HTMLElement>(null);
+  const chapterNavRef = useRef<HTMLElement>(null);
+  const chapterNavScrollerRef = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState<HistoryEventKey>("1990");
   const [expandedId, setExpandedId] = useState<HistoryEventKey | null>("1990");
   const [progress, setProgress] = useState(0);
@@ -195,23 +197,18 @@ export default function HistoriaPage() {
       const section = chaptersRef.current;
       if (!section) return;
       const rect = section.getBoundingClientRect();
-      const visibleLine = Math.min(window.innerHeight * 0.45, 420);
+      const visibleLine = (chapterNavRef.current?.getBoundingClientRect().bottom ?? 132) + 48;
       const available = Math.max(rect.height - window.innerHeight * 0.35, 1);
       const nextProgress = Math.max(0, Math.min(1, (visibleLine - rect.top) / available));
       setProgress((current) => Math.abs(current - nextProgress) > 0.005 ? nextProgress : current);
 
-      let nearest: HistoryEventKey = "1990";
-      let distance = Infinity;
+      let currentChapter: HistoryEventKey = "1990";
       for (const item of items) {
         const node = document.getElementById(`history-${item.id}`);
         if (!node) continue;
-        const currentDistance = Math.abs(node.getBoundingClientRect().top - visibleLine);
-        if (currentDistance < distance) {
-          distance = currentDistance;
-          nearest = item.id;
-        }
+        if (node.getBoundingClientRect().top <= visibleLine) currentChapter = item.id;
       }
-      if (rect.top < window.innerHeight && rect.bottom > 0) setActiveId(nearest);
+      if (rect.top < window.innerHeight && rect.bottom > 0) setActiveId(currentChapter);
     };
     const schedule = () => {
       if (frame === null) frame = window.requestAnimationFrame(update);
@@ -226,6 +223,17 @@ export default function HistoriaPage() {
     };
   }, [items]);
 
+  useEffect(() => {
+    const scroller = chapterNavScrollerRef.current;
+    const button = scroller?.querySelector<HTMLButtonElement>(`[data-history-nav-id="${activeId}"]`);
+    if (!scroller || !button) return;
+    const buttonLeft = button.getBoundingClientRect().left - scroller.getBoundingClientRect().left + scroller.scrollLeft;
+    scroller.scrollTo({
+      left: buttonLeft - (scroller.clientWidth - button.clientWidth) / 2,
+      behavior: prefersReducedMotion ? "instant" : "smooth",
+    });
+  }, [activeId, prefersReducedMotion]);
+
   const reveal = {
     initial: { opacity: 0, y: prefersReducedMotion ? 0 : 28 },
     whileInView: { opacity: 1, y: 0 },
@@ -234,12 +242,15 @@ export default function HistoriaPage() {
   };
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-x-clip">
       <section className="history-hero relative overflow-hidden">
         <div className="pointer-events-none absolute -right-24 top-0 h-[42rem] w-[42rem] rounded-full bg-primary/[0.07] blur-3xl dark:bg-primary/[0.08]" aria-hidden="true" />
         <div className="container relative mx-auto grid min-h-[650px] items-center gap-12 px-4 pb-16 pt-14 lg:grid-cols-[1.03fr_0.97fr] lg:gap-16 lg:pb-20 lg:pt-20">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.65 }}>
-            <p className="mb-7 font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary">{content.eyebrow}</p>
+            <div className="mb-6 flex items-center gap-4 sm:gap-6">
+              <p className="min-w-0 font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary">{content.eyebrow}</p>
+              <span className="history-icmc-logo" aria-hidden="true" />
+            </div>
             <h1 data-testid="history-title" className="max-w-3xl font-display text-[clamp(3.5rem,7vw,7rem)] font-bold leading-[0.92] tracking-[-0.065em] text-foreground">
               {content.headlineA} <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{content.headlineB}</span>
             </h1>
@@ -299,79 +310,81 @@ export default function HistoriaPage() {
         </motion.div>
       </section>
 
-      <nav className="sticky top-20 z-30 border-y border-border/75 bg-background/90 backdrop-blur-2xl" aria-label={content.navLabel}>
-        <div className="container mx-auto overflow-x-auto px-4">
-          <div className="flex min-w-[660px] items-stretch">
-            {items.map((item) => {
-              const isActive = activeId === item.id;
-              return (
-                <button key={item.id} type="button" onClick={() => scrollToChapter(item.id)} aria-current={isActive ? "step" : undefined} className={cn("group relative flex min-w-0 flex-1 items-center gap-3 px-3 py-4 text-left transition-colors hover:bg-primary/[0.05] sm:px-5", isActive && "bg-primary/[0.06]")}>
-                  <span className={cn("font-mono text-[11px] font-bold transition-colors", isActive ? "text-accent" : "text-muted-foreground")}>0{item.index + 1}</span>
-                  <span className={cn("truncate text-xs font-semibold transition-colors sm:text-sm", isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>{item.era}</span>
-                  {isActive && <motion.span layoutId="history-active-chapter" className="absolute inset-x-2 bottom-0 h-[3px] rounded-full bg-gradient-to-r from-primary to-accent" transition={{ type: "spring", stiffness: 350, damping: 30 }} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <motion.div className="absolute bottom-0 left-0 h-px w-full origin-left bg-primary/40" animate={{ scaleX: progress }} transition={{ duration: 0.25 }} aria-hidden="true" />
-      </nav>
-
-      <section id="chapters" ref={chaptersRef} className="container mx-auto px-4 py-8 sm:py-12">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const expanded = expandedId === item.id;
-          return (
-            <article key={item.id} id={`history-${item.id}`} data-history-id={item.id} data-testid={`history-item-${item.id}`} className="scroll-mt-44 border-b border-border/80 py-12 first:pt-6 last:border-b-0 sm:py-16 lg:py-20">
-              <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
-                <motion.figure {...reveal} className={cn("relative min-w-0", item.index % 2 === 1 && "lg:order-2")}>
-                  <div className="group relative aspect-[1.18] overflow-hidden rounded-[1.6rem] border border-border/70 bg-secondary sm:aspect-[1.28]">
-                    <img src={item.photo} alt={item.photoAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                    <span className="absolute left-6 top-5 font-display text-[5rem] font-bold leading-none tracking-[-0.08em] text-white/20 sm:left-8 sm:text-[7rem]" aria-hidden="true">0{item.index + 1}</span>
-                    <figcaption className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4 text-white sm:bottom-8 sm:left-8 sm:right-8">
-                      <div>
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">{item.metricLabel}</span>
-                        <p className="mt-1 font-display text-3xl font-bold sm:text-4xl">{item.metric}</p>
-                      </div>
-                      <span className="text-right text-[11px] text-white/70">{content.illustrative}</span>
-                    </figcaption>
-                  </div>
-                </motion.figure>
-
-                <motion.div {...reveal} className={cn("min-w-0", item.index % 2 === 1 && "lg:order-1")}>
-                  <div className="mb-5 flex items-center gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><Icon size={20} /></span>
-                    <span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-primary">{content.chapterLabel} 0{item.index + 1} <span className="mx-1 text-muted-foreground">/</span> {item.era}</span>
-                  </div>
-                  <h3 className="max-w-xl font-display text-3xl font-bold leading-[1.07] tracking-[-0.045em] text-foreground sm:text-4xl lg:text-5xl">{item.title}</h3>
-                  <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">{item.summary}</p>
-                  <p className="mt-5 max-w-xl text-sm leading-relaxed text-foreground/85 sm:text-base">{item.paragraphs[0]}</p>
-
-                  <div id={`history-details-${item.id}`}>
-                    <AnimatePresence initial={false}>
-                      {expanded && (
-                        <motion.div key="details" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.35 }} className="overflow-hidden" data-testid={`history-expanded-${item.id}`}>
-                          <div className="space-y-4 pt-4">
-                            {item.paragraphs.slice(1).map((paragraph) => <p key={paragraph} className="max-w-xl text-sm leading-relaxed text-foreground/85 sm:text-base">{paragraph}</p>)}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <button type="button" onClick={() => setExpandedId(expanded ? null : item.id)} aria-expanded={expanded} aria-controls={`history-details-${item.id}`} className="group mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-accent">
-                    {expanded ? content.less : content.more}<ChevronDown size={17} className={cn("transition-transform", expanded && "rotate-180")} />
+      <div>
+        <nav ref={chapterNavRef} className="sticky top-20 z-30 border-y border-border/75 bg-background/90 backdrop-blur-2xl" aria-label={content.navLabel}>
+          <div ref={chapterNavScrollerRef} className="container mx-auto overflow-x-auto px-4">
+            <div className="flex min-w-[660px] items-stretch">
+              {items.map((item) => {
+                const isActive = activeId === item.id;
+                return (
+                  <button key={item.id} type="button" data-history-nav-id={item.id} onClick={() => scrollToChapter(item.id)} aria-current={isActive ? "step" : undefined} className={cn("group relative flex min-w-0 flex-1 items-center gap-3 px-3 py-4 text-left transition-colors hover:bg-primary/[0.05] sm:px-5", isActive && "bg-primary/[0.06]")}>
+                    <span className={cn("font-mono text-[11px] font-bold transition-colors", isActive ? "text-accent" : "text-muted-foreground")}>0{item.index + 1}</span>
+                    <span className={cn("truncate text-xs font-semibold transition-colors sm:text-sm", isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>{item.era}</span>
+                    {isActive && <motion.span layoutId="history-active-chapter" className="absolute inset-x-2 bottom-0 h-[3px] rounded-full bg-gradient-to-r from-primary to-accent" transition={{ type: "spring", stiffness: 350, damping: 30 }} />}
                   </button>
-                  <div className="mt-7 flex flex-wrap gap-x-4 gap-y-2 border-t border-border/80 pt-5">
-                    {item.subjects.map((subject) => <span key={subject} className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-accent" />{subject}</span>)}
-                  </div>
-                </motion.div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
+                );
+              })}
+            </div>
+          </div>
+          <motion.div className="absolute bottom-0 left-0 h-px w-full origin-left bg-primary/40" animate={{ scaleX: progress }} transition={{ duration: 0.25 }} aria-hidden="true" />
+        </nav>
+
+        <section id="chapters" ref={chaptersRef} className="container mx-auto px-4 py-8 sm:py-12">
+          {items.map((item) => {
+            const Icon = item.icon;
+            const expanded = expandedId === item.id;
+            return (
+              <article key={item.id} id={`history-${item.id}`} data-history-id={item.id} data-testid={`history-item-${item.id}`} className="scroll-mt-44 border-b border-border/80 py-12 first:pt-6 last:border-b-0 sm:py-16 lg:py-20">
+                <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+                  <motion.figure {...reveal} className={cn("relative min-w-0", item.index % 2 === 1 && "lg:order-2")}>
+                    <div className="group relative aspect-[1.18] overflow-hidden rounded-[1.6rem] border border-border/70 bg-secondary sm:aspect-[1.28]">
+                      <img src={item.photo} alt={item.photoAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                      <span className="absolute left-6 top-5 font-display text-[5rem] font-bold leading-none tracking-[-0.08em] text-white/20 sm:left-8 sm:text-[7rem]" aria-hidden="true">0{item.index + 1}</span>
+                      <figcaption className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4 text-white sm:bottom-8 sm:left-8 sm:right-8">
+                        <div>
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">{item.metricLabel}</span>
+                          <p className="mt-1 font-display text-3xl font-bold sm:text-4xl">{item.metric}</p>
+                        </div>
+                        <span className="text-right text-[11px] text-white/70">{content.illustrative}</span>
+                      </figcaption>
+                    </div>
+                  </motion.figure>
+
+                  <motion.div {...reveal} className={cn("min-w-0", item.index % 2 === 1 && "lg:order-1")}>
+                    <div className="mb-5 flex items-center gap-3">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><Icon size={20} /></span>
+                      <span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-primary">{content.chapterLabel} 0{item.index + 1} <span className="mx-1 text-muted-foreground">/</span> {item.era}</span>
+                    </div>
+                    <h3 className="max-w-xl font-display text-3xl font-bold leading-[1.07] tracking-[-0.045em] text-foreground sm:text-4xl lg:text-5xl">{item.title}</h3>
+                    <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">{item.summary}</p>
+                    <p className="mt-5 max-w-xl text-sm leading-relaxed text-foreground/85 sm:text-base">{item.paragraphs[0]}</p>
+
+                    <div id={`history-details-${item.id}`}>
+                      <AnimatePresence initial={false}>
+                        {expanded && (
+                          <motion.div key="details" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.35 }} className="overflow-hidden" data-testid={`history-expanded-${item.id}`}>
+                            <div className="space-y-4 pt-4">
+                              {item.paragraphs.slice(1).map((paragraph) => <p key={paragraph} className="max-w-xl text-sm leading-relaxed text-foreground/85 sm:text-base">{paragraph}</p>)}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <button type="button" onClick={() => setExpandedId(expanded ? null : item.id)} aria-expanded={expanded} aria-controls={`history-details-${item.id}`} className="group mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-accent">
+                      {expanded ? content.less : content.more}<ChevronDown size={17} className={cn("transition-transform", expanded && "rotate-180")} />
+                    </button>
+                    <div className="mt-7 flex flex-wrap gap-x-4 gap-y-2 border-t border-border/80 pt-5">
+                      {item.subjects.map((subject) => <span key={subject} className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-accent" />{subject}</span>)}
+                    </div>
+                  </motion.div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      </div>
 
       <section className="container mx-auto px-4 py-14 sm:py-20">
         <motion.div {...reveal} className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">

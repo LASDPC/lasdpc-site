@@ -10,10 +10,21 @@ export interface Doc {
 
 export type DocInput = Omit<Doc, "id">;
 
+export interface DocFolder {
+  id: string;
+  path: string;
+}
+
 export const docsService = {
   list: () => api.get<Doc[]>("/api/v1/docs"),
   get: (id: string) => api.get<Doc>(`/api/v1/docs/${id}`),
   create: (data: DocInput) => api.post<Doc>("/api/v1/docs", data),
   update: (id: string, data: DocInput) => api.put<Doc>(`/api/v1/docs/${id}`, data),
   remove: (id: string) => api.delete<void>(`/api/v1/docs/${id}`),
+};
+
+export const docFoldersService = {
+  list: () => api.get<DocFolder[]>("/api/v1/docs/folders"),
+  create: (path: string) => api.post<DocFolder>("/api/v1/docs/folders", { path }),
+  remove: (id: string) => api.delete<void>(`/api/v1/docs/folders/${id}`),
 };

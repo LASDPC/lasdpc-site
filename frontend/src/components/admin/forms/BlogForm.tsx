@@ -112,16 +112,18 @@ const BlogForm = ({ initial, onSubmit, loading, lang }: BlogFormProps) => {
         name="content"
         control={control}
         render={({ field }) => (
-          <MarkdownEditor label={pt ? "Conteúdo EN (Markdown)" : "Content EN (Markdown)"} value={field.value || ""} onChange={field.onChange} />
+          <MarkdownEditor label={pt ? "Conteúdo EN" : "Content EN"} value={field.value || ""} onChange={field.onChange} visualEditing lang={lang} />
         )}
       />
+      {errors.content && <p role="alert" className="text-xs text-destructive">{pt ? "Preencha o conteúdo em inglês." : "Enter the English content."}</p>}
       <Controller
         name="contentPt"
         control={control}
         render={({ field }) => (
-          <MarkdownEditor label={pt ? "Conteúdo PT (Markdown)" : "Content PT (Markdown)"} value={field.value || ""} onChange={field.onChange} />
+          <MarkdownEditor label={pt ? "Conteúdo PT" : "Content PT"} value={field.value || ""} onChange={field.onChange} visualEditing lang={lang} />
         )}
       />
+      {errors.contentPt && <p role="alert" className="text-xs text-destructive">{pt ? "Preencha o conteúdo em português." : "Enter the Portuguese content."}</p>}
 
       <div className="grid grid-cols-4 gap-4">
         <div><Label>{pt ? "Data" : "Date"}</Label><Input type="date" {...register("date")} /></div>

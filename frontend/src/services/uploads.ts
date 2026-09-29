@@ -3,7 +3,7 @@ import { getToken } from "@/lib/api";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_SIZE = 2 * 1024 * 1024;
 
-export type UploadPrefix = "profile" | "blog" | "markdown";
+export type UploadPrefix = "profile" | "banner" | "blog" | "markdown";
 
 export async function uploadMedia(
   file: File,
@@ -25,6 +25,8 @@ export async function uploadMedia(
   let endpoint: string;
   if (prefix === "profile") {
     endpoint = publicUpload ? "/api/v1/uploads/public" : "/api/v1/uploads";
+  } else if (prefix === "banner") {
+    endpoint = "/api/v1/uploads/banner";
   } else {
     endpoint = `/api/v1/uploads/${prefix}`;
   }
@@ -40,4 +42,8 @@ export async function uploadMedia(
 
 export async function uploadProfilePhoto(file: File, publicUpload = false) {
   return uploadMedia(file, "profile", publicUpload);
+}
+
+export async function uploadProfileBanner(file: File) {
+  return uploadMedia(file, "banner");
 }

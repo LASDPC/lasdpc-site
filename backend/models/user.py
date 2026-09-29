@@ -43,6 +43,7 @@ class UserCreate(BaseModel):
     scholar: Optional[str] = None
     page: Optional[str] = None
     photo: Optional[str] = None
+    banner: Optional[str] = None
     # Student-specific fields
     level: Optional[str] = None       # e.g. "PhD", "MSc"
     levelPt: Optional[str] = None
@@ -84,6 +85,7 @@ class UserUpdate(BaseModel):
     scholar: Optional[str] = None
     page: Optional[str] = None
     photo: Optional[str] = None
+    banner: Optional[str] = None
     level: Optional[str] = None
     levelPt: Optional[str] = None
     advisor_id: Optional[str] = None
@@ -131,6 +133,7 @@ class UserOut(BaseModel):
     scholar: Optional[str] = None
     page: Optional[str] = None
     photo: Optional[str] = None
+    banner: Optional[str] = None
     level: Optional[str] = None
     levelPt: Optional[str] = None
     advisor_id: Optional[str] = None

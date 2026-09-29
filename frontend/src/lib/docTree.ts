@@ -1,4 +1,4 @@
-import type { Doc } from "@/services/docs";
+import type { Doc, DocFolder } from "@/services/docs";
 
 export interface DocTreeFolder {
   name: string;
@@ -9,7 +9,7 @@ export interface DocTreeFolder {
 }
 
 /** Derive the folder tree from the flat list of doc paths (folders are implicit). */
-export function buildDocTree(docs: Doc[]): DocTreeFolder {
+export function buildDocTree(docs: Doc[], explicitFolders: DocFolder[] = []): DocTreeFolder {
   const root: DocTreeFolder = { name: "", path: "", folders: [], files: [] };
   const folderIndex = new Map<string, DocTreeFolder>([["", root]]);
 
@@ -28,6 +28,8 @@ export function buildDocTree(docs: Doc[]): DocTreeFolder {
     folderIndex.set(path, folder);
     return folder;
   };
+
+  for (const folder of explicitFolders) ensureFolder(folder.path);
 
   for (const doc of docs) {
     ensureFolder(docFolderPath(doc.path)).files.push(doc);
@@ -87,4 +89,17 @@ export function normalizeDocPath(raw: string): string | null {
   if (last.toLowerCase() === ".md") return null;
   segments[segments.length - 1] = last;
   return segments.join("/");
+}
+
+export function normalizeFolderPath(raw: string): string | null {
+  const collapsed = raw.trim().replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\/|\/$/g, "");
+  if (!collapsed) return null;
+  const segments = collapsed.split("/").map((s) => s.trim());
+  if (segments.some((s) => !s || s === "." || s === ".." || /[:*?"<>|]/.test(s))) return null;
+  return segments.join("/");
+}
+
+export function findDocFolder(root: DocTreeFolder, path: string): DocTreeFolder | undefined {
+  if (!path) return root;
+  return path.split("/").reduce<DocTreeFolder | undefined>((folder, segment) => folder?.folders.find((child) => child.name === segment), root);
 }
