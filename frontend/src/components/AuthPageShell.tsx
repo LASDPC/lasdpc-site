@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowUpRight, Network, Sparkles } from "lucide-react";
+import { ArrowUpRight, Network, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -49,7 +49,7 @@ const content = {
 };
 
 export default function AuthPageShell({ mode, children }: AuthPageShellProps) {
-  const { lang, t } = useLang();
+  const { lang } = useLang();
   const reducedMotion = useReducedMotion();
   const copy = content[mode][lang === "pt-BR" ? "pt" : "en"];
 
@@ -58,17 +58,15 @@ export default function AuthPageShell({ mode, children }: AuthPageShellProps) {
       <div className="pointer-events-none absolute inset-0 tech-grid opacity-70" aria-hidden="true" />
       <div className="pointer-events-none absolute -left-44 top-16 h-[32rem] w-[32rem] rounded-full bg-primary/10 blur-[100px]" aria-hidden="true" />
       <div className="pointer-events-none absolute -right-32 bottom-0 h-[30rem] w-[30rem] rounded-full bg-accent/10 blur-[110px]" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent to-background" aria-hidden="true" />
 
       <div className="relative mx-auto grid max-w-[1360px] items-start gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1fr)] lg:gap-16 lg:px-12 lg:py-20 xl:gap-24">
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
-          className="relative lg:sticky lg:top-32 lg:pt-10"
+          className={mode === "register" ? "relative -mt-4 lg:sticky lg:top-24 lg:mt-0" : "relative lg:sticky lg:top-32 lg:pt-10"}
         >
-          <Link to="/" className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary focus-visible:rounded-sm lg:mb-20">
-            <ArrowLeft size={16} /> {t("auth.backToHome")}
-          </Link>
           <p className="mb-5 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{copy.eyebrow}</p>
           <h1 className="max-w-[700px] font-display text-[clamp(3rem,5vw,5.5rem)] font-bold leading-[1.02] tracking-[-0.065em] text-foreground">
             {copy.lead}<br /><span className="text-primary">{copy.accent}</span>
