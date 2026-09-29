@@ -21,6 +21,21 @@ docker info >/dev/null && echo "docker ok"
 
 ## Quick Start
 
+### Opção automática (recomendada para desenvolvimento)
+
+O script configura os arquivos `.env` ausentes, inicia o Docker quando possível,
+instala as dependências, sobe MongoDB e MinIO e executa backend e frontend:
+
+```bash
+./dev.sh
+```
+
+Na primeira execução, ele mostra no terminal a senha de administrador gerada.
+Use `Ctrl+C` para parar o backend e o frontend. A infraestrutura permanece ativa;
+para pará-la, execute `docker compose down`.
+
+Os passos manuais equivalentes estão documentados abaixo.
+
 ### 1. Configure environment
 
 The docker-compose stack reads variables from `backend/.env`, so there's a single config file for both the backend app and the MinIO containers. Copy the template and set a strong MinIO password:

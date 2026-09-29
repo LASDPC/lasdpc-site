@@ -17,11 +17,6 @@ interface PageHeaderProps {
   titleTestId?: string;
 }
 
-/**
- * Page-level header band shared across the site. Renders the section icon +
- * title (and optional subtitle / eyebrow / actions) over a soft blue gradient
- * background, so every section page opens with the same visual rhythm.
- */
 const PageHeader = ({
   icon: Icon,
   title,
@@ -33,33 +28,25 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   return (
     <div className={`relative ${className}`}>
-      {/* Single soft vertical glow - no orbs, so there is no curved edge
-          anywhere in the header. The gradient is fully transparent well
-          before the bottom of the band, which means the transition into
-          the page background is a continuous fade with no perceivable
-          boundary. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--primary)/0.09)_0%,hsl(var(--primary)/0.04)_35%,hsl(var(--primary)/0.015)_65%,transparent_90%)]"
-      />
-
-      <div className="container mx-auto px-4 pt-10 pb-16 md:pt-12 md:pb-20 relative">
+      <div className="container relative mx-auto px-4 pb-14 pt-14 md:pb-20 md:pt-20">
         {eyebrow && (
-          <p className="text-primary font-mono text-xs sm:text-sm font-medium tracking-widest uppercase mb-3">
-            {eyebrow}
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.06] px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary sm:text-xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" /> {eyebrow}
           </p>
         )}
-        <div className="flex items-center gap-3">
-          <Icon className="h-7 w-7 md:h-8 md:w-8 text-primary shrink-0" />
+        <div className="flex items-center gap-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-border/80 bg-card/90 text-primary shadow-sm backdrop-blur md:h-14 md:w-14 dark:bg-card/80">
+            <Icon className="h-6 w-6 md:h-7 md:w-7" />
+          </span>
           <h1
             data-testid={titleTestId}
-            className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight"
+            className="font-display text-3xl font-bold leading-[1.05] tracking-[-0.045em] text-foreground sm:text-4xl md:text-5xl"
           >
             {title}
           </h1>
         </div>
         {subtitle && (
-          <div className="mt-3 text-foreground text-sm sm:text-base max-w-2xl">
+          <div className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             {subtitle}
           </div>
         )}
