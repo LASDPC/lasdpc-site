@@ -5,13 +5,12 @@ import { useLang } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Server, Brain, Cloud, Shield } from "lucide-react";
-import { motion } from "framer-motion";
-import logo from "@/assets/lasdpc-logo.png";
+import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
+import AuthPageShell from "@/components/AuthPageShell";
 
 const LoginPage = () => {
   const { user, login } = useAuth();
-  const { t } = useLang();
+  const { lang, t } = useLang();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -55,127 +54,67 @@ const LoginPage = () => {
     }
   };
 
-  const features = [
-    { icon: <Server size={20} />, text: "High-Performance Computing" },
-    { icon: <Brain size={20} />, text: "Artificial Intelligence" },
-    { icon: <Cloud size={20} />, text: "Cloud Computing" },
-    { icon: <Shield size={20} />, text: "Distributed Systems" },
-  ];
-
   if (user) return null;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex">
-      {/* Left panel - desktop only */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground flex-col justify-between p-12">
-        <div>
-          <div className="flex items-center gap-4 mb-12">
-            <img src={logo} alt="LASDPC" className="h-14 w-14 brightness-0 invert" />
-            <div>
-              <h1 className="font-display font-bold text-2xl">LASDPC</h1>
-              <p className="text-sm text-primary-foreground/80">ICMC - USP</p>
-            </div>
-          </div>
-
-          <h2 className="font-display text-3xl font-bold mb-4">
-            Laboratorio de Sistemas Distribuidos e Programacao Concorrente
-          </h2>
-          <p className="text-primary-foreground/80 mb-10 max-w-md">
-            Pesquisa de ponta em computacao de alto desempenho, inteligencia artificial e sistemas distribuidos.
-          </p>
-
-          <ul className="space-y-4">
-            {features.map((f, i) => (
-              <li key={i} className="flex items-center gap-3 text-primary-foreground/90">
-                <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-foreground/10">
-                  {f.icon}
-                </span>
-                <span className="text-sm font-medium">{f.text}</span>
-              </li>
-            ))}
-          </ul>
+    <AuthPageShell mode="login">
+      <div className="mx-auto max-w-md py-2 lg:py-10">
+        <div className="mb-9 flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><LockKeyhole size={19} /></span>
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">LaSDPC / {lang === "pt-BR" ? "Acesso" : "Access"}</span>
         </div>
-
-        <p className="text-xs text-primary-foreground/50">
-          ICMC-USP, Av. Trabalhador Sao-Carlense, 400 - Sao Carlos, SP
-        </p>
-      </div>
-
-      {/* Right panel - form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full max-w-md"
-        >
-          <div className="glass-surface rounded-2xl border border-border p-8 shadow-xl">
-            {/* Mobile logo */}
-            <div className="flex items-center gap-3 mb-6 lg:hidden">
-              <img src={logo} alt="LASDPC" className="h-10 w-10" />
-              <span className="font-display font-bold text-lg text-foreground">LASDPC</span>
-            </div>
-
-            <h2 className="font-display font-bold text-2xl text-foreground mb-1">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               {t("auth.loginTitle")}
             </h2>
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="mb-9 mt-3 text-sm leading-relaxed text-muted-foreground">
               {t("auth.loginSubtitle")}
             </p>
 
             {(error || errorMsg) && (
-              <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-3">
+              <div role="alert" className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {errorMsg || t("auth.loginError")}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2.5">
                 <Label htmlFor="identifier">{t("auth.identifierLabel")}</Label>
-                <Input
+                <div className="relative"><Mail size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input
                   id="identifier"
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="email@usp.br ou 12345678"
+                  placeholder={lang === "pt-BR" ? "email@usp.br ou número USP" : "email@usp.br or USP number"}
                   required
                   autoComplete="username"
-                />
+                  className="h-12 rounded-xl bg-background/70 pl-11"
+                /></div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="password">{t("auth.password")}</Label>
-                <Input
+                <div className="relative"><LockKeyhole size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                />
+                  className="h-12 rounded-xl bg-background/70 pl-11"
+                /></div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "..." : t("auth.loginButton")}
+              <Button type="submit" className="mt-2 h-12 w-full rounded-xl text-sm font-semibold shadow-lg shadow-primary/15" disabled={loading}>
+                {loading ? "..." : t("auth.loginButton")} {!loading && <ArrowRight size={17} className="ml-2" />}
               </Button>
             </form>
 
-            <p className="text-xs text-muted-foreground mt-6">
+            <p className="mt-8 border-t border-border/70 pt-6 text-sm text-muted-foreground">
               {t("auth.noAccount")}{" "}
-              <Link to="/register" className="text-primary hover:underline">
+              <Link to="/register" className="font-semibold text-primary hover:underline">
                 {t("auth.register")}
               </Link>
             </p>
-          </div>
-
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mt-6 justify-center"
-          >
-            <ArrowLeft size={16} />
-            {t("auth.backToHome")}
-          </Link>
-        </motion.div>
       </div>
-    </div>
+    </AuthPageShell>
   );
 };
 

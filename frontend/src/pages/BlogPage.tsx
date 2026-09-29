@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Newspaper, Search, X } from "lucide-react";
+import { ArrowUpRight, Newspaper, Search, X } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useBlog } from "@/hooks/useBlog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import FilterCombobox from "@/components/FilterCombobox";
+import DiscoveryFilters from "@/components/DiscoveryFilters";
 import PaginationControls from "@/components/PaginationControls";
-import PageHeader from "@/components/PageHeader";
+import EditorialHero from "@/components/EditorialHero";
 import { mediaUrl } from "@/lib/media";
 import { matchesSearchTerm, normalizeSearchText } from "@/lib/search";
 
@@ -207,16 +208,37 @@ const BlogPage = () => {
 
   return (
     <div>
-      <PageHeader
-        icon={Newspaper}
-        title={t("section.blog")}
-        subtitle={t("blog.subtitle")}
+      <EditorialHero
+        eyebrow={isPt ? "Diário do laboratório" : "From the lab"}
+        title={<>{isPt ? "Além da" : "Beyond the"}<br /><span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{isPt ? "pesquisa." : "research."}</span></>}
+        description={isPt ? "Ideias, encontros e bastidores de quem faz ciência todos os dias. Um espaço para contar o que acontece entre uma descoberta e outra." : "Ideas, encounters and stories from the people doing science every day. A space for what happens between discoveries."}
+        action={isPt ? "Ler histórias" : "Read stories"}
+        target="#blog-posts-section"
+        visual={<div className="relative mx-auto flex h-[320px] max-w-[510px] items-center justify-center lg:h-[410px]">
+          <div className="absolute left-[10%] top-[11%] h-[72%] w-[70%] -rotate-12 rounded-[2rem] border border-primary/20 bg-primary/10" />
+          <div className="absolute right-[8%] top-[16%] h-[72%] w-[70%] rotate-9 rounded-[2rem] border border-accent/25 bg-accent/10" />
+          <div className="relative z-10 flex h-[75%] w-[72%] flex-col justify-between overflow-hidden rounded-[2rem] border border-border bg-card p-7 shadow-2xl shadow-primary/10 md:p-10">
+            <div className="flex items-center justify-between border-b border-border pb-4"><span className="font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">LaSDPC / {isPt ? "Histórias" : "Stories"}</span><Newspaper size={22} className="text-primary" /></div>
+            <div><span className="mb-3 block font-mono text-xs font-bold uppercase tracking-[.2em] text-accent">{isPt ? "Ideias em movimento" : "Ideas in motion"}</span><p className="font-display text-3xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">{isPt ? "A ciência também tem histórias para contar." : "Science has stories to tell, too."}</p></div>
+            <span className="block h-1 w-16 rounded-full bg-gradient-to-r from-primary to-accent" />
+          </div>
+        </div>}
+        footer={<div className="flex flex-wrap gap-x-10 gap-y-3 text-sm text-muted-foreground"><span><strong className="mr-2 font-display text-2xl text-foreground">{blog.length}</strong>{isPt ? "histórias publicadas" : "published stories"}</span><span className="font-mono text-xs font-bold uppercase tracking-[.18em] text-primary"></span></div>}
       />
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto px-4 py-14 md:py-20">
         {/* Faceted filter bar (mirrors ResearchPage) */}
-        <div className="mb-6 bg-card border border-border rounded-xl p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[200px]">
+        <DiscoveryFilters
+          icon={Newspaper}
+          eyebrow={isPt ? "Arquivo vivo" : "Living archive"}
+          title={isPt ? "Encontre uma história" : "Find a story"}
+          count={filteredBlog.length}
+          countLabel={isPt ? "histórias" : "stories"}
+          hint={isPt ? "Explore por tema, ano, autoria ou categoria" : "Explore by topic, year, author or category"}
+          clearLabel={t("blog.clearFilters")}
+          active={hasAnyFilter}
+          onClear={clearFilters}
+        >
+            <div className="min-w-[230px] flex-[1.5]">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -225,7 +247,7 @@ const BlogPage = () => {
                   onChange={(event) => setFilter("q", event.target.value, true)}
                   placeholder={t("blog.searchPlaceholder")}
                   aria-label={t("blog.searchPlaceholder")}
-                  className="pl-9 pr-9"
+                  className="pl-10 pr-9 text-sm"
                 />
                 {searchQuery && (
                   <button
@@ -259,7 +281,7 @@ const BlogPage = () => {
                 options={yearOptions.map(String)}
                 onChange={(value, replace) => setFilter("year", value, replace)}
                 inputMode="numeric"
-                className="min-w-[140px]"
+                className="min-w-[125px]"
                 labels={{
                   placeholder: t("blog.filterByYear"),
                   clear: t("blog.clearYearFilter"),
@@ -273,7 +295,7 @@ const BlogPage = () => {
                 value={authorFilter}
                 options={authorOptions}
                 onChange={(value, replace) => setFilter("author", value, replace)}
-                className="min-w-[180px]"
+                className="min-w-[150px]"
                 labels={{
                   placeholder: t("blog.filterByAuthor"),
                   clear: t("blog.clearAuthorFilter"),
@@ -286,7 +308,7 @@ const BlogPage = () => {
               <select
                 value={categoryFilter}
                 onChange={(event) => setFilter("category", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
+                className="h-12 min-w-[140px] flex-1 rounded-xl border border-border bg-background/75 px-3 text-sm text-foreground transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <option value="">{t("blog.filterByCategory")}</option>
                 {categoryOptions.map((cat) => (
@@ -295,43 +317,34 @@ const BlogPage = () => {
               </select>
             )}
 
-            {hasAnyFilter && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-                <X size={14} className="mr-1" /> {t("blog.clearFilters")}
-              </Button>
-            )}
-          </div>
-        </div>
+        </DiscoveryFilters>
 
         <div
           id="blog-posts-section"
-          className="flex items-center justify-between mb-6 scroll-mt-20"
+          className="flex items-end justify-between mb-8 scroll-mt-24 border-b border-border pb-5"
         >
-          <h2 className="font-display text-2xl font-bold text-foreground">
+          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">{isPt ? "O que há de novo" : "Latest from the lab"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.blog")}
-            <span className="ml-2 text-sm font-mono text-muted-foreground align-middle">
-              ({filteredBlog.length})
-            </span>
-          </h2>
+          </h2></div><span className="font-mono text-sm text-muted-foreground">{String(filteredBlog.length).padStart(2, "0")}</span>
         </div>
 
         {paginatedBlog.length > 0 ? (
-          <div className="grid auto-rows-fr md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid auto-rows-fr md:grid-cols-2 lg:grid-cols-3 gap-5">
             {paginatedBlog.map((post, i) => (
-              <div key={post.id} className="relative group h-full">
+              <div key={post.id} className={`relative group h-full ${i === 0 && safePage === 1 && !hasAnyFilter ? "lg:col-span-2" : ""}`}>
                 <Link to={`/blog/${post.id}`} className="block h-full">
-                  <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/30 transition-colors overflow-hidden cursor-pointer">
-                    <img
+                  <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className={`flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-border bg-card/80 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10 cursor-pointer ${i === 0 && safePage === 1 && !hasAnyFilter ? "lg:grid lg:grid-cols-2" : ""}`}>
+                    <div className="overflow-hidden"><img
                       src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
                       alt={isPt ? post.titlePt : post.title}
-                      className="w-full h-44 object-cover shrink-0"
+                      className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 ${i === 0 && safePage === 1 && !hasAnyFilter ? "h-52 lg:h-full lg:min-h-[340px]" : "h-52"}`}
                       loading="lazy"
-                    />
-                    <div className="p-6 flex flex-col flex-1">
-                      <span className="text-xs font-mono bg-accent/10 text-accent px-2 py-0.5 rounded self-start shrink-0">{post.tag}</span>
-                      <h2 className="font-display text-xl font-semibold text-foreground mt-4 mb-3 line-clamp-2 shrink-0">{isPt ? post.titlePt : post.title}</h2>
+                    /></div>
+                    <div className="p-6 md:p-7 flex flex-col flex-1">
+                      <div className="flex items-start justify-between gap-3"><span className="text-xs font-mono font-bold uppercase tracking-[.12em] text-accent">{post.tag || post.category || (isPt ? "História" : "Story")}</span><ArrowUpRight size={20} className="shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" /></div>
+                      <h2 className={`font-display font-semibold tracking-tight text-foreground mt-6 mb-3 line-clamp-3 shrink-0 ${i === 0 && safePage === 1 && !hasAnyFilter ? "text-2xl md:text-3xl" : "text-xl"}`}>{isPt ? post.titlePt || post.title : post.title || post.titlePt}</h2>
                       <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1 overflow-hidden">{isPt ? post.excerptPt : post.excerpt}</p>
-                      <time className="text-xs text-muted-foreground shrink-0">{post.date}</time>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-4 text-xs text-muted-foreground"><time>{post.date}</time>{post.author && <span>· {post.author}</span>}</div>
                     </div>
                   </motion.article>
                 </Link>
@@ -339,9 +352,17 @@ const BlogPage = () => {
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
-            {t("blog.noPostsFound")}
-          </p>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-card/75 px-7 py-12 md:px-12 md:py-16">
+            <div className="pointer-events-none absolute -right-12 -top-16 h-64 w-64 rounded-full border border-primary/20" />
+            <div className="pointer-events-none absolute right-16 top-12 h-40 w-40 rounded-full border border-dashed border-accent/25" />
+            <div className="relative max-w-xl">
+              <span className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Newspaper size={27} strokeWidth={1.5} /></span>
+              <p className="font-mono text-xs font-bold uppercase tracking-[.2em] text-accent">{hasAnyFilter ? (isPt ? "Nenhum resultado" : "No results") : (isPt ? "Em preparação" : "Coming soon")}</p>
+              <h3 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">{hasAnyFilter ? (isPt ? "Vamos tentar outra busca?" : "Try another search?") : (isPt ? "Histórias estão a caminho." : "Stories are on their way.")}</h3>
+              <p className="mt-4 text-muted-foreground">{hasAnyFilter ? t("blog.noPostsFound") : (isPt ? "Em breve, este espaço reunirá projetos, encontros e ideias da nossa comunidade." : "Soon, this space will bring together projects, encounters and ideas from our community.")}</p>
+              {hasAnyFilter && <Button variant="outline" onClick={clearFilters} className="mt-6">{t("blog.clearFilters")}</Button>}
+            </div>
+          </div>
         )}
 
         <PaginationControls

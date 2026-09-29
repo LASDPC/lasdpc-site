@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FlaskConical, Search, X } from "lucide-react";
+import { ArrowUpRight, BookOpenText, FlaskConical, Network, Search, X } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useProjects } from "@/hooks/useProjects";
 import { usePublications } from "@/hooks/usePublications";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import FilterCombobox from "@/components/FilterCombobox";
+import DiscoveryFilters from "@/components/DiscoveryFilters";
 import PaginationControls from "@/components/PaginationControls";
-import PageHeader from "@/components/PageHeader";
+import EditorialHero from "@/components/EditorialHero";
 import { matchesSearchTerm, normalizeSearchText } from "@/lib/search";
 
 const fadeUp = {
@@ -283,16 +283,38 @@ const ResearchPage = () => {
 
   return (
     <div>
-      <PageHeader
-        icon={FlaskConical}
-        title={t("section.research")}
-        subtitle={t("research.subtitle")}
+      <EditorialHero
+        eyebrow={isPt ? "Pesquisa · LaSDPC" : "Research · LaSDPC"}
+        title={<>{isPt ? "Ideias que" : "Ideas that"}<br /><span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{isPt ? "ganham escala." : "scale beyond."}</span></>}
+        description={isPt ? "Da pergunta ao experimento, do experimento ao impacto. Explore os projetos e resultados que conectam computação, ciência e sociedade." : "From question to experiment, from experiment to impact. Explore projects and results connecting computing, science and society."}
+        action={isPt ? "Explorar projetos" : "Explore projects"}
+        target="#research-projects-section"
+        visual={<div className="relative mx-auto flex h-[320px] max-w-[520px] items-center justify-center lg:h-[420px]">
+          <div className="absolute h-[300px] w-[300px] rounded-full border border-primary/25 md:h-[390px] md:w-[390px]" />
+          <div className="absolute h-[210px] w-[210px] rounded-full border border-dashed border-accent/40 md:h-[285px] md:w-[285px]" />
+          <div className="absolute h-[90px] w-[90px] rounded-full bg-primary/15 blur-3xl" />
+          <div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-[2rem] border border-primary/25 bg-card/90 text-primary shadow-2xl shadow-primary/15 backdrop-blur"><FlaskConical size={53} strokeWidth={1.2} /></div>
+          <div className="absolute left-[5%] top-[12%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card text-primary shadow-lg"><Network size={24} /></div>
+          <div className="absolute bottom-[11%] right-[6%] flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-card text-accent shadow-lg"><BookOpenText size={24} /></div>
+          <span className="absolute right-[10%] top-[15%] h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_18px_hsl(var(--accent))]" />
+          <span className="absolute bottom-[16%] left-[13%] h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_18px_hsl(var(--primary))]" />
+        </div>}
+        footer={<div className="flex flex-wrap gap-x-10 gap-y-3 text-sm text-muted-foreground"><span><strong className="mr-2 font-display text-2xl text-foreground">{projects.length}</strong>{isPt ? "projetos" : "projects"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{publications.length}</strong>{isPt ? "publicações" : "publications"}</span></div>}
       />
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto px-4 py-14 md:py-20">
         {/* Faceted filter bar (mirrors PeoplePage) */}
-        <div className="mb-6 bg-card border border-border rounded-xl p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[200px]">
+        <DiscoveryFilters
+          icon={FlaskConical}
+          eyebrow={isPt ? "Da ideia ao resultado" : "From idea to result"}
+          title={isPt ? "Descubra a pesquisa" : "Discover our research"}
+          count={filteredProjects.length + filteredPublications.length}
+          countLabel={isPt ? "resultados" : "results"}
+          hint={isPt ? "Filtre projetos e publicações por assunto, ano ou tipo" : "Filter projects and publications by topic, year or type"}
+          clearLabel={t("research.clearFilters")}
+          active={hasAnyFilter}
+          onClear={clearFilters}
+        >
+            <div className="min-w-[230px] flex-[1.4]">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -301,7 +323,7 @@ const ResearchPage = () => {
                   onChange={(event) => setFilter("q", event.target.value, true)}
                   placeholder={t("research.searchPlaceholder")}
                   aria-label={t("research.searchPlaceholder")}
-                  className="pl-9 pr-9"
+                  className="pl-10 pr-9 text-sm"
                 />
                 {searchQuery && (
                   <button
@@ -335,7 +357,7 @@ const ResearchPage = () => {
                 options={yearOptions.map(String)}
                 onChange={(value, replace) => setFilter("year", value, replace)}
                 inputMode="numeric"
-                className="min-w-[140px]"
+                className="min-w-[125px]"
                 labels={{
                   placeholder: t("research.filterByYear"),
                   clear: t("research.clearYearFilter"),
@@ -348,7 +370,7 @@ const ResearchPage = () => {
               <select
                 value={typeFilter}
                 onChange={(event) => setFilter("type", event.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
+                className="h-12 min-w-[140px] flex-1 rounded-xl border border-border bg-background/75 px-3 text-sm text-foreground transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <option value="">{t("research.filterByType")}</option>
                 {typeOptions.map((tp) => (
@@ -357,27 +379,18 @@ const ResearchPage = () => {
               </select>
             )}
 
-            {hasAnyFilter && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-                <X size={14} className="mr-1" /> {t("research.clearFilters")}
-              </Button>
-            )}
-          </div>
-        </div>
+        </DiscoveryFilters>
 
         <div
           id="research-projects-section"
-          className="flex items-center justify-between mb-6 scroll-mt-20"
+          className="flex items-end justify-between mb-8 scroll-mt-24 border-b border-border pb-5"
         >
-          <h2 className="font-display text-2xl font-bold text-foreground">
+          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">01 / {isPt ? "Em desenvolvimento" : "In progress"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.projects")}
-            <span className="ml-2 text-sm font-mono text-muted-foreground align-middle">
-              ({filteredProjects.length})
-            </span>
-          </h2>
+          </h2></div><span className="font-mono text-sm text-muted-foreground">{String(filteredProjects.length).padStart(2, "0")}</span>
         </div>
         {filteredProjects.length > 0 ? (
-          <div className="grid auto-rows-fr md:grid-cols-2 gap-6 items-stretch">
+          <div className="grid auto-rows-fr md:grid-cols-2 gap-5 items-stretch">
             {paginatedProjects.map((p, i) => (
               <div key={p.id} className="relative group h-full">
                 <Link to={`/research/${p.id}`} className="block h-full">
@@ -387,23 +400,22 @@ const ResearchPage = () => {
                     viewport={{ once: true }}
                     variants={fadeUp}
                     custom={i}
-                    className="h-full flex flex-col bg-card rounded-xl p-6 border border-border hover:border-primary/30 transition-colors cursor-pointer"
+                    className="h-full min-h-[260px] flex flex-col rounded-[1.5rem] border border-border bg-card/80 p-7 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between mb-3 shrink-0">
+                    <div className="flex items-start justify-between gap-4 mb-8 shrink-0">
                       <div className="flex flex-wrap gap-2">
                         {p.tags.map((tag) => (
                           <span key={tag} className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">{tag}</span>
                         ))}
                       </div>
-                      <span className={`text-xs font-mono px-2 py-0.5 rounded ${p.status === "active" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
-                        {p.status}
-                      </span>
+                      <ArrowUpRight size={22} className="shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
                     </div>
-                    <h3 className="font-display text-lg font-semibold text-foreground mb-2 line-clamp-2 shrink-0">{isPt ? p.titlePt : p.title}</h3>
+                    <h3 className="font-display text-2xl font-semibold tracking-tight text-foreground mb-3 line-clamp-2 shrink-0">{isPt ? p.titlePt : p.title}</h3>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-4 flex-1 overflow-hidden">{isPt ? p.descriptionPt : p.description}</p>
-                    <div className="flex gap-4 text-xs text-muted-foreground mt-auto shrink-0">
+                    <div className="flex flex-wrap gap-4 border-t border-border pt-4 text-xs text-muted-foreground mt-auto shrink-0">
+                      <span className={p.status === "active" ? "text-accent" : ""}>● {statusLabel(p.status)}</span>
                       <span>{p.publications} {isPt ? "publicações" : "publications"}</span>
-                      <span>Impact: {p.impact}</span>
+                      {p.impact && <span>{isPt ? "Impacto" : "Impact"}: {p.impact}</span>}
                     </div>
                   </motion.div>
                 </Link>
@@ -429,16 +441,13 @@ const ResearchPage = () => {
 
         <div
           id="research-publications-section"
-          className="flex items-center justify-between mb-6 mt-20 scroll-mt-20"
+          className="flex items-end justify-between mb-8 mt-20 scroll-mt-24 border-b border-border pb-5"
         >
-          <h2 className="font-display text-2xl font-bold text-foreground">
+          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">02 / {isPt ? "Conhecimento aberto" : "Open knowledge"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.publications")}
-            <span className="ml-2 text-sm font-mono text-muted-foreground align-middle">
-              ({filteredPublications.length})
-            </span>
-          </h2>
+          </h2></div><span className="font-mono text-sm text-muted-foreground">{String(filteredPublications.length).padStart(2, "0")}</span>
         </div>
-        <div className="grid auto-rows-fr gap-4">
+        <div className="divide-y divide-border border-y border-border">
           {paginatedPublications.map((pub, i) => (
             <div key={pub.id} className="relative group h-full">
               <motion.a
@@ -450,8 +459,9 @@ const ResearchPage = () => {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className="flex h-full min-h-[104px] flex-col justify-center bg-card rounded-lg p-5 border border-border hover:border-primary/50 transition-colors"
+                className="group flex h-full min-h-[120px] flex-col justify-center py-5 px-2 transition-all duration-300 hover:bg-primary/5 md:px-5"
               >
+                <div className="flex items-center justify-between gap-5"><span className="font-mono text-xs font-bold text-primary">{pub.year}</span><ArrowUpRight size={18} className="text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" /></div>
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   {pub.type && (
                     <span className="text-[10px] font-mono uppercase bg-primary/10 text-primary px-2 py-0.5 rounded">

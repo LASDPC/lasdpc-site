@@ -6,9 +6,9 @@ import { peopleService } from "@/services/people";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, CheckCircle, ChevronLeft, ChevronRight, UserRoundPlus } from "lucide-react";
 import { motion } from "framer-motion";
-import logo from "@/assets/lasdpc-logo.png";
+import AuthPageShell from "@/components/AuthPageShell";
 import AffiliationInput from "@/components/profile/AffiliationInput";
 import { uploadProfilePhoto } from "@/services/uploads";
 import { mediaUrl } from "@/lib/media";
@@ -205,54 +205,36 @@ const RegisterPage = () => {
 
   if (success) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
-        >
-          <div className="glass-surface rounded-2xl border border-border p-8 shadow-xl">
-            <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
-            <h2 className="font-display font-bold text-xl text-foreground mb-2">
-              {t("auth.registerSuccess")}
-            </h2>
-          </div>
-          <Link
-            to="/login"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mt-6 justify-center"
-          >
-            <ArrowLeft size={16} />
-            {t("auth.loginHere")}
+      <AuthPageShell mode="register">
+        <div className="flex min-h-[360px] flex-col items-start justify-center">
+          <span className="mb-7 grid h-16 w-16 place-items-center rounded-2xl bg-accent/10 text-accent"><CheckCircle size={34} /></span>
+          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">{t("auth.registerSuccess")}</h2>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{isPt ? "Nossa equipe analisará sua solicitação. Você poderá entrar após a aprovação." : "Our team will review your request. You can sign in once it is approved."}</p>
+          <Link to="/login" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+            {t("auth.loginHere")} <ChevronRight size={17} />
           </Link>
-        </motion.div>
-      </div>
+        </div>
+      </AuthPageShell>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-2xl"
-      >
-        <div className="glass-surface rounded-2xl border border-border p-6 sm:p-8 shadow-xl">
-          <div className="flex items-center gap-3 mb-6">
-            <img src={logo} alt="LASDPC" className="h-10 w-10" />
-            <span className="font-display font-bold text-lg text-foreground">LASDPC</span>
+    <AuthPageShell mode="register">
+          <div className="mb-7 flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><UserRoundPlus size={20} /></span>
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">LaSDPC / {isPt ? "Cadastro" : "Registration"}</span>
           </div>
 
-          <h2 className="font-display font-bold text-2xl text-foreground mb-1">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {t("auth.registerTitle")}
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="mb-8 mt-3 text-sm leading-relaxed text-muted-foreground">
             {t("auth.registerSubtitle")}
           </p>
 
-          <div className="mb-7">
-            <div className="relative px-2 sm:px-8" aria-label={isPt ? "Progresso do cadastro" : "Registration progress"}>
-              <div className="absolute left-10 right-10 top-5 h-0.5 bg-border sm:left-16 sm:right-16">
+          <div className="mb-8">
+            <div className="relative" aria-label={isPt ? "Progresso do cadastro" : "Registration progress"}>
+              <div className="absolute left-[16%] right-[16%] top-5 h-0.5 bg-border">
                 <div
                   className="h-full bg-primary transition-all duration-300 ease-out"
                   style={{ width: `${progressPercent}%` }}
@@ -267,18 +249,18 @@ const RegisterPage = () => {
                   return (
                     <div key={step.title} className="flex flex-col items-center text-center">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold shadow-sm transition-colors ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${
                           isComplete
                             ? "border-primary bg-primary text-primary-foreground"
                             : isActive
-                              ? "border-primary bg-background text-primary"
-                              : "border-border bg-background text-muted-foreground"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border bg-secondary/60 text-muted-foreground"
                         }`}
                         aria-current={isActive ? "step" : undefined}
                       >
                         {isComplete ? <Check size={16} /> : index + 1}
                       </div>
-                      <span className={`mt-2 text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                      <span className={`mt-2 text-xs font-semibold sm:text-sm ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
                         {step.title}
                       </span>
                     </div>
@@ -287,7 +269,7 @@ const RegisterPage = () => {
               </div>
             </div>
 
-            <div className="mt-5 border-l-2 border-primary bg-primary/5 px-4 py-3">
+            <div className="mt-6 rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                 {isPt ? `Etapa ${currentStep + 1} de ${steps.length}` : `Step ${currentStep + 1} of ${steps.length}`}
               </p>
@@ -297,7 +279,7 @@ const RegisterPage = () => {
           </div>
 
           {error && (
-            <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-3">
+            <div role="alert" className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -374,7 +356,7 @@ const RegisterPage = () => {
                       id="role"
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                      className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="aluno_ativo">{t("auth.role.aluno")}</option>
                       <option value="docente">{t("auth.role.docente")}</option>
@@ -394,7 +376,7 @@ const RegisterPage = () => {
                           id="advisor"
                           value={advisorId}
                           onChange={(e) => setAdvisorId(e.target.value)}
-                          className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                          className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           required
                         >
                           <option value="">{t("auth.advisorPlaceholder")}</option>
@@ -409,7 +391,7 @@ const RegisterPage = () => {
                           id="academicLevel"
                           value={academicLevel}
                           onChange={(e) => setAcademicLevel(e.target.value)}
-                          className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                          className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           required
                         >
                           {ACADEMIC_LEVELS.map((item) => (
@@ -472,7 +454,7 @@ const RegisterPage = () => {
                       id="labRelationshipType"
                       value={labRelationshipType}
                       onChange={(e) => setLabRelationshipType(e.target.value)}
-                      className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                      className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       required
                     >
                       <option value="academic_advisor">{isPt ? "Orientador acadêmico" : "Academic advisor"}</option>
@@ -501,7 +483,7 @@ const RegisterPage = () => {
                       value={registrationObjective}
                       onChange={(e) => setRegistrationObjective(e.target.value)}
                       placeholder={t("auth.registrationObjectivePlaceholder")}
-                      className="w-full min-h-[90px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                      className="min-h-[110px] w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       required
                     />
                   </div>
@@ -516,7 +498,7 @@ const RegisterPage = () => {
                       onChange={(e) => setObservation(e.target.value)}
                       placeholder={t("auth.observationPlaceholder")}
                       maxLength={150}
-                      className="w-full min-h-[70px] bg-secondary border border-border rounded-md px-3 py-2 text-sm"
+                      className="min-h-[90px] w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
                   <div className="flex items-start gap-2">
@@ -538,48 +520,38 @@ const RegisterPage = () => {
               )}
             </motion.div>
 
-            <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0 || loading}
-                className="min-w-28"
+                className="min-w-28 rounded-xl"
               >
                 <ChevronLeft size={16} />
                 {isPt ? "Voltar" : "Back"}
               </Button>
 
               {currentStep < steps.length - 1 ? (
-                <Button type="button" onClick={handleNext} className="min-w-32">
+                <Button type="button" onClick={handleNext} className="min-w-32 rounded-xl shadow-md shadow-primary/15">
                   {isPt ? "Continuar" : "Continue"}
                   <ChevronRight size={16} />
                 </Button>
               ) : (
-                <Button type="submit" disabled={loading} className="min-w-40">
+                <Button type="submit" disabled={loading} className="min-w-40 rounded-xl shadow-md shadow-primary/15">
                   {loading ? "..." : t("auth.registerButton")}
                 </Button>
               )}
             </div>
           </form>
 
-          <p className="text-xs text-muted-foreground mt-6">
+          <p className="mt-7 border-t border-border/70 pt-6 text-sm text-muted-foreground">
             {t("auth.alreadyHaveAccount")}{" "}
             <Link to="/login" className="text-primary hover:underline">
               {t("auth.loginHere")}
             </Link>
           </p>
-        </div>
-
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mt-6 justify-center"
-        >
-          <ArrowLeft size={16} />
-          {t("auth.backToHome")}
-        </Link>
-      </motion.div>
-    </div>
+    </AuthPageShell>
   );
 };
 

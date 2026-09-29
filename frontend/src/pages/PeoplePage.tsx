@@ -7,13 +7,13 @@ import {
   ExternalLink,
   Mail,
   Search,
-  X,
   Linkedin,
   Github,
   Twitter,
   Users,
   ChevronLeft,
   ChevronRight,
+  ArrowUpRight,
 } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
@@ -22,7 +22,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import FilterCombobox from "@/components/FilterCombobox";
-import PageHeader from "@/components/PageHeader";
+import DiscoveryFilters from "@/components/DiscoveryFilters";
+import EditorialHero from "@/components/EditorialHero";
 import { mediaUrl } from "@/lib/media";
 import { normalizeResearchArea } from "@/lib/researchAreas";
 
@@ -390,24 +391,55 @@ const PeoplePage = () => {
 
   return (
     <div>
-      <PageHeader
-        icon={Users}
-        title={t("nav.people")}
-        subtitle={t("people.subtitle")}
+      <EditorialHero
+        eyebrow={isPt ? "Comunidade · LaSDPC" : "Community · LaSDPC"}
+        title={<>{isPt ? "Pessoas que" : "People who"}<br /><span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{isPt ? "fazem acontecer." : "make it happen."}</span></>}
+        description={isPt ? "A pesquisa ganha vida quando diferentes trajetórias se encontram. Conheça quem transforma perguntas em descobertas no laboratório." : "Research comes to life when different paths meet. Meet the people turning questions into discoveries at the lab."}
+        action={isPt ? "Conhecer a equipe" : "Meet the team"}
+        target="#faculty-section"
+        visual={
+          <div className="relative mx-auto h-[320px] w-full max-w-[530px] lg:h-[430px]">
+            <div className="absolute inset-[7%] rounded-full border border-primary/25" />
+            <div className="absolute inset-[21%] rounded-full border border-dashed border-accent/35" />
+            <div className="absolute inset-[35%] rounded-full bg-primary/10 blur-3xl" />
+            <span className="absolute left-[8%] top-[11%] h-2 w-2 rounded-full bg-accent shadow-[0_0_18px_hsl(var(--accent))]" />
+            <span className="absolute bottom-[10%] right-[18%] h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_hsl(var(--primary))]" />
+            {(currentDocentes.concat(activeStudents).slice(0, 4)).map((person, index) => {
+              const positions = ["left-[29%] top-[5%]", "right-[5%] top-[25%]", "bottom-[3%] left-[26%]", "bottom-[27%] left-[1%]"];
+              return (
+                <div key={person.id} className={`absolute ${positions[index]} h-20 w-20 overflow-hidden rounded-[1.5rem] border-4 border-background bg-primary/10 shadow-xl shadow-primary/10 md:h-28 md:w-28`} title={person.name}>
+                  {person.photo ? <img src={mediaUrl(person.photo)} alt={person.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center font-display text-2xl font-bold text-primary">{person.initials || person.name.slice(0, 2)}</div>}
+                </div>
+              );
+            })}
+            <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[2rem] border border-primary/20 bg-card/90 text-primary shadow-2xl shadow-primary/15 backdrop-blur md:h-32 md:w-32"><Users className="h-11 w-11 md:h-14 md:w-14" strokeWidth={1.25} /></div>
+          </div>
+        }
+        footer={<div className="flex flex-wrap gap-x-10 gap-y-3 text-sm text-muted-foreground"><span><strong className="mr-2 font-display text-2xl text-foreground">{currentDocentes.length}</strong>{isPt ? "docentes" : "faculty"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{activeStudents.length}</strong>{isPt ? "estudantes" : "students"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{formerMembers.length}</strong>{isPt ? "ex-integrantes" : "alumni"}</span></div>}
       />
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto px-4 py-14 md:py-20">
 
         {/* Filter bar */}
-        <div className="mb-6 bg-card border border-border rounded-xl p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[200px]">
+        <DiscoveryFilters
+          icon={Users}
+          eyebrow={isPt ? "Encontre sua conexão" : "Find your connection"}
+          title={isPt ? "Explore a comunidade" : "Explore the community"}
+          count={currentDocentes.length + activeStudents.length + formerMembers.length}
+          countLabel={isPt ? "pessoas" : "people"}
+          hint={isPt ? "Busque por nome, área, ano ou nível" : "Search by name, area, year or level"}
+          clearLabel={t("people.clearFilters")}
+          active={Boolean(hasAnyFilter)}
+          onClear={clearFilters}
+        >
+            <div className="min-w-[230px] flex-[1.4]">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={nameSearch}
                   onChange={(e) => setFilter("name", e.target.value, true)}
                   placeholder={t("people.searchPlaceholder")}
-                  className="pl-9"
+                  aria-label={t("people.searchPlaceholder")}
+                  className="pl-10 text-sm"
                 />
               </div>
             </div>
@@ -416,7 +448,7 @@ const PeoplePage = () => {
                 value={areaFilter}
                 options={areaOptions.areas}
                 onChange={(value, replace) => setFilter("area", value, replace)}
-                className="min-w-[260px]"
+                className="min-w-[170px]"
                 labels={{
                   placeholder: t("people.areaSearchPlaceholder"),
                   clear: t("people.clearAreaFilter"),
@@ -430,7 +462,7 @@ const PeoplePage = () => {
                 options={presenceYears.map(String)}
                 onChange={setYearFilter}
                 inputMode="numeric"
-                className="min-w-[160px]"
+                className="min-w-[135px]"
                 labels={{
                   placeholder: t("people.filterByYear"),
                   clear: t("people.clearYearFilter"),
@@ -442,29 +474,24 @@ const PeoplePage = () => {
               <select
                 value={levelFilter}
                 onChange={(e) => setFilter("level", e.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-2 text-sm min-w-[140px]"
+                className="h-12 min-w-[140px] flex-1 rounded-xl border border-border bg-background/75 px-3 text-sm text-foreground transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <option value="">{t("people.filterByLevel")}</option>
                 {studentLevels.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
             )}
-            {hasAnyFilter && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-                <X size={14} className="mr-1" /> {t("people.clearFilters")}
-              </Button>
-            )}
-          </div>
-        </div>
+        </DiscoveryFilters>
 
         {/* Faculty section */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-3xl font-bold text-foreground">{t("section.faculty")}</h2>
+        <div id="faculty-section" className="mb-8 flex items-end justify-between scroll-mt-24 border-b border-border pb-5">
+          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">01 / {isPt ? "Orientação" : "Mentorship"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">{t("section.faculty")}</h2></div>
+          <span className="font-mono text-sm text-muted-foreground">{String(currentDocentes.length).padStart(2, "0")}</span>
         </div>
 
         {currentDocentes.length === 0 ? (
           <p className="text-muted-foreground text-center py-8 mb-20">{t("people.noResults")}</p>
         ) : (
-          <div className="grid auto-rows-fr md:grid-cols-2 gap-6 mb-20">
+          <div className="grid auto-rows-fr md:grid-cols-2 gap-5 mb-20">
             {currentDocentes.map((d, i) => (
               <div key={d.id} className="relative group h-full">
                 <motion.div
@@ -473,23 +500,26 @@ const PeoplePage = () => {
                   viewport={{ once: true }}
                   variants={fadeUp}
                   custom={i}
-                  className="h-full bg-card rounded-xl p-6 border border-border hover:glow-primary transition-shadow cursor-pointer"
+                  className="h-full bg-card/80 rounded-[1.5rem] p-6 border border-border hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => navigate(`/profile/${d.id}`)}
+                  onKeyDown={(event) => { if (event.key === "Enter") navigate(`/profile/${d.id}`); }}
+                  tabIndex={0}
+                  role="link"
                 >
                   <div className="flex items-start gap-4">
                     {d.photo ? (
                       <img
                         src={mediaUrl(d.photo)}
                         alt={d.name}
-                        className="w-16 h-16 rounded-full object-cover shrink-0"
+                        className="w-20 h-20 rounded-2xl object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-xl shrink-0">
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-xl shrink-0">
                         {d.initials}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-lg font-semibold text-foreground line-clamp-2">{d.name}</h3>
+                      <h3 className="font-display text-xl font-semibold text-foreground line-clamp-2">{d.name}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-1">{isPt ? d.titlePt : d.title}</p>
                       <p className="text-sm text-accent mt-1 line-clamp-1">{isPt ? d.areaPt : d.area}</p>
                       <div className="flex flex-wrap gap-3 mt-3 text-xs max-h-10 overflow-hidden">
@@ -510,13 +540,11 @@ const PeoplePage = () => {
         )}
 
         {/* Active Students section */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-3xl font-bold text-foreground">
+        <div className="flex items-end justify-between mb-4 border-b border-border pb-5">
+          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">02 / {isPt ? "Nova geração" : "Next generation"}</p>
+          <h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.activeStudents")}
-            <span className="ml-2 text-sm font-mono text-muted-foreground align-middle">
-              ({activeStudents.length})
-            </span>
-          </h2>
+          </h2></div><span className="font-mono text-sm text-muted-foreground">{String(activeStudents.length).padStart(2, "0")}</span>
         </div>
         <p className="text-muted-foreground mb-8 text-sm font-mono">
           {t("section.activeStudents.desc")}
@@ -541,16 +569,11 @@ const PeoplePage = () => {
         )}
 
         {/* Former members section */}
-        <div
-          id="former-section"
-          className="flex items-center justify-between mb-4 scroll-mt-20"
-        >
-          <h2 className="font-display text-3xl font-bold text-foreground flex items-center gap-2">
+        <div id="former-section" className="flex items-end justify-between mb-4 scroll-mt-24 border-b border-border pb-5">
+          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">03 / {isPt ? "Trajetórias" : "Journeys"}</p>
+          <h2 className="font-display text-4xl font-bold tracking-tight text-foreground flex items-center gap-2 md:text-5xl">
             {t("section.alumni")}
-            <span className="text-sm font-mono text-muted-foreground align-middle">
-              ({formerMembers.length})
-            </span>
-          </h2>
+          </h2></div><span className="font-mono text-sm text-muted-foreground">{String(formerMembers.length).padStart(2, "0")}</span>
         </div>
         <p className="text-muted-foreground mb-8 text-sm font-mono">
           {t("section.alumni.desc")}
@@ -674,16 +697,21 @@ const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
 
   return (
     <div className="relative group h-full">
-      <motion.div
+      <motion.button
+        type="button"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
         variants={fadeUp}
         custom={i}
-        className="h-full min-h-[154px] bg-card rounded-lg p-4 border border-border cursor-pointer hover:bg-accent/5 transition-colors flex flex-col overflow-hidden"
+        className="h-full w-full min-h-[190px] rounded-[1.3rem] border border-border bg-card/75 p-5 text-left cursor-pointer hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 flex flex-col overflow-hidden"
         onClick={onClick}
       >
-        <p className="font-semibold text-foreground line-clamp-2">{person.name}</p>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          {person.photo ? <img src={mediaUrl(person.photo)} alt="" className="h-12 w-12 rounded-xl object-cover" loading="lazy" /> : <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 font-display font-bold text-primary">{person.initials || person.name.slice(0, 2)}</span>}
+          <ArrowUpRight size={18} className="text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
+        </div>
+        <p className="font-display text-lg font-semibold text-foreground line-clamp-2">{person.name}</p>
         {subtitle && <p className="text-sm text-accent line-clamp-1">{subtitle}</p>}
         {area && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{area}</p>}
         {person.year_joined && (
@@ -711,7 +739,7 @@ const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
             ))}
           </div>
         )}
-      </motion.div>
+      </motion.button>
     </div>
   );
 };
