@@ -11,7 +11,7 @@ services:
       - mongo_data:/data/db
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
     container_name: lasdpc-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -22,7 +22,7 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -32,7 +32,7 @@ services:
           memory: 512M
 
   minio-init:
-    image: quay.io/minio/mc:latest
+    image: ghcr.io/teableio/minio-mc:RELEASE.2025-04-16T18-13-26Z
     container_name: lasdpc-minio-init
     depends_on:
       minio:
