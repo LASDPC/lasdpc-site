@@ -11,7 +11,7 @@ services:
       - mongo_data:/data/db
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: lasdpc-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -32,7 +32,7 @@ services:
           memory: 512M
 
   minio-init:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: lasdpc-minio-init
     depends_on:
       minio:
