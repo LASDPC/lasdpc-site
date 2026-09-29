@@ -27,7 +27,8 @@ const PageHeader = ({
   titleTestId,
 }: PageHeaderProps) => {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative overflow-hidden border-b border-border/70 bg-[radial-gradient(ellipse_at_85%_15%,hsl(var(--primary)/0.13),transparent_48%)] ${className}`}>
+      <div className="tech-grid pointer-events-none absolute inset-0 opacity-70" />
       <div className="container relative mx-auto px-4 pb-14 pt-14 md:pb-20 md:pt-20">
         {eyebrow && (
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/[0.06] px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary sm:text-xs">
@@ -40,7 +41,7 @@ const PageHeader = ({
           </span>
           <h1
             data-testid={titleTestId}
-            className="font-display text-3xl font-bold leading-[1.05] tracking-[-0.045em] text-foreground sm:text-4xl md:text-5xl"
+            className="font-display text-4xl font-bold leading-[1.02] tracking-[-0.055em] text-foreground sm:text-5xl md:text-6xl"
           >
             {title}
           </h1>

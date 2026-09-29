@@ -13,9 +13,10 @@ const ComingSoonPage = () => {
   const toggleLang = () => setLang(lang === "pt-BR" ? "en-US" : "pt-BR");
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(ellipse_at_80%_15%,hsl(var(--primary)/0.14),transparent_55%)] text-foreground">
+      <div className="tech-grid pointer-events-none absolute inset-0 opacity-60" />
       {/* Top bar with toggles */}
-      <div className="flex justify-end gap-2 p-4">
+      <div className="relative flex justify-end gap-2 p-4">
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:opacity-80 transition-opacity"
@@ -39,7 +40,7 @@ const ComingSoonPage = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center max-w-lg"
+          className="surface-panel relative max-w-xl rounded-3xl px-8 py-12 text-center shadow-2xl sm:px-14"
         >
           <motion.img
             src={logo}
@@ -58,7 +59,7 @@ const ComingSoonPage = () => {
           </p>
 
           <motion.h1
-            className="font-display text-4xl sm:text-5xl font-bold mb-4"
+            className="mb-4 font-display text-4xl font-bold tracking-[-0.06em] sm:text-6xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
@@ -79,7 +80,7 @@ const ComingSoonPage = () => {
 
       {/* Footer with admin link */}
       <motion.div
-        className="pb-8 text-center"
+        className="relative pb-8 text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}

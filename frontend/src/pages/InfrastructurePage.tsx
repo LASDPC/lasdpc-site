@@ -225,17 +225,23 @@ const InfrastructurePage = () => {
   };
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4">
+    <div className="pb-20">
+      <div className="border-b border-border/70 bg-[radial-gradient(ellipse_at_86%_15%,hsl(var(--primary)/0.13),transparent_52%)] px-4 pb-16 pt-16 md:pt-24">
+        <div className="container mx-auto">
+          <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-primary">{isPt ? "Infraestrutura" : "Infrastructure"}</p>
+          <h1 className="max-w-3xl font-display text-5xl font-bold tracking-[-0.06em] text-foreground md:text-6xl">{t("infra.title")}</h1>
+          <p className="mt-5 max-w-xl text-muted-foreground">{isPt ? "Conheça os recursos disponíveis e acompanhe suas solicitações de acesso." : "Explore available resources and track your access requests."}</p>
+        </div>
+      </div>
+      <div className="container mx-auto px-4 pt-12">
         {/* Header */}
-        <h1 className="font-display text-4xl font-bold text-foreground mb-4">{t("infra.title")}</h1>
 
         {/* ---- Clusters display ---- */}
         <h2 className="font-display text-xl font-semibold text-foreground mb-6 mt-8">{t("infra.clusters")}</h2>
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {clusters.map((c, i) => (
             <div key={c.id} className="relative group">
-              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="bg-card rounded-xl p-6 border border-border">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="surface-panel interactive-card rounded-3xl p-6">
                 {c.image && (
                   <img
                     src={mediaUrl(c.image)}
@@ -267,7 +273,7 @@ const InfrastructurePage = () => {
             <h2 className="font-display text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
               <Server size={20} /> {t("infra.requestTitle")}
             </h2>
-            <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="surface-panel space-y-4 rounded-3xl p-6 md:p-8">
               <div>
                 <Label>{t("infra.selectCluster")}</Label>
                 <select
@@ -340,7 +346,7 @@ const InfrastructurePage = () => {
             ) : (
               <div className="space-y-3">
                 {visibleRequests.map((req) => (
-                  <div key={req.id} className="bg-card border border-border rounded-xl p-4 space-y-2">
+                  <div key={req.id} className="surface-panel space-y-2 rounded-2xl p-5">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-foreground">{req.cluster_name}</span>
                       <StatusBadge status={req.status} t={t} />

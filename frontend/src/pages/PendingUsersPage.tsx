@@ -142,11 +142,11 @@ const PendingUsersPage = () => {
   const isLoading = tab === "users" ? loadingUsers : tab === "clusters" ? loadingClusters : loadingLgpd;
 
   return (
-    <div className="py-8">
-      <div className="container mx-auto px-6 max-w-3xl">
-        <div className="flex items-center gap-3 mb-6">
+    <div className="py-12 md:py-16">
+      <div className="container mx-auto max-w-4xl px-4 sm:px-6">
+        <div className="mb-8 flex items-center gap-3 border-b border-border pb-8">
           <Clock size={24} className="text-primary" />
-          <h1 className="font-display text-2xl font-bold text-foreground">
+          <h1 className="font-display text-4xl font-bold text-foreground md:text-5xl">
             {t("admin.pendingUsers")}
           </h1>
         </div>

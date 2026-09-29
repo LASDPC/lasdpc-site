@@ -5,11 +5,15 @@ const PrivacyPolicyPage = () => {
   const isPt = lang === "pt-BR";
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4 max-w-3xl prose prose-sm dark:prose-invert">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-8">
+    <div className="py-16 md:py-24">
+      <div className="container mx-auto max-w-4xl px-4">
+        <div className="mb-10 border-b border-border/70 pb-10">
+          <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-primary">LASDPC / {isPt ? "Privacidade" : "Privacy"}</p>
+        <h1 className="font-display text-5xl font-bold text-foreground md:text-6xl">
           {isPt ? "Politica de Privacidade" : "Privacy Policy"}
         </h1>
+        </div>
+        <article className="surface-panel prose prose-sm max-w-none rounded-3xl p-6 dark:prose-invert sm:p-10 md:p-14">
 
         {isPt ? (
           <>
@@ -114,6 +118,7 @@ const PrivacyPolicyPage = () => {
             <p>We adopt technical and organizational measures to protect your data, including password encryption and role-based access control.</p>
           </>
         )}
+        </article>
       </div>
     </div>
   );

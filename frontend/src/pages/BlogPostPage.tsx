@@ -57,18 +57,13 @@ const BlogPostPage = () => {
   }
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4 max-w-3xl">
+    <div className="pb-20">
+      <div className="editorial-detail px-4 pb-24 pt-16 md:pt-24">
+        <div className="container mx-auto max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <Link to="/blog" className="text-primary hover:underline inline-flex items-center gap-2 mb-8 text-sm">
+          <Link to="/blog" className="mb-10 inline-flex items-center gap-2 rounded-full border border-border bg-card/75 px-4 py-2 text-sm font-medium text-primary transition-colors hover:border-primary/40 hover:bg-card">
             <ArrowLeft size={16} /> {isPt ? "Voltar ao blog" : "Back to blog"}
           </Link>
-
-          <img
-            src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
-            alt={isPt ? post.titlePt : post.title}
-            className="w-full h-64 sm:h-80 object-cover rounded-xl mb-8"
-          />
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6">
             <span className="inline-flex items-center gap-1.5">
@@ -85,15 +80,22 @@ const BlogPostPage = () => {
             )}
           </div>
 
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-8">
+          <h1 className="font-display font-bold text-foreground">
             {isPt ? post.titlePt : post.title}
           </h1>
-
+        </motion.div>
+        </div>
+      </div>
+      <div className="container mx-auto max-w-4xl px-4">
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.12 }}>
+          <img src={mediaUrl(post.coverImage) || FALLBACK_IMAGE} alt={isPt ? post.titlePt : post.title} className="relative -mt-12 mb-8 h-64 w-full rounded-3xl border border-border object-cover shadow-xl sm:h-96" />
+          <div className="editorial-article !mt-0">
           <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
             <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
               {isPt ? post.contentPt : post.content}
             </ReactMarkdown>
           </article>
+          </div>
         </motion.div>
       </div>
     </div>

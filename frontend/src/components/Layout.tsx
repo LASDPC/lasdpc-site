@@ -24,11 +24,22 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     </a>
     <div className="relative z-10 flex min-h-screen flex-col">
       <Header />
-      <main id="main-content" className="flex-1 pt-20">{children}</main>
+      <MainContent>{children}</MainContent>
       <Footer />
     </div>
   </div>
 );
+
+const establishedPages = new Set(["/", "/historia", "/people", "/research", "/blog", "/contact", "/login", "/register"]);
+
+const MainContent = ({ children }: { children: React.ReactNode }) => {
+  const { pathname } = useLocation();
+  return (
+    <main id="main-content" className={`flex-1 pt-20 ${establishedPages.has(pathname) ? "" : "refreshed-page"}`}>
+      {children}
+    </main>
+  );
+};
 
 const HomeBackground = () => {
   const { pathname } = useLocation();

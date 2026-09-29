@@ -302,6 +302,7 @@ const DocsPage = () => {
       <PageHeader
         icon={FileText}
         title={isPt ? "Documentação" : "Documentation"}
+        eyebrow={isPt ? "Biblioteca interna" : "Internal library"}
         subtitle={
           isPt
             ? "Atas de reunião e documentos internos do laboratório, organizados em pastas."
@@ -311,7 +312,7 @@ const DocsPage = () => {
 
       {isEmpty ? (
         <div className="container mx-auto px-4 py-12 md:py-16 flex justify-center">
-          <div className="w-full max-w-xl rounded-xl border border-dashed border-border bg-card/50 p-8 sm:p-12 flex flex-col items-center text-center">
+          <div className="surface-panel flex w-full max-w-xl flex-col items-center rounded-3xl border-dashed p-8 text-center sm:p-12">
             <div className="rounded-full bg-primary/10 text-primary p-4 mb-5">
               <Inbox size={32} />
             </div>
@@ -336,9 +337,9 @@ const DocsPage = () => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col md:flex-row min-h-[calc(100vh-16rem)]">
+        <div className="container mx-auto flex min-h-[calc(100vh-16rem)] flex-col gap-5 px-4 py-8 md:flex-row">
           {/* Desktop sidebar: VS Code-like explorer */}
-          <aside className="hidden md:flex md:flex-col w-72 shrink-0 border-r border-border bg-card overflow-y-auto">
+          <aside className="surface-panel hidden max-h-[calc(100vh-8rem)] w-72 shrink-0 overflow-y-auto rounded-2xl md:sticky md:top-24 md:flex md:flex-col">
             <div className="p-3 flex-1">
               <div className="flex items-center justify-between px-1 mb-3">
                 <h2 className="font-display font-bold text-foreground text-sm uppercase tracking-wider flex items-center gap-2">
@@ -364,7 +365,7 @@ const DocsPage = () => {
           </aside>
 
           {/* Main content */}
-          <div className="flex-1 min-w-0">
+          <div className="surface-panel min-w-0 flex-1 rounded-2xl">
             <div className={`px-4 sm:px-6 md:px-10 py-6 md:py-10 ${editing ? "" : "max-w-3xl"}`}>
               {/* Mobile explorer + user box */}
               <div className="md:hidden mb-6 space-y-3">

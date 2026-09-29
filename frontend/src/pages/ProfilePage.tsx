@@ -448,10 +448,10 @@ const ProfilePage = () => {
   ].filter(Boolean).length;
 
   return (
-    <div className="py-8">
+    <div className="py-12 md:py-16">
       <div className="container mx-auto max-w-5xl px-4">
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
-          <div className="h-40 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.28),transparent_28%),linear-gradient(135deg,hsl(var(--primary)),hsl(var(--accent))_52%,hsl(var(--secondary)))] sm:h-48" />
+        <section className="surface-panel overflow-hidden rounded-3xl">
+          <div className="relative h-44 overflow-hidden bg-[radial-gradient(circle_at_20%_20%,hsl(var(--accent)/0.38),transparent_28%),linear-gradient(135deg,hsl(var(--primary)),hsl(var(--accent))_52%,hsl(var(--secondary)))] sm:h-56"><div className="tech-grid absolute inset-0 opacity-60" /></div>
           <div className="px-4 pb-5 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <div className="relative -mt-14 w-fit shrink-0 sm:-mt-16">

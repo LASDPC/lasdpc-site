@@ -268,7 +268,7 @@ const RoomSchedulingPage = () => {
   };
 
   return (
-    <div className="mt-16 min-h-[calc(100vh-4rem)]">
+    <div className="min-h-[calc(100vh-4rem)]">
       <RoomSchedulingToolbar
         weekStart={weekStart}
         weekEndInclusive={weekEndInclusive}

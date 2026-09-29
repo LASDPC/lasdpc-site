@@ -11,8 +11,8 @@ const ReservaPage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-muted-foreground">{t("infra.loginRequired")}</p>
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <div className="surface-panel rounded-3xl p-10 text-center"><CalendarDays className="mx-auto mb-4 h-10 w-10 text-primary" /><p className="text-muted-foreground">{t("infra.loginRequired")}</p><Link to="/login" className="mt-5 inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">{isPt ? "Entrar" : "Sign in"}</Link></div>
       </div>
     );
   }
@@ -23,35 +23,36 @@ const ReservaPage = () => {
       icon={CalendarDays}
       title={isPt ? "Reservas" : "Reservations"}
       subtitle={t("reserva.subtitle")}
+      eyebrow={isPt ? "Espaços e recursos" : "Spaces and resources"}
     />
-    <div className="container mx-auto px-4 py-10">
+    <div className="container mx-auto px-4 py-12 md:py-16">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <Link
           to="/infrastructure"
-          className="group block rounded-xl bg-secondary p-8 text-center shadow-sm border border-border hover:border-primary hover:shadow-md transition-all duration-200"
+          className="group surface-panel interactive-card block rounded-3xl p-8 text-left sm:p-10"
         >
-          <Server className="mx-auto mb-4 h-12 w-12 text-primary group-hover:scale-110 transition-transform" />
-          <span className="text-xl font-semibold text-foreground">
+          <Server className="mb-10 h-12 w-12 text-primary transition-transform group-hover:scale-110" />
+          <span className="font-display text-2xl font-bold tracking-tight text-foreground">
             {t("reserva.infraButton")}
           </span>
         </Link>
 
         <Link
           to="/room-scheduling"
-          className="group block rounded-xl bg-secondary p-8 text-center shadow-sm border border-border hover:border-primary hover:shadow-md transition-all duration-200"
+          className="group surface-panel interactive-card block rounded-3xl p-8 text-left sm:p-10"
         >
-          <CalendarDays className="mx-auto mb-4 h-12 w-12 text-primary group-hover:scale-110 transition-transform" />
-          <span className="text-xl font-semibold text-foreground">
+          <CalendarDays className="mb-10 h-12 w-12 text-primary transition-transform group-hover:scale-110" />
+          <span className="font-display text-2xl font-bold tracking-tight text-foreground">
             {t("reserva.roomButton")}
           </span>
         </Link>
 
         <Link
           to="/cluster-calendar"
-          className="group block rounded-xl bg-secondary p-8 text-center shadow-sm border border-border hover:border-primary hover:shadow-md transition-all duration-200"
+          className="group surface-panel interactive-card block rounded-3xl p-8 text-left sm:p-10"
         >
-          <CalendarClock className="mx-auto mb-4 h-12 w-12 text-primary group-hover:scale-110 transition-transform" />
-          <span className="text-xl font-semibold text-foreground">
+          <CalendarClock className="mb-10 h-12 w-12 text-primary transition-transform group-hover:scale-110" />
+          <span className="font-display text-2xl font-bold tracking-tight text-foreground">
             {t("reserva.clusterCalendarButton")}
           </span>
         </Link>

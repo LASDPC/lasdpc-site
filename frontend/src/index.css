@@ -159,6 +159,68 @@
     @apply transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_24px_60px_-36px_hsl(var(--primary)/0.65)];
   }
 
+  .refreshed-page {
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(ellipse 45rem 32rem at 90% 2%, hsl(var(--primary) / 0.10), transparent 72%),
+      radial-gradient(ellipse 34rem 28rem at 0% 70%, hsl(var(--accent) / 0.055), transparent 75%);
+  }
+
+  .refreshed-page > * {
+    position: relative;
+    z-index: 1;
+    animation: page-arrive 550ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .refreshed-page h1 {
+    letter-spacing: -0.055em;
+    line-height: 1.05;
+  }
+
+  .refreshed-page h2,
+  .refreshed-page h3 {
+    letter-spacing: -0.035em;
+  }
+
+  .refreshed-page :is(section, article, aside, form):is(.bg-card, .surface-panel) {
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 50px -40px hsl(var(--foreground) / 0.28);
+  }
+
+  .refreshed-page :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]) {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .refreshed-page :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]):focus-visible {
+    border-color: hsl(var(--primary) / 0.65);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+  }
+
+  .editorial-detail {
+    border-bottom: 1px solid hsl(var(--border));
+    background: radial-gradient(ellipse at 85% 10%, hsl(var(--primary) / 0.12), transparent 55%);
+  }
+
+  .editorial-detail h1 {
+    font-size: clamp(2.75rem, 6vw, 5.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.065em;
+  }
+
+  .editorial-article {
+    margin-top: -2rem;
+    border: 1px solid hsl(var(--border) / 0.75);
+    border-radius: 1.5rem;
+    background: hsl(var(--card) / 0.94);
+    box-shadow: 0 28px 70px -50px hsl(var(--foreground) / 0.32);
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  .editorial-article :is(h2, h3) {
+    margin-top: 2em;
+  }
+
   .tech-grid {
     background-image:
       linear-gradient(hsl(var(--primary) / 0.075) 1px, transparent 1px),
@@ -232,6 +294,11 @@ body .font-mono {
 
 @keyframes orbit-spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes page-arrive {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .signal-pulse {

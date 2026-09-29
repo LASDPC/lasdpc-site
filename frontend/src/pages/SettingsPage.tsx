@@ -69,17 +69,18 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="py-10">
+    <div className="py-16 md:py-20">
       <div className="container mx-auto max-w-4xl px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">{t("menu.settings")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+        <div className="mb-10 border-b border-border/70 pb-10">
+          <p className="mb-4 font-mono text-xs uppercase tracking-[0.22em] text-primary">{isPt ? "Área pessoal" : "Personal area"}</p>
+          <h1 className="font-display text-5xl font-bold text-foreground md:text-6xl">{t("menu.settings")}</h1>
+          <p className="mt-5 max-w-xl text-base text-muted-foreground">
             {isPt ? "Gerencie dados da conta, privacidade e preferencias do seu perfil." : "Manage account data, privacy, and profile preferences."}
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="space-y-2">
+          <aside className="surface-panel h-fit space-y-2 rounded-2xl p-3 lg:sticky lg:top-28">
             <a href="#account" className="flex min-h-10 items-center gap-2 rounded-md bg-secondary px-3 text-sm font-medium text-foreground">
               <User size={16} />
               {isPt ? "Conta" : "Account"}
@@ -91,7 +92,7 @@ const SettingsPage = () => {
           </aside>
 
           <main className="space-y-6">
-            <section id="account" className="rounded-lg border border-border bg-card p-5">
+            <section id="account" className="surface-panel rounded-2xl p-5 md:p-7">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
                   <h2 className="font-semibold text-foreground">{isPt ? "Conta" : "Account"}</h2>
@@ -124,7 +125,7 @@ const SettingsPage = () => {
               </div>
             </section>
 
-            <section id="privacy" className="rounded-lg border border-border bg-card p-5">
+            <section id="privacy" className="surface-panel rounded-2xl p-5 md:p-7">
               <div className="mb-5 flex items-start gap-3">
                 <Shield size={20} className="mt-0.5 text-primary" />
                 <div>

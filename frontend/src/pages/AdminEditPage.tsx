@@ -59,15 +59,15 @@ const AdminEditPage = () => {
   };
 
   return (
-    <div className="py-4">
-      <div className="mx-auto px-6">
+    <div className="py-12 md:py-16">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="font-display text-2xl font-bold text-foreground">{title}</h1>
+            <h1 className="font-display text-4xl font-bold text-foreground md:text-5xl">{title}</h1>
           </div>
         </div>
 

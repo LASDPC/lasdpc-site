@@ -526,7 +526,7 @@ const AdminDashboardPage = () => {
   }));
 
   return (
-    <div className="py-8">
+    <div className="py-12 md:py-16">
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -534,7 +534,7 @@ const AdminDashboardPage = () => {
               <LayoutDashboard size={22} />
               <span className="text-sm font-semibold uppercase tracking-wide">Admin</span>
             </div>
-            <h1 className="mt-2 font-display text-3xl font-bold text-foreground">
+            <h1 className="mt-3 font-display text-4xl font-bold text-foreground md:text-5xl">
               {isPt ? "Painel administrativo" : "Admin dashboard"}
             </h1>
           </div>

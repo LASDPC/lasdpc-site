@@ -46,7 +46,7 @@ const ClusterCalendarPage = () => {
   }
 
   return (
-    <div className="mt-16 min-h-[calc(100vh-4rem)] py-8">
+    <div className="min-h-[calc(100vh-4rem)] py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -54,7 +54,7 @@ const ClusterCalendarPage = () => {
               <Server size={20} />
               <span className="text-sm font-semibold uppercase tracking-wide">Clusters</span>
             </div>
-            <h1 className="mt-2 font-display text-3xl font-bold text-foreground">
+            <h1 className="mt-3 font-display text-4xl font-bold text-foreground md:text-5xl">
               {isPt ? "Calendário de uso dos clusters" : "Cluster usage calendar"}
             </h1>
           </div>
@@ -76,7 +76,7 @@ const ClusterCalendarPage = () => {
           {format(rangeStart, "dd MMM", { locale })} - {format(rangeEnd, "dd MMM yyyy", { locale })}
         </div>
 
-        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-xl shadow-foreground/5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {days.map((day) => {
             const key = dateKey(day);
             const dayEvents = events.filter((event) => event.start_date <= key && event.end_date >= key);
@@ -111,7 +111,7 @@ const ClusterCalendarPage = () => {
           })}
         </div>
 
-        <div className="mt-6 rounded-lg border border-border bg-card p-4">
+        <div className="surface-panel mt-6 rounded-2xl p-6">
           <h2 className="font-display text-lg font-semibold text-foreground">
             {isPt ? "Reservas aprovadas no período" : "Approved reservations in this period"}
           </h2>

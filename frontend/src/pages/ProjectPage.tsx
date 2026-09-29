@@ -61,10 +61,11 @@ const ProjectPage = () => {
   }
 
   return (
-    <div className="py-10">
-      <div className="container mx-auto px-4 max-w-3xl">
+    <div className="pb-20">
+      <div className="editorial-detail px-4 pb-20 pt-16 md:pt-24">
+        <div className="container mx-auto max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <Link to="/research" className="text-primary hover:underline inline-flex items-center gap-2 mb-8 text-sm">
+          <Link to="/research" className="mb-10 inline-flex items-center gap-2 rounded-full border border-border bg-card/75 px-4 py-2 text-sm font-medium text-primary transition-colors hover:border-primary/40 hover:bg-card">
             <ArrowLeft size={16} /> {isPt ? "Voltar à pesquisa" : "Back to research"}
           </Link>
 
@@ -77,23 +78,28 @@ const ProjectPage = () => {
             </span>
           </div>
 
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-4">
+          <h1 className="font-display font-bold text-foreground">
             {isPt ? project.titlePt : project.title}
           </h1>
 
-          <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+          <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             {isPt ? project.descriptionPt : project.description}
           </p>
+        </motion.div>
+        </div>
+      </div>
+      <div className="container mx-auto max-w-4xl px-4">
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.12 }}>
 
           {project.image && (
             <img
               src={mediaUrl(project.image)}
               alt={isPt ? project.titlePt : project.title}
-              className="w-full rounded-lg border border-border mb-8"
+              className="relative -mt-10 mb-8 w-full rounded-3xl border border-border object-cover shadow-xl"
             />
           )}
 
-          <div className="flex flex-wrap gap-6 text-sm text-muted-foreground mb-10 border-y border-border py-4">
+          <div className="mb-8 flex flex-wrap gap-6 rounded-2xl border border-border bg-card/85 px-6 py-5 text-sm text-muted-foreground shadow-sm">
             <span className="inline-flex items-center gap-1.5">
               <BookOpen size={15} /> {project.publications} {isPt ? "publicações" : "publications"}
             </span>
@@ -112,7 +118,7 @@ const ProjectPage = () => {
             )}
           </div>
 
-          <article className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
+          <article className="editorial-article !mt-0 prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary">
             <ReactMarkdown remarkPlugins={[remarkGfm]} urlTransform={urlTransform}>
               {isPt ? project.contentPt : project.content}
             </ReactMarkdown>
