@@ -93,7 +93,7 @@ const eventMeta = {
 
 const copy = {
   pt: {
-    eyebrow: "1990 — presente · ICMC/USP",
+    eyebrow: "1990 — presente",
     headlineA: "O futuro tem",
     headlineB: "uma história.",
     heroDescription: "Uma trajetória construída por pessoas, perguntas e descobertas. Conheça os marcos que fizeram do LaSDPC um espaço de pesquisa em constante evolução.",
@@ -122,7 +122,7 @@ const copy = {
     threads: ["Computação paralela", "Sistemas distribuídos", "Escalonamento", "Computação em nuvem", "Redes de sensores", "Educação aberta"],
   },
   en: {
-    eyebrow: "1990 — present · ICMC/USP",
+    eyebrow: "1990 — present",
     headlineA: "The future has",
     headlineB: "a history.",
     heroDescription: "A journey shaped by people, questions, and discoveries. Explore the milestones that made LaSDPC a place of research in constant evolution.",
@@ -248,8 +248,8 @@ export default function HistoriaPage() {
         <div className="container relative mx-auto grid min-h-[650px] items-center gap-12 px-4 pb-16 pt-14 lg:grid-cols-[1.03fr_0.97fr] lg:gap-16 lg:pb-20 lg:pt-20">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: prefersReducedMotion ? 0 : 0.65 }}>
             <div className="mb-6 flex items-center gap-4 sm:gap-6">
-              <p className="min-w-0 font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary">{content.eyebrow}</p>
               <span className="history-icmc-logo" aria-hidden="true" />
+              <p className="min-w-0 font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary">{content.eyebrow}</p>
             </div>
             <h1 data-testid="history-title" className="max-w-3xl font-display text-[clamp(3.5rem,7vw,7rem)] font-bold leading-[0.92] tracking-[-0.065em] text-foreground">
               {content.headlineA} <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{content.headlineB}</span>
