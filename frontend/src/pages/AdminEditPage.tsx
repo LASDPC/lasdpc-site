@@ -2,9 +2,11 @@ import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DeleteConfirmButton from "@/components/admin/DeleteConfirmButton";
+import PasswordResetCard from "@/components/admin/PasswordResetCard";
+import PageHeader from "@/components/PageHeader";
 
 import BlogForm from "@/components/admin/forms/BlogForm";
 import ProjectForm from "@/components/admin/forms/ProjectForm";
@@ -16,9 +18,10 @@ import InfraClusterForm from "@/components/admin/forms/InfraClusterForm";
 import { useBlogPost, useCreateBlogPost, useUpdateBlogPost, useDeleteBlogPost } from "@/hooks/useBlog";
 import { useProject, useCreateProject, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
 import { usePublication, useCreatePublication, useUpdatePublication, useDeletePublication } from "@/hooks/usePublications";
-import { useDocente, useCreateDocente, useUpdateDocente, useDeleteDocente, useStudent, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/usePeople";
+import { useUser, useCreateDocente, useUpdateDocente, useDeleteDocente, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/hooks/usePeople";
 import { useCluster, useCreateCluster, useUpdateCluster, useDeleteCluster } from "@/hooks/useInfrastructure";
 import { useDoc, useCreateDoc, useUpdateDoc, useDeleteDoc } from "@/hooks/useDocs";
+import type { User } from "@/services/auth";
 
 type ResourceType = "blog" | "project" | "publication" | "docente" | "student" | "cluster" | "doc";
 
@@ -45,6 +48,7 @@ const AdminEditPage = () => {
 
   const res = resource as ResourceType;
   const isEdit = !!id;
+  const isPerson = res === "docente" || res === "student";
   const labels = RESOURCE_LABELS[res] || { en: res, pt: res };
   const label = lang === "pt" ? labels.pt : labels.en;
   const title = lang === "pt"
@@ -55,23 +59,32 @@ const AdminEditPage = () => {
     toast.success(lang === "pt"
       ? (isEdit ? "Atualizado com sucesso" : "Criado com sucesso")
       : (isEdit ? "Updated successfully" : "Created successfully"));
-    navigate(-1);
+    if (isPerson) navigate("/admin");
+    else navigate(-1);
   };
 
   return (
-    <div className="py-12 md:py-16">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+    <div className={isPerson ? "pb-16" : "py-12 md:py-16"}>
+      {isPerson ? (
+        <PageHeader
+          icon={UserRound}
+          eyebrow={lang === "pt" ? "Painel administrativo / Pessoas" : "Admin dashboard / People"}
+          title={title}
+          subtitle={lang === "pt" ? "Organize os dados do perfil e o acesso à conta em etapas claras." : "Manage profile details and account access in clear sections."}
+        >
+          <Button variant="outline" onClick={() => navigate("/admin")}><ArrowLeft size={16} />{lang === "pt" ? "Voltar ao painel" : "Back to dashboard"}</Button>
+        </PageHeader>
+      ) : null}
+      <div className={isPerson ? "container mx-auto max-w-6xl px-4 pt-8 sm:px-6" : "mx-auto max-w-5xl px-4 sm:px-6"}>
+        {!isPerson && (
+          <div className="mb-8 flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft size={20} />
             </Button>
             <h1 className="font-display text-4xl font-bold text-foreground md:text-5xl">{title}</h1>
           </div>
-        </div>
+        )}
 
-        {/* Form */}
         <ResourceForm resource={res} id={id} lang={lang} onSuccess={handleSuccess} />
       </div>
     </div>
@@ -97,9 +110,9 @@ const ResourceForm = ({ resource, id, lang, onSuccess }: ResourceFormProps) => {
     case "publication":
       return <PublicationResourceForm id={id} lang={lang} isEdit={isEdit} onSuccess={onSuccess} onDelete={() => navigate(-1)} />;
     case "docente":
-      return <DocenteResourceForm id={id} lang={lang} isEdit={isEdit} onSuccess={onSuccess} onDelete={() => navigate(-1)} />;
+      return <DocenteResourceForm id={id} lang={lang} isEdit={isEdit} onSuccess={onSuccess} onDelete={() => navigate("/admin")} />;
     case "student":
-      return <StudentResourceForm id={id} lang={lang} isEdit={isEdit} onSuccess={onSuccess} onDelete={() => navigate(-1)} />;
+      return <StudentResourceForm id={id} lang={lang} isEdit={isEdit} onSuccess={onSuccess} onDelete={() => navigate("/admin")} />;
     case "cluster":
       return <ClusterResourceForm id={id} lang={lang} isEdit={isEdit} onSuccess={onSuccess} onDelete={() => navigate(-1)} />;
     case "doc":
@@ -210,13 +223,44 @@ const PublicationResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: Form
   );
 };
 
+function AccountActions({
+  user, currentUserId, lang, deleting, onDelete,
+}: {
+  user: User;
+  currentUserId?: string;
+  lang: "en" | "pt";
+  deleting: boolean;
+  onDelete: () => void;
+}) {
+  const isPt = lang === "pt";
+  const isOwnAccount = user.id === currentUserId;
+  return (
+    <div className="mt-6 space-y-6 lg:ml-[264px]">
+      {isOwnAccount ? (
+        <section id="account-access" className="surface-panel scroll-mt-28 rounded-2xl p-5 text-sm text-muted-foreground sm:p-7">
+          {isPt ? "Outro administrador pode alterar a senha desta conta. Você não pode alterá-la por esta ação." : "Another administrator can change this account's password. You cannot use this action on your own account."}
+        </section>
+      ) : <PasswordResetCard user={user} isPt={isPt} />}
+      {!isOwnAccount && !user.is_bootstrap_admin && (
+        <section className="surface-panel rounded-2xl border border-destructive/20 p-5 sm:p-7">
+          <h2 className="font-display text-lg font-semibold text-foreground">{isPt ? "Excluir conta" : "Delete account"}</h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">{isPt ? "Remova esta conta somente quando ela não for mais necessária." : "Remove this account only when it is no longer needed."}</p>
+          <DeleteConfirmButton loading={deleting} onConfirm={onDelete} isPt={isPt} />
+        </section>
+      )}
+    </div>
+  );
+}
+
 const DocenteResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrapperProps) => {
-  const { data, isLoading } = useDocente(id || "");
+  const { user: currentUser } = useAuth();
+  const { data, isLoading } = useUser(id || "");
   const create = useCreateDocente();
   const update = useUpdateDocente();
   const del = useDeleteDocente();
 
   if (isEdit && isLoading) return <FormSkeleton />;
+  if (isEdit && !data) return <p role="alert" className="text-sm text-destructive">{lang === "pt" ? "Não foi possível carregar este perfil." : "Could not load this profile."}</p>;
 
   return (
     <>
@@ -226,29 +270,25 @@ const DocenteResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrap
         lang={lang}
         loading={create.isPending || update.isPending}
         onSubmit={(values: Record<string, unknown>) => {
-          if (isEdit && id) update.mutate({ id, data: values }, { onSuccess });
-          else create.mutate(values as never, { onSuccess });
+          const onError = (error: Error) => toast.error(error.message || (lang === "pt" ? "Não foi possível salvar o perfil." : "Could not save the profile."));
+          if (isEdit && id) update.mutate({ id, data: values }, { onSuccess, onError });
+          else create.mutate(values as never, { onSuccess, onError });
         }}
       />
-      {isEdit && (
-        <div className="flex justify-end pt-4 mt-4 border-t border-border">
-          <DeleteConfirmButton
-            loading={del.isPending}
-            onConfirm={() => del.mutate(id!, { onSuccess: () => { toast.success("Deleted successfully"); onDelete(); } })}
-          />
-        </div>
-      )}
+      {isEdit && data && <AccountActions user={data} currentUserId={currentUser?.id} lang={lang} deleting={del.isPending} onDelete={() => del.mutate(id!, { onSuccess: () => { toast.success(lang === "pt" ? "Conta excluída." : "Account deleted."); onDelete(); }, onError: (error) => toast.error(error.message) })} />}
     </>
   );
 };
 
 const StudentResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrapperProps) => {
-  const { data, isLoading } = useStudent(id || "");
+  const { user: currentUser } = useAuth();
+  const { data, isLoading } = useUser(id || "");
   const create = useCreateStudent();
   const update = useUpdateStudent();
   const del = useDeleteStudent();
 
   if (isEdit && isLoading) return <FormSkeleton />;
+  if (isEdit && !data) return <p role="alert" className="text-sm text-destructive">{lang === "pt" ? "Não foi possível carregar este perfil." : "Could not load this profile."}</p>;
 
   return (
     <>
@@ -258,18 +298,12 @@ const StudentResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrap
         lang={lang}
         loading={create.isPending || update.isPending}
         onSubmit={(values: Record<string, unknown>) => {
-          if (isEdit && id) update.mutate({ id, data: values }, { onSuccess });
-          else create.mutate(values as never, { onSuccess });
+          const onError = (error: Error) => toast.error(error.message || (lang === "pt" ? "Não foi possível salvar o perfil." : "Could not save the profile."));
+          if (isEdit && id) update.mutate({ id, data: values }, { onSuccess, onError });
+          else create.mutate(values as never, { onSuccess, onError });
         }}
       />
-      {isEdit && (
-        <div className="flex justify-end pt-4 mt-4 border-t border-border">
-          <DeleteConfirmButton
-            loading={del.isPending}
-            onConfirm={() => del.mutate(id!, { onSuccess: () => { toast.success("Deleted successfully"); onDelete(); } })}
-          />
-        </div>
-      )}
+      {isEdit && data && <AccountActions user={data} currentUserId={currentUser?.id} lang={lang} deleting={del.isPending} onDelete={() => del.mutate(id!, { onSuccess: () => { toast.success(lang === "pt" ? "Conta excluída." : "Account deleted."); onDelete(); }, onError: (error) => toast.error(error.message) })} />}
     </>
   );
 };

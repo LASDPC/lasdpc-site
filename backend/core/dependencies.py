@@ -22,6 +22,8 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)):
     user = await db.users.find_one({"email": email})
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if payload.get("ver", 0) != user.get("auth_version", 0):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired")
     user["_id"] = str(user["_id"])
     return user
 

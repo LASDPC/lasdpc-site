@@ -19,6 +19,7 @@ from models.user import (
     UserCreate,
     UserUpdate,
     AdminPrivilegeUpdate,
+    AdminPasswordUpdate,
     UserOut,
 )
 
@@ -362,6 +363,34 @@ async def set_admin_privilege(
         await db.users.update_one({"_id": oid}, {"$set": {"is_admin": body.is_admin}})
         target["is_admin"] = body.is_admin
     return _user_out(target)
+
+
+@router.put("/{user_id}/password", status_code=status.HTTP_204_NO_CONTENT)
+async def set_user_password(
+    user_id: str,
+    body: AdminPasswordUpdate,
+    current_admin: dict = Depends(require_admin),
+):
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id") from None
+    if str(current_admin["_id"]) == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change your own password here")
+    if len(body.new_password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at most 72 bytes")
+
+    db = get_db()
+    target = await db.users.find_one({"_id": oid})
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if settings.admin_email and target.get("email", "").casefold() == settings.admin_email.casefold():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bootstrap admin password is managed by configuration")
+
+    await db.users.update_one(
+        {"_id": oid},
+        {"$set": {"hashed_password": hash_password(body.new_password)}, "$inc": {"auth_version": 1}},
+    )
 
 
 @router.put("/{user_id}", response_model=UserOut)

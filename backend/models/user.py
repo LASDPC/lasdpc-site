@@ -119,6 +119,10 @@ class AdminPrivilegeUpdate(BaseModel):
     is_admin: bool
 
 
+class AdminPasswordUpdate(BaseModel):
+    new_password: str = Field(..., min_length=12)
+
+
 class UserOut(BaseModel):
     id: str
     email: str

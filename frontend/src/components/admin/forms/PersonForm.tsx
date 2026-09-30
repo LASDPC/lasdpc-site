@@ -8,6 +8,10 @@ import ProfileTermPicker from "@/components/profile/ProfileTermPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Camera, Fingerprint, GraduationCap, Link2, Save, Sparkles, UserRound } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
 import { useDocentes } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
 import { uploadProfilePhoto } from "@/services/uploads";
@@ -21,6 +25,21 @@ const LAB_RELATIONSHIP_OPTIONS = [
 
 const requiredText = z.string().trim().min(1);
 
+const requireCreationFields = (values: {
+  password?: string;
+  orcid?: string;
+  scholar?: string;
+  github?: string;
+  affiliation_name?: string;
+}, ctx: z.RefinementCtx) => {
+  if (!values.password || values.password.length < 12 || new TextEncoder().encode(values.password).length > 72) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["password"], message: "12–72 bytes" });
+  }
+  for (const field of ["orcid", "scholar", "github", "affiliation_name"] as const) {
+    if (!values[field]?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: "Required" });
+  }
+};
+
 const docenteSchema = z.object({
   name: requiredText,
   email: z.string().email(),
@@ -29,8 +48,8 @@ const docenteSchema = z.object({
   area: z.string().optional(),
   areaPt: z.string().optional(),
   lattes: requiredText,
-  orcid: requiredText,
-  scholar: requiredText,
+  orcid: z.string().optional(),
+  scholar: z.string().optional(),
   page: z.string().optional(),
   password: z.string().optional(),
   bio: z.string().optional(),
@@ -38,13 +57,14 @@ const docenteSchema = z.object({
   year_joined: z.coerce.number().int().min(1900).max(2100).optional().or(z.literal("")),
   exit_date: z.string().optional(),
   linkedin: z.string().optional(),
-  github: requiredText,
+  github: z.string().optional(),
   twitter: z.string().optional(),
   researchgate: z.string().optional(),
   usp_number: z.string().optional(),
   lab_relationship_type: z.enum(["academic_advisor", "usp_organization", "external_organization"]),
-  affiliation_name: requiredText,
+  affiliation_name: z.string().optional(),
 });
+const docenteCreateSchema = docenteSchema.superRefine(requireCreationFields);
 
 const studentSchema = z.object({
   name: requiredText,
@@ -62,16 +82,17 @@ const studentSchema = z.object({
   graduation_year: z.coerce.number().int().min(1900).max(2100).optional().or(z.literal("")),
   exit_date: z.string().optional(),
   linkedin: z.string().optional(),
-  github: requiredText,
+  github: z.string().optional(),
   twitter: z.string().optional(),
   researchgate: z.string().optional(),
   usp_number: z.string().optional(),
   lattes: requiredText,
-  orcid: requiredText,
-  scholar: requiredText,
+  orcid: z.string().optional(),
+  scholar: z.string().optional(),
   lab_relationship_type: z.enum(["academic_advisor", "usp_organization", "external_organization"]),
-  affiliation_name: requiredText,
+  affiliation_name: z.string().optional(),
 });
+const studentCreateSchema = studentSchema.superRefine(requireCreationFields);
 
 interface DocenteFormProps {
   type: "docente";
@@ -100,14 +121,95 @@ const initialsFor = (name: string) => {
 
 const numberOrNull = (value: unknown) => value || null;
 
+function FormSection({
+  id, number, icon: Icon, title, description, children,
+}: {
+  id: string;
+  number: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="surface-panel scroll-mt-28 rounded-2xl p-5 sm:p-7">
+      <div className="mb-6 flex items-start gap-3 border-b border-border/70 pb-5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon size={19} /></span>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">{number}</p>
+          <h2 className="mt-0.5 font-display text-xl font-semibold text-foreground">{title}</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="space-y-5">{children}</div>
+    </section>
+  );
+}
+
+function PersonFormShell({
+  name, email, photo, pt, isEdit, type, loading, children,
+}: {
+  name: string;
+  email: string;
+  photo: string;
+  pt: boolean;
+  isEdit: boolean;
+  type: "docente" | "student";
+  loading?: boolean;
+  children: ReactNode;
+}) {
+  const links = [
+    { id: "identity", label: pt ? "Identificação" : "Identity", icon: UserRound },
+    { id: "academic", label: pt ? "Vínculo acadêmico" : "Academic details", icon: GraduationCap },
+    { id: "sources", label: pt ? "Fontes e afiliação" : "Sources & affiliation", icon: BookOpen },
+    { id: "public-profile", label: pt ? "Perfil público" : "Public profile", icon: Sparkles },
+    { id: "social-links", label: pt ? "Outros links" : "Other links", icon: Link2 },
+  ];
+  return (
+    <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+      <aside className="surface-panel rounded-2xl p-4 lg:sticky lg:top-28">
+        <div className="flex items-center gap-3 border-b border-border/70 px-1 pb-4">
+          {photo ? <img src={mediaUrl(photo)} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" /> : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><UserRound size={23} /></span>}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{name || (pt ? "Novo perfil" : "New profile")}</p>
+            <p className="truncate text-xs text-muted-foreground">{email || (pt ? "Sem e-mail" : "No email yet")}</p>
+          </div>
+        </div>
+        <div className="px-1 pt-3 lg:pt-4">
+          <Badge variant="outline" className="rounded-full lg:mb-4">{type === "docente" ? (pt ? "Docente" : "Faculty") : (pt ? "Aluno" : "Student")}</Badge>
+          <nav aria-label={pt ? "Seções do perfil" : "Profile sections"} className="hidden space-y-1 lg:block">
+            {links.map(({ id, label, icon: Icon }) => (
+              <a key={id} href={`#${id}`} className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                <Icon size={16} />{label}
+              </a>
+            ))}
+            {isEdit && <a href="#account-access" className="flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"><Fingerprint size={16} />{pt ? "Acesso à conta" : "Account access"}</a>}
+          </nav>
+        </div>
+      </aside>
+      <div className="min-w-0 space-y-6">
+        {children}
+        <div className="surface-panel flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 px-5 py-4">
+          <p className="text-sm text-muted-foreground">{pt ? "Revise as informações antes de salvar." : "Review the details before saving."}</p>
+          <Button type="submit" disabled={loading || (!isEdit && !photo)}>
+            <Save size={16} />{loading ? (pt ? "Salvando..." : "Saving...") : isEdit ? (pt ? "Salvar perfil" : "Save profile") : (pt ? "Criar perfil" : "Create profile")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProfilePhotoField({
   photo,
   setPhoto,
   pt,
+  required,
 }: {
   photo: string;
   setPhoto: (value: string) => void;
   pt: boolean;
+  required: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -129,19 +231,20 @@ function ProfilePhotoField({
   };
 
   return (
-    <div className="space-y-2">
-      <Label>{pt ? "Foto de perfil" : "Profile photo"}</Label>
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="rounded-xl border border-border/70 bg-secondary/35 p-4">
+      <div className="flex flex-wrap items-center gap-4">
         {photo ? (
-          <img src={mediaUrl(photo)} alt="" className="h-16 w-16 rounded-full border border-border object-cover" />
+          <img src={mediaUrl(photo)} alt="" className="h-20 w-20 rounded-2xl border border-border object-cover" />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary text-xs text-muted-foreground">
-            {pt ? "Sem foto" : "No photo"}
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground">
+            <Camera size={25} />
           </div>
         )}
-        <div className="flex flex-col gap-2">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">{pt ? "Foto do perfil" : "Profile photo"}</p>
+          <p className="text-xs text-muted-foreground">{required ? (pt ? "Obrigatória para criar a conta." : "Required to create the account.") : (pt ? "Opcional ao editar o perfil." : "Optional when editing the profile.")}</p>
           <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
-            {uploading ? "..." : pt ? "Enviar foto" : "Upload photo"}
+            <Camera size={15} />{uploading ? "..." : photo ? (pt ? "Trocar foto" : "Change photo") : pt ? "Enviar foto" : "Upload photo"}
           </Button>
           <input
             ref={inputRef}
@@ -152,7 +255,7 @@ function ProfilePhotoField({
           />
         </div>
       </div>
-      {!photo && <p className="text-xs text-destructive">{requiredMessage(pt)}</p>}
+      {required && !photo && <p className="mt-3 text-xs text-destructive">{requiredMessage(pt)}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
@@ -160,6 +263,7 @@ function ProfilePhotoField({
 
 function RequiredProfileSection({
   pt,
+  isEdit,
   register,
   errors,
   relationshipType,
@@ -167,6 +271,7 @@ function RequiredProfileSection({
   onAffiliationChange,
 }: {
   pt: boolean;
+  isEdit: boolean;
   register: ReturnType<typeof useForm>["register"];
   errors: Record<string, { message?: string }>;
   relationshipType?: string;
@@ -174,37 +279,34 @@ function RequiredProfileSection({
   onAffiliationChange: (value: string) => void;
 }) {
   return (
-    <div className="border-t border-border pt-4 space-y-4">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        {pt ? "Campos obrigatorios do perfil publico" : "Required public profile fields"}
-      </h3>
-      <div className="grid grid-cols-2 gap-4">
+    <FormSection id="sources" number="03" icon={BookOpen} title={pt ? "Fontes e afiliação" : "Sources & affiliation"} description={isEdit ? (pt ? "Lattes é necessário para salvar; os demais links podem ser preenchidos depois." : "Lattes is needed to save; other links can be added later.") : (pt ? "Informe as fontes acadêmicas e o vínculo da nova conta." : "Add academic sources and the new account's affiliation.")}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label>Lattes URL</Label>
+          <Label>Lattes URL *</Label>
           <Input {...register("lattes")} />
           {errors.lattes && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
         </div>
         <div>
-          <Label>ORCID URL</Label>
+          <Label>ORCID URL{!isEdit && " *"}</Label>
           <Input {...register("orcid")} />
           {errors.orcid && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label>Google Scholar URL</Label>
+          <Label>Google Scholar URL{!isEdit && " *"}</Label>
           <Input {...register("scholar")} />
           {errors.scholar && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
         </div>
         <div>
-          <Label>GitHub</Label>
+          <Label>GitHub{!isEdit && " *"}</Label>
           <Input {...register("github")} placeholder="https://github.com/..." />
           {errors.github && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
         </div>
       </div>
       <div>
-        <Label>{pt ? "Relacao com o lab" : "Relationship with the lab"}</Label>
-        <select {...register("lab_relationship_type")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm">
+        <Label>{pt ? "Relação com o laboratório" : "Relationship with the lab"}</Label>
+        <select {...register("lab_relationship_type")} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {LAB_RELATIONSHIP_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>{pt ? option.pt : option.en}</option>
           ))}
@@ -212,7 +314,7 @@ function RequiredProfileSection({
         {errors.lab_relationship_type && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
       </div>
       <div>
-        <Label>{pt ? "Nome da afiliacao/organizacao" : "Affiliation or organization name"}</Label>
+        <Label>{pt ? "Afiliação ou organização" : "Affiliation or organization"}{!isEdit && " *"}</Label>
         <AffiliationInput
           value={affiliationName}
           onChange={onAffiliationChange}
@@ -221,7 +323,7 @@ function RequiredProfileSection({
         />
         {errors.affiliation_name && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
       </div>
-    </div>
+    </FormSection>
   );
 }
 
@@ -240,7 +342,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<z.infer<typeof docenteSchema>>({
-    resolver: zodResolver(docenteSchema),
+    resolver: zodResolver(isEdit ? docenteSchema : docenteCreateSchema),
     defaultValues: {
       name: initial?.name ?? "",
       email: initial?.email ?? "",
@@ -270,7 +372,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
 
   return (
     <form onSubmit={handleSubmit((v) => {
-      if (!photo) return;
+      if (!photo && !isEdit) return;
       const data: Record<string, unknown> = {
         ...v,
         role: "docente",
@@ -293,27 +395,32 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
       };
       if (!isEdit) {
         data.initials = initialsFor(v.name);
-        if (!v.password) data.password = "changeme123";
+        data.password = v.password;
       }
       onSubmit(data);
-    })} className="space-y-6">
-      <div className="space-y-4">
-        <ProfilePhotoField photo={photo} setPhoto={setPhoto} pt={pt} />
-        <div><Label>{pt ? "Nome" : "Name"}</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
-        <div><Label>E-mail</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">{pt ? "E-mail valido obrigatorio" : "Valid email required"}</p>}</div>
-        {!isEdit && <div><Label>{pt ? "Senha" : "Password"}</Label><Input type="password" {...register("password")} placeholder={pt ? "Padrao: changeme123" : "Default: changeme123"} /></div>}
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Titulo (EN)" : "Title (EN)"}</Label><Input {...register("title")} placeholder="Full Professor" /></div>
-          <div><Label>{pt ? "Titulo (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} placeholder="Professor Titular" /></div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Area (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>
-          <div><Label>{pt ? "Area (PT)" : "Area (PT)"}</Label><Input {...register("areaPt")} /></div>
-        </div>
-      </div>
+    })}>
+      <PersonFormShell name={watch("name")} email={watch("email")} photo={photo} pt={pt} isEdit={isEdit} type="docente" loading={loading}>
+        <FormSection id="identity" number="01" icon={UserRound} title={pt ? "Identificação" : "Identity"} description={pt ? "Dados básicos da conta e imagem exibida no site." : "Basic account details and the image shown on the site."}>
+          <ProfilePhotoField photo={photo} setPhoto={setPhoto} pt={pt} required={!isEdit} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><Label htmlFor="docente-name">{pt ? "Nome" : "Name"} *</Label><Input id="docente-name" {...register("name")} />{errors.name && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
+            <div><Label htmlFor="docente-email">E-mail *</Label><Input id="docente-email" type="email" readOnly={isEdit} className={isEdit ? "bg-secondary/60 text-muted-foreground" : ""} {...register("email")} />{errors.email && <p className="mt-1 text-xs text-destructive">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
+          </div>
+          {isEdit ? <p className="text-xs text-muted-foreground">{pt ? "O e-mail de login não pode ser alterado nesta tela." : "The login email cannot be changed here."}</p> : <div><Label htmlFor="docente-password">{pt ? "Senha inicial" : "Initial password"} *</Label><Input id="docente-password" type="password" autoComplete="new-password" {...register("password")} /><p className="mt-1 text-xs text-muted-foreground">{pt ? "Use entre 12 e 72 bytes. A senha poderá ser alterada depois." : "Use 12 to 72 bytes. The password can be changed later."}</p>{errors.password && <p className="mt-1 text-xs text-destructive">{pt ? "Informe uma senha de 12 a 72 bytes." : "Enter a password of 12 to 72 bytes."}</p>}</div>}
+        </FormSection>
+
+        <FormSection id="academic" number="02" icon={GraduationCap} title={pt ? "Vínculo acadêmico" : "Academic details"} description={pt ? "Título e área de atuação em português e inglês." : "Title and research area in Portuguese and English."}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><Label>{pt ? "Título (EN)" : "Title (EN)"}</Label><Input {...register("title")} placeholder="Full Professor" /></div>
+            <div><Label>{pt ? "Título (PT)" : "Title (PT)"}</Label><Input {...register("titlePt")} placeholder="Professor Titular" /></div>
+            <div><Label>{pt ? "Área (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>
+            <div><Label>{pt ? "Área (PT)" : "Area (PT)"}</Label><Input {...register("areaPt")} /></div>
+          </div>
+        </FormSection>
 
       <RequiredProfileSection
         pt={pt}
+        isEdit={isEdit}
         register={register as never}
         errors={errors as never}
         relationshipType={watch("lab_relationship_type")}
@@ -321,11 +428,10 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
         onAffiliationChange={(value) => setValue("affiliation_name", value, { shouldValidate: true })}
       />
 
-      <div className="border-t border-border pt-4 space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{pt ? "Perfil" : "Profile"}</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Bio (EN)" : "Bio (EN)"}</Label><textarea {...register("bio")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-          <div><Label>{pt ? "Bio (PT)" : "Bio (PT)"}</Label><textarea {...register("bioPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      <FormSection id="public-profile" number="04" icon={Sparkles} title={pt ? "Perfil público" : "Public profile"} description={pt ? "Apresente a trajetória, temas de pesquisa e habilidades deste docente." : "Describe this faculty member's background, research topics, and skills."}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><Label>{pt ? "Biografia (EN)" : "Biography (EN)"}</Label><Textarea {...register("bio")} className="min-h-28" /></div>
+          <div><Label>{pt ? "Biografia (PT)" : "Biography (PT)"}</Label><Textarea {...register("bioPt")} className="min-h-28" /></div>
         </div>
         <div>
           <Label>{pt ? "Areas de pesquisa" : "Research areas"}</Label>
@@ -335,28 +441,26 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
           <Label>{pt ? "Habilidades e tecnologias" : "Skills and technologies"}</Label>
           <ProfileTermPicker kind="skill" selected={skills} onChange={setSkills} isPt={pt} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>{pt ? "Ano de ingresso" : "Year joined"}</Label><Input type="number" {...register("year_joined")} placeholder="2020" /></div>
           <div><Label>{pt ? "Data de saída" : "Exit date"}</Label><Input type="date" {...register("exit_date")} /></div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>{pt ? "Numero USP" : "USP Number"}</Label><Input {...register("usp_number")} /></div>
         </div>
-      </div>
+      </FormSection>
 
-      <div className="border-t border-border pt-4 space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{pt ? "Redes Sociais" : "Social Links"}</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <FormSection id="social-links" number="05" icon={Link2} title={pt ? "Outros links" : "Other links"} description={pt ? "Canais opcionais exibidos no perfil público." : "Optional channels shown on the public profile."}>
+        <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>LinkedIn</Label><Input {...register("linkedin")} placeholder="https://linkedin.com/in/..." /></div>
           <div><Label>{pt ? "Pagina pessoal" : "Personal page"}</Label><Input {...register("page")} /></div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>Twitter / X</Label><Input {...register("twitter")} placeholder="https://twitter.com/..." /></div>
           <div><Label>ResearchGate</Label><Input {...register("researchgate")} placeholder="https://researchgate.net/..." /></div>
         </div>
-      </div>
-
-      <Button type="submit" disabled={loading || !photo} className="w-full">{loading ? "..." : isEdit ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
+      </FormSection>
+      </PersonFormShell>
     </form>
   );
 };
@@ -370,7 +474,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
   const [skills, setSkills] = useState<string[]>(initial?.skills ?? []);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<z.infer<typeof studentSchema>>({
-    resolver: zodResolver(studentSchema),
+    resolver: zodResolver(isEdit ? studentSchema : studentCreateSchema),
     defaultValues: {
       name: initial?.name ?? "",
       email: initial?.email ?? "",
@@ -403,7 +507,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
 
   return (
     <form onSubmit={handleSubmit((v) => {
-      if (!photo) return;
+      if (!photo && !isEdit) return;
       const advisor = docentes.find((docente) => docente.id === v.advisor_id);
       const data: Record<string, unknown> = {
         ...v,
@@ -427,44 +531,34 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       };
       if (!isEdit) {
         data.initials = initialsFor(v.name);
-        if (!v.password) data.password = "changeme123";
+        data.password = v.password;
       }
       onSubmit(data);
-    })} className="space-y-6">
-      <div className="space-y-4">
-        <ProfilePhotoField photo={photo} setPhoto={setPhoto} pt={pt} />
-        <div><Label>{pt ? "Nome" : "Name"}</Label><Input {...register("name")} />{errors.name && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
-        <div><Label>E-mail</Label><Input {...register("email")} />{errors.email && <p className="text-xs text-destructive mt-1">{pt ? "E-mail valido obrigatorio" : "Valid email required"}</p>}</div>
-        {!isEdit && <div><Label>{pt ? "Senha" : "Password"}</Label><Input type="password" {...register("password")} placeholder={pt ? "Padrao: changeme123" : "Default: changeme123"} /></div>}
-        <div>
-          <Label>{pt ? "Situação no lab" : "Lab status"}</Label>
-          <select {...register("role")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm">
-            <option value="aluno_ativo">{pt ? "Aluno ativo" : "Active student"}</option>
-            <option value="alumni">{pt ? "Egresso" : "Alumni"}</option>
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Nivel (EN)" : "Level (EN)"}</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" />{errors.level && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
-          <div><Label>{pt ? "Nivel (PT)" : "Level (PT)"}</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" />{errors.levelPt && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}</div>
-        </div>
-        <div>
-          <Label>{pt ? "Orientador" : "Advisor"}</Label>
-          <select {...register("advisor_id")} className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm">
-            <option value="">{pt ? "Selecione um orientador" : "Select an advisor"}</option>
-            {docentes.map((docente) => (
-              <option key={docente.id} value={docente.id}>{docente.name}</option>
-            ))}
-          </select>
-          {errors.advisor_id && <p className="text-xs text-destructive mt-1">{requiredMessage(pt)}</p>}
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Area (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>
-          <div><Label>{pt ? "Area (PT)" : "Area (PT)"}</Label><Input {...register("areaPt")} /></div>
-        </div>
-      </div>
+    })}>
+      <PersonFormShell name={watch("name")} email={watch("email")} photo={photo} pt={pt} isEdit={isEdit} type="student" loading={loading}>
+        <FormSection id="identity" number="01" icon={UserRound} title={pt ? "Identificação" : "Identity"} description={pt ? "Dados básicos da conta e imagem exibida no site." : "Basic account details and the image shown on the site."}>
+          <ProfilePhotoField photo={photo} setPhoto={setPhoto} pt={pt} required={!isEdit} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><Label htmlFor="student-name">{pt ? "Nome" : "Name"} *</Label><Input id="student-name" {...register("name")} />{errors.name && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
+            <div><Label htmlFor="student-email">E-mail *</Label><Input id="student-email" type="email" readOnly={isEdit} className={isEdit ? "bg-secondary/60 text-muted-foreground" : ""} {...register("email")} />{errors.email && <p className="mt-1 text-xs text-destructive">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
+          </div>
+          {isEdit ? <p className="text-xs text-muted-foreground">{pt ? "O e-mail de login não pode ser alterado nesta tela." : "The login email cannot be changed here."}</p> : <div><Label htmlFor="student-password">{pt ? "Senha inicial" : "Initial password"} *</Label><Input id="student-password" type="password" autoComplete="new-password" {...register("password")} /><p className="mt-1 text-xs text-muted-foreground">{pt ? "Use entre 12 e 72 bytes. A senha poderá ser alterada depois." : "Use 12 to 72 bytes. The password can be changed later."}</p>{errors.password && <p className="mt-1 text-xs text-destructive">{pt ? "Informe uma senha de 12 a 72 bytes." : "Enter a password of 12 to 72 bytes."}</p>}</div>}
+        </FormSection>
+
+        <FormSection id="academic" number="02" icon={GraduationCap} title={pt ? "Vínculo acadêmico" : "Academic details"} description={pt ? "Situação no laboratório, nível e orientação." : "Lab status, academic level, and advisor."}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><Label>{pt ? "Situação no lab" : "Lab status"}</Label><select {...register("role")} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><option value="aluno_ativo">{pt ? "Aluno ativo" : "Active student"}</option><option value="alumni">{pt ? "Egresso" : "Alumni"}</option></select></div>
+            <div><Label>{pt ? "Orientador" : "Advisor"} *</Label><select {...register("advisor_id")} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><option value="">{pt ? "Selecione um orientador" : "Select an advisor"}</option>{docentes.map((docente) => <option key={docente.id} value={docente.id}>{docente.name}</option>)}</select>{errors.advisor_id && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
+            <div><Label>{pt ? "Nível (EN)" : "Level (EN)"} *</Label><Input {...register("level")} placeholder="PhD, MSc, Undergrad" />{errors.level && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
+            <div><Label>{pt ? "Nível (PT)" : "Level (PT)"} *</Label><Input {...register("levelPt")} placeholder="Doutorado, Mestrado" />{errors.levelPt && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
+            <div><Label>{pt ? "Área (EN)" : "Area (EN)"}</Label><Input {...register("area")} /></div>
+            <div><Label>{pt ? "Área (PT)" : "Area (PT)"}</Label><Input {...register("areaPt")} /></div>
+          </div>
+        </FormSection>
 
       <RequiredProfileSection
         pt={pt}
+        isEdit={isEdit}
         register={register as never}
         errors={errors as never}
         relationshipType={watch("lab_relationship_type")}
@@ -472,11 +566,10 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
         onAffiliationChange={(value) => setValue("affiliation_name", value, { shouldValidate: true })}
       />
 
-      <div className="border-t border-border pt-4 space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{pt ? "Perfil" : "Profile"}</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div><Label>{pt ? "Bio (EN)" : "Bio (EN)"}</Label><textarea {...register("bio")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
-          <div><Label>{pt ? "Bio (PT)" : "Bio (PT)"}</Label><textarea {...register("bioPt")} className="w-full min-h-[80px] bg-secondary border border-border rounded-md px-3 py-2 text-sm" /></div>
+      <FormSection id="public-profile" number="04" icon={Sparkles} title={pt ? "Perfil público" : "Public profile"} description={pt ? "Apresente a trajetória, temas de pesquisa e habilidades deste aluno." : "Describe this student's background, research topics, and skills."}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><Label>{pt ? "Biografia (EN)" : "Biography (EN)"}</Label><Textarea {...register("bio")} className="min-h-28" /></div>
+          <div><Label>{pt ? "Biografia (PT)" : "Biography (PT)"}</Label><Textarea {...register("bioPt")} className="min-h-28" /></div>
         </div>
         <div>
           <Label>{pt ? "Areas de pesquisa" : "Research areas"}</Label>
@@ -486,28 +579,26 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
           <Label>{pt ? "Habilidades e tecnologias" : "Skills and technologies"}</Label>
           <ProfileTermPicker kind="skill" selected={skills} onChange={setSkills} isPt={pt} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>{pt ? "Ano de ingresso" : "Year joined"}</Label><Input type="number" {...register("year_joined")} placeholder="2020" /></div>
           <div><Label>{pt ? "Numero USP" : "USP Number"}</Label><Input {...register("usp_number")} /></div>
         </div>
         {selectedRole === "alumni" && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div><Label>{pt ? "Ano de formatura" : "Graduation year"}</Label><Input type="number" {...register("graduation_year")} placeholder="2024" /></div>
             <div><Label>{pt ? "Data de saída" : "Exit date"}</Label><Input type="date" {...register("exit_date")} /></div>
           </div>
         )}
-      </div>
+      </FormSection>
 
-      <div className="border-t border-border pt-4 space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{pt ? "Redes Sociais" : "Social Links"}</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <FormSection id="social-links" number="05" icon={Link2} title={pt ? "Outros links" : "Other links"} description={pt ? "Canais opcionais exibidos no perfil público." : "Optional channels shown on the public profile."}>
+        <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>LinkedIn</Label><Input {...register("linkedin")} placeholder="https://linkedin.com/in/..." /></div>
           <div><Label>Twitter / X</Label><Input {...register("twitter")} placeholder="https://twitter.com/..." /></div>
         </div>
         <div><Label>ResearchGate</Label><Input {...register("researchgate")} placeholder="https://researchgate.net/..." /></div>
-      </div>
-
-      <Button type="submit" disabled={loading || !photo} className="w-full">{loading ? "..." : isEdit ? (pt ? "Atualizar" : "Update") : (pt ? "Criar" : "Create")}</Button>
+      </FormSection>
+      </PersonFormShell>
     </form>
   );
 };

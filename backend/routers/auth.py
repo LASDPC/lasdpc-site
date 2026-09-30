@@ -36,7 +36,7 @@ async def login(body: LoginRequest):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account pending approval")
     if user_status == "rejected":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account rejected")
-    token = create_access_token({"sub": user["email"]})
+    token = create_access_token({"sub": user["email"], "ver": user.get("auth_version", 0)})
     return LoginResponse(
         access_token=token,
         user=_user_out(user),

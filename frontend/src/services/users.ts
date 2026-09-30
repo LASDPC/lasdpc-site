@@ -23,4 +23,6 @@ export const usersService = {
     ),
   setAdmin: (id: string, isAdmin: boolean) =>
     api.patch<User>(`/api/v1/users/${id}/admin`, { is_admin: isAdmin }),
+  setPassword: (id: string, newPassword: string) =>
+    api.put<void>(`/api/v1/users/${id}/password`, { new_password: newPassword }),
 };
