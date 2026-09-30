@@ -135,6 +135,24 @@ curl -O http://localhost:9000/lasdpc-media/profile/abc...jpg
 - In production, expose MinIO via a reverse proxy on a dedicated subdomain (e.g. `cdn.lasdpc.usp.br`) and set `VITE_MINIO_PUBLIC_URL` and `MINIO_PUBLIC_URL` accordingly. Restrict `MINIO_API_CORS_ALLOW_ORIGIN` to your frontend domain.
 - To migrate legacy Base64 / filesystem images to MinIO, see `backend/scripts/migrate_images.py` (run with `--dry-run` first).
 
+## Recriar os dados do site
+
+O script `reset-e-popular.sh` usa a configuração de `backend/.env`. Primeiro confira a prévia:
+
+```bash
+./reset-e-popular.sh
+```
+
+Para executar a limpeza e a carga:
+
+```bash
+./reset-e-popular.sh --yes
+```
+
+É necessário ter `backend/venv` com `backend/requirements.txt` instalado, MongoDB e MinIO acessíveis e `ADMIN_EMAIL`/`ADMIN_PASSWORD` configurados com senha real. O script apaga **todo o banco `MONGO_DB_NAME`** (inclusive usuários, reservas, solicitações e alterações feitas no painel) e todos os objetos do bucket `MINIO_BUCKET`; mantém o bucket e sua configuração. Depois recria o administrador, seis docentes, Luiz Felipe Diniz Costa como único aluno, duas publicações, três projetos, três itens de infraestrutura, dois posts bilíngues, salas padrão e oito Docs. O terminal exibe uma senha inicial aleatória para o aluno; guarde-a.
+
+As seis atas de `Desktop/Reuniões` foram convertidas para Markdown em `backend/seed_docs/reunioes/2026/` e são importadas a partir do repositório. Os guias de configuração e deploy ficam em `backend/seed_docs/guias/`. Para corrigir ou acrescentar Docs ao próximo reset, edite os arquivos Markdown dessa pasta. O script de reset **não é chamado pelo deploy automático**.
+
 ## Troubleshooting
 
 **`docker compose up -d` warns `MINIO_ROOT_PASSWORD variable is not set`**

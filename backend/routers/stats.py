@@ -43,7 +43,7 @@ async def _count_researchers(db) -> int:
     not inflate the "current researchers" counter.
     """
     docentes, students = await asyncio.gather(
-        db.users.count_documents({"role": "docente", "status": "active"}),
-        db.users.count_documents({"role": "aluno_ativo", "status": "active"}),
+        db.users.count_documents({"role": "docente", "status": "active", "is_admin": {"$ne": True}}),
+        db.users.count_documents({"role": "aluno_ativo", "status": "active", "is_admin": {"$ne": True}}),
     )
     return docentes + students
