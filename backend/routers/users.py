@@ -18,6 +18,7 @@ from models.user import (
     LgpdRequestOut,
     UserCreate,
     UserUpdate,
+    AdminPrivilegeUpdate,
     UserOut,
 )
 
@@ -26,12 +27,16 @@ router = APIRouter()
 # Fields that non-admins cannot modify
 ADMIN_ONLY_FIELDS = {"is_admin", "role", "usp_number", "lgpd_consent", "lgpd_consent_at", "lgpd_consent_version"}
 STUDENT_ROLES = {"aluno_ativo", "alumni"}
+ACTIVE_ADMIN_QUERY = {"is_admin": True, "status": {"$nin": ["pending", "rejected"]}}
 
 
 def _user_out(doc: dict) -> UserOut:
     return UserOut(
         id=str(doc["_id"]),
-        **{k: doc.get(k) for k in UserOut.model_fields if k != "id" and k in doc},
+        is_bootstrap_admin=bool(
+            settings.admin_email and doc.get("email", "").casefold() == settings.admin_email.casefold()
+        ),
+        **{k: doc.get(k) for k in UserOut.model_fields if k not in {"id", "is_bootstrap_admin"} and k in doc},
     )
 
 
@@ -329,6 +334,36 @@ async def get_user(user_id: str):
     return _user_out(doc)
 
 
+@router.patch("/{user_id}/admin", response_model=UserOut)
+async def set_admin_privilege(
+    user_id: str,
+    body: AdminPrivilegeUpdate,
+    current_admin: dict = Depends(require_admin),
+):
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id") from None
+    if str(current_admin["_id"]) == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change your own admin access")
+
+    db = get_db()
+    target = await db.users.find_one({"_id": oid})
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if body.is_admin and target.get("status", "active") != "active":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only active users can be admins")
+    if not body.is_admin and settings.admin_email and target.get("email", "").casefold() == settings.admin_email.casefold():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bootstrap admin cannot be demoted")
+    if not body.is_admin and target.get("is_admin") and target.get("status", "active") == "active":
+        if await db.users.count_documents(ACTIVE_ADMIN_QUERY) <= 1:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="At least one admin is required")
+    if target.get("is_admin", False) != body.is_admin:
+        await db.users.update_one({"_id": oid}, {"$set": {"is_admin": body.is_admin}})
+        target["is_admin"] = body.is_admin
+    return _user_out(target)
+
+
 @router.put("/{user_id}", response_model=UserOut)
 async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depends(get_current_user)):
     is_own_profile = str(current_user["_id"]) == user_id
@@ -336,6 +371,8 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
     db = get_db()
     update_data = body.model_dump(exclude_unset=True)
+    if "is_admin" in update_data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Use the admin access action")
     if not current_user.get("is_admin"):
         for field in ADMIN_ONLY_FIELDS:
             update_data.pop(field, None)
@@ -361,8 +398,22 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: str, _admin: dict = Depends(require_admin)):
+async def delete_user(user_id: str, current_admin: dict = Depends(require_admin)):
+    try:
+        oid = ObjectId(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id") from None
+    if str(current_admin["_id"]) == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete your own account")
     db = get_db()
-    result = await db.users.delete_one({"_id": ObjectId(user_id)})
+    target = await db.users.find_one({"_id": oid})
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if target.get("is_admin"):
+        if settings.admin_email and target.get("email", "").casefold() == settings.admin_email.casefold():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bootstrap admin cannot be deleted")
+        if target.get("status", "active") == "active" and await db.users.count_documents(ACTIVE_ADMIN_QUERY) <= 1:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="At least one admin is required")
+    result = await db.users.delete_one({"_id": oid})
     if result.deleted_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

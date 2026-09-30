@@ -26,6 +26,16 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -352,13 +362,14 @@ function editUserPath(user: User) {
 }
 
 const AdminDashboardPage = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user: currentUser } = useAuth();
   const { lang } = useLang();
   const isPt = lang === "pt-BR";
   const locale = isPt ? ptBR : enUS;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newRoomName, setNewRoomName] = useState("");
+  const [adminChangeUser, setAdminChangeUser] = useState<User | null>(null);
 
   const rangeStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }), []);
   const rangeEnd = useMemo(() => addDays(rangeStart, 21), [rangeStart]);
@@ -427,6 +438,20 @@ const AdminDashboardPage = () => {
     onSuccess: () => {
       invalidateAdminData(queryClient);
       toast.success(isPt ? "Solicitação recusada." : "Request rejected.");
+    },
+  });
+
+  const changeAdmin = useMutation({
+    mutationFn: ({ id, isAdmin: grant }: { id: string; isAdmin: boolean }) => usersService.setAdmin(id, grant),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setAdminChangeUser(null);
+      toast.success(updated.is_admin
+        ? (isPt ? "Acesso de administrador concedido." : "Admin access granted.")
+        : (isPt ? "Acesso de administrador removido." : "Admin access removed."));
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : (isPt ? "Não foi possível alterar o acesso." : "Could not change access."));
     },
   });
 
@@ -796,6 +821,7 @@ const AdminDashboardPage = () => {
                     <TableHead>Email</TableHead>
                     <TableHead>{isPt ? "Perfil" : "Role"}</TableHead>
                     <TableHead>{isPt ? "Status" : "Status"}</TableHead>
+                    <TableHead>{isPt ? "Administrador" : "Administrator"}</TableHead>
                     <TableHead className="text-right">{isPt ? "Ações" : "Actions"}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -806,19 +832,75 @@ const AdminDashboardPage = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{roleLabels[user.role]?.[isPt ? "pt" : "en"] ?? user.role}</TableCell>
                       <TableCell><StatusBadge status={user.status ?? "active"} isPt={isPt} /></TableCell>
+                      <TableCell>
+                        <Badge variant={user.is_admin ? "default" : "outline"}>
+                          {user.is_admin ? (isPt ? "Sim" : "Yes") : (isPt ? "Não" : "No")}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button asChild size="sm" variant="ghost">
-                          <Link to={editUserPath(user)}>
-                            <Edit3 size={14} />
-                            {isPt ? "Editar" : "Edit"}
-                          </Link>
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          {user.id !== currentUser?.id && !(user.is_admin && user.is_bootstrap_admin) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={changeAdmin.isPending || (!user.is_admin && user.status !== "active")}
+                              onClick={() => setAdminChangeUser(user)}
+                            >
+                              <Shield size={14} />
+                              {user.is_admin
+                                ? (isPt ? "Remover admin" : "Remove admin")
+                                : (isPt ? "Tornar admin" : "Make admin")}
+                            </Button>
+                          )}
+                          {user.is_admin && user.is_bootstrap_admin && user.id !== currentUser?.id && (
+                            <span className="self-center text-xs text-muted-foreground">
+                              {isPt ? "Admin principal" : "Primary admin"}
+                            </span>
+                          )}
+                          <Button asChild size="sm" variant="ghost">
+                            <Link to={editUserPath(user)}>
+                              <Edit3 size={14} />
+                              {isPt ? "Editar" : "Edit"}
+                            </Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </section>
+            <AlertDialog open={adminChangeUser !== null} onOpenChange={(open) => { if (!open) setAdminChangeUser(null); }}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {adminChangeUser?.is_admin
+                      ? (isPt ? "Remover acesso de administrador?" : "Remove administrator access?")
+                      : (isPt ? "Conceder acesso de administrador?" : "Grant administrator access?")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {adminChangeUser?.is_admin
+                      ? (isPt
+                        ? `${adminChangeUser.name} deixará de acessar o painel administrativo.`
+                        : `${adminChangeUser.name} will lose access to the admin dashboard.`)
+                      : (isPt
+                        ? `${adminChangeUser?.name ?? ""} poderá gerenciar usuários e conteúdo do site.`
+                        : `${adminChangeUser?.name ?? ""} will be able to manage users and site content.`)}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{isPt ? "Cancelar" : "Cancel"}</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={changeAdmin.isPending || !adminChangeUser}
+                    onClick={() => {
+                      if (adminChangeUser) changeAdmin.mutate({ id: adminChangeUser.id, isAdmin: !adminChangeUser.is_admin });
+                    }}
+                  >
+                    {isPt ? "Confirmar" : "Confirm"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </TabsContent>
 
           <TabsContent value="content" className="mt-6 grid gap-6 lg:grid-cols-2">

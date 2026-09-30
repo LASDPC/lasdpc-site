@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { authService } from "@/services/auth";
-import { setToken, removeToken } from "@/lib/api";
+import { getToken, setToken, removeToken } from "@/lib/api";
 
 export type UserRole = "docente" | "aluno_ativo" | "alumni";
 
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.removeItem(SESSION_KEY);
   };
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const fresh = await authService.me();
       const userData: User = {
@@ -98,7 +98,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // keep current session if refresh fails
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const refreshIfSignedIn = () => {
+      if (getToken()) void refreshUser();
+    };
+    refreshIfSignedIn();
+    window.addEventListener("focus", refreshIfSignedIn);
+    return () => window.removeEventListener("focus", refreshIfSignedIn);
+  }, [refreshUser]);
 
   const isAdmin = user?.is_admin ?? false;
 

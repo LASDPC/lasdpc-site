@@ -115,12 +115,17 @@ class UserUpdate(BaseModel):
     lgpd_consent_version: Optional[str] = None
 
 
+class AdminPrivilegeUpdate(BaseModel):
+    is_admin: bool
+
+
 class UserOut(BaseModel):
     id: str
     email: str
     name: str
     role: str
     is_admin: bool = False
+    is_bootstrap_admin: bool = False
     avatar: Optional[str] = None
     initials: str
     status: str = "active"

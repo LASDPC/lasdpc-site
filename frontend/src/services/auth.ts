@@ -6,6 +6,7 @@ export interface User {
   name: string;
   role: string;
   is_admin: boolean;
+  is_bootstrap_admin?: boolean;
   status?: string;
   avatar?: string | null;
   initials: string;

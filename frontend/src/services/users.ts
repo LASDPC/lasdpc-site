@@ -21,4 +21,6 @@ export const usersService = {
     api.get<UserSuggestion[]>(
       `/api/v1/users/suggest?query=${encodeURIComponent(query)}&limit=${encodeURIComponent(String(limit))}`
     ),
+  setAdmin: (id: string, isAdmin: boolean) =>
+    api.patch<User>(`/api/v1/users/${id}/admin`, { is_admin: isAdmin }),
 };
