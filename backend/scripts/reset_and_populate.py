@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import secrets
 from datetime import date
 from pathlib import Path
@@ -31,6 +32,7 @@ from scripts.seed_blog import build_posts
 from scripts.parsers import infrastructure, people, projects, publications
 
 DOCS_DIR = Path(__file__).resolve().parent.parent / "seed_docs"
+GENEALOGY_CACHE = Path(__file__).resolve().parent.parent / "data" / "genealogy_data.json"
 
 
 def load_docs() -> list[dict]:
@@ -52,6 +54,16 @@ def load_docs() -> list[dict]:
     return docs
 
 
+def load_genealogy() -> dict:
+    if not GENEALOGY_CACHE.is_file():
+        raise ValueError(f"Cache de genealogia ausente: {GENEALOGY_CACHE}")
+    with GENEALOGY_CACHE.open(encoding="utf-8") as source:
+        genealogy = json.load(source)
+    if not genealogy.get("nodes") or not genealogy.get("edges"):
+        raise ValueError("Cache de genealogia vazio ou inválido.")
+    return genealogy
+
+
 def prepare_content() -> dict[str, list[dict]]:
     required_images = [
         projects.IMG_DIR / "smart_lasdpc_architecture_v1.png",
@@ -65,11 +77,11 @@ def prepare_content() -> dict[str, list[dict]]:
     missing = [str(path) for path in required_images if not path.is_file()]
     if missing:
         raise ValueError(f"Imagens de origem ausentes: {', '.join(missing)}")
-    docentes = people.parse_docentes()
-    students = people.parse_active_students()
-    if len(students) != 1 or students[0]["name"] != "Luiz Felipe Diniz Costa":
-        raise ValueError("O seed deve ter apenas Luiz Felipe Diniz Costa como aluno.")
-    students[0]["year_joined"] = 2024
+    docentes, students = people.parse_everyone()
+    active_students = [student for student in students if student.get("role") == "aluno_ativo"]
+    if len(active_students) != 1 or active_students[0]["name"] != "Luiz Felipe Diniz Costa":
+        raise ValueError("O seed deve ter Luiz Felipe Diniz Costa como único aluno ativo.")
+    active_students[0]["year_joined"] = 2024
     pubs = [publications._enrich(p) for p in publications.parse_smart_lasdpc()[:2]]
     data = {
         "docentes": docentes,
@@ -164,7 +176,7 @@ async def insert_person(db, raw: dict, password: str) -> dict:
     return doc
 
 
-async def seed(db, data: dict[str, list[dict]]) -> str:
+async def seed(db, data: dict[str, list[dict]]) -> tuple[str, str, dict[str, int]]:
     image_uploader.ensure_bucket()
 
     def upload_required_image(path: Path, prefix: str) -> str:
@@ -198,18 +210,41 @@ async def seed(db, data: dict[str, list[dict]]) -> str:
         person = await insert_person(db, raw, secrets.token_urlsafe(32))
         by_name[person["name"]] = str(person["_id"])
 
-    # One initial password is emitted only to the local terminal.
-    student_password = secrets.token_urlsafe(24)
-    student = dict(data["students"][0])
-    student["advisor_id"] = by_name.get(student.get("advisor_name"))
-    await insert_person(db, student, student_password)
+    # Every historical profile receives an unusable-by-default random password.
+    # Only the active student's initial credentials are emitted to the terminal.
+    active_student_credentials: tuple[str, str] | None = None
+    for raw in data["students"]:
+        student_password = secrets.token_urlsafe(24)
+        student = dict(raw)
+        student["advisor_id"] = by_name.get(student.get("advisor_name"))
+        await insert_person(db, student, student_password)
+        if student.get("role") == "aluno_ativo":
+            active_student_credentials = (student["email"], student_password)
+
+    if active_student_credentials is None:
+        raise RuntimeError("Nenhum aluno ativo foi inserido.")
 
     for collection in ("publications", "projects", "clusters", "blog_posts", "docs"):
         if data[collection]:
             await db[collection].insert_many(data[collection])
 
+    genealogy = load_genealogy()
+    from scripts.sync_genealogy import correlate_with_lasdpc_users, upsert_direct_advisee_accounts
+
+    genealogy_profile_stats = await upsert_direct_advisee_accounts(db, genealogy)
+    await correlate_with_lasdpc_users(db, genealogy)
+    for collection, key in (
+        ("genealogy_professors", "professors"),
+        ("genealogy_nodes", "nodes"),
+        ("genealogy_edges", "edges"),
+    ):
+        if genealogy.get(key):
+            await db[collection].insert_many(genealogy[key])
+    if genealogy.get("meta"):
+        await db.genealogy_meta.insert_one({"_id": "current", "stats": genealogy["meta"]})
+
     await initialize_default_rooms(db)
-    return student_password
+    return (*active_student_credentials, genealogy_profile_stats)
 
 
 async def run(confirmed: bool) -> None:
@@ -217,6 +252,11 @@ async def run(confirmed: bool) -> None:
     data = prepare_content()
     print(f"Destino: banco MongoDB {settings.mongo_db_name} | bucket MinIO {settings.minio_bucket} em {settings.minio_endpoint}")
     print("Seed: " + ", ".join(f"{key}={len(items)}" for key, items in data.items()))
+    genealogy = load_genealogy()
+    print(
+        f"Genealogia: nodes={len(genealogy['nodes'])}, edges={len(genealogy['edges'])}, "
+        f"orientações diretas={genealogy.get('meta', {}).get('direct_advisees_total', 0)}"
+    )
     print("Blog: dois posts novos baseados no projeto do site e no Smart-LaSDPC.")
     if not confirmed:
         print("Prévia apenas. Execute ./reset-e-popular.sh --yes para apagar e repopular.")
@@ -236,12 +276,26 @@ async def run(confirmed: bool) -> None:
             print(f"Objetos/versões removidos: {deleted}")
             await client.drop_database(settings.mongo_db_name)
             print("Banco MongoDB apagado. Inserindo conteúdo...")
-            student_password = await seed(db, data)
+            active_student_email, active_student_password, genealogy_profile_stats = await seed(db, data)
         except Exception:
             print("Reset interrompido. MongoDB e MinIO podem estar parcialmente populados; corrija o erro e execute novamente.")
             raise
-        print(f"Concluído: {len(data['docentes'])} docentes, 1 aluno, 2 publicações, {len(data['blog_posts'])} posts, {len(data['docs'])} Docs.")
-        print(f"Login inicial do aluno: {data['students'][0]['email']} | senha: {student_password}")
+        active_count = sum(student.get("role") == "aluno_ativo" for student in data["students"])
+        alumni_count = (
+            sum(student.get("role") == "alumni" for student in data["students"])
+            + genealogy_profile_stats["created"]
+        )
+        print(
+            f"Concluído: {len(data['docentes'])} docentes, {active_count} aluno ativo, "
+            f"{alumni_count} egressos, 2 publicações, {len(data['blog_posts'])} posts, "
+            f"{len(data['docs'])} Docs."
+        )
+        print(
+            "Genealogia acadêmica: "
+            f"{genealogy_profile_stats['created']} perfis criados e "
+            f"{genealogy_profile_stats['updated']} perfis enriquecidos."
+        )
+        print(f"Login inicial do aluno ativo: {active_student_email} | senha: {active_student_password}")
         print("Guarde a senha; ela não será exibida novamente.")
     finally:
         client.close()

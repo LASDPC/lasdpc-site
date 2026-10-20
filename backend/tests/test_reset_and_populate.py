@@ -2,17 +2,25 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from routers.stats import _count_researchers
-from scripts.reset_and_populate import clear_bucket, load_docs, prepare_content
+from scripts.reset_and_populate import clear_bucket, load_docs, load_genealogy, prepare_content
 
 
-def test_seed_content_is_valid_and_has_only_one_student():
+def test_seed_content_is_valid_and_has_all_students():
     data = prepare_content()
-    assert [person["name"] for person in data["students"]] == ["Luiz Felipe Diniz Costa"]
-    assert data["students"][0]["year_joined"] == 2024
+    active_students = [person for person in data["students"] if person["role"] == "aluno_ativo"]
+    alumni = [person for person in data["students"] if person["role"] == "alumni"]
+    assert [person["name"] for person in active_students] == ["Luiz Felipe Diniz Costa"]
+    assert active_students[0]["year_joined"] == 2024
+    assert len(alumni) == 198
+    assert len(data["students"]) == 199
     assert len(data["publications"]) == 2
     assert len(data["blog_posts"]) == 2
     assert len(load_docs()) == 8
     assert all(doc["path"].endswith(".md") for doc in data["docs"])
+    genealogy = load_genealogy()
+    assert len(genealogy["nodes"]) == 156
+    assert len(genealogy["edges"]) == 187
+    assert genealogy["meta"]["direct_advisees_total"] == 153
 
 
 def test_bucket_cleanup_removes_versions_and_current_objects():

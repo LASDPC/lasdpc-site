@@ -21,4 +21,4 @@ Se `ADMIN_EMAIL` e `ADMIN_PASSWORD` estiverem configurados, o backend cria ou at
 
 ## Dados de exemplo
 
-O script `./reset-e-popular.sh --yes` recria o banco configurado e limpa o bucket MinIO configurado. Ele importa professores, um aluno ativo, duas publicações, projetos, infraestrutura, blog e Docs. **A execução apaga todas as contas, reservas, solicitações e alterações feitas no painel nesse banco.** Confira o banco e o bucket indicados pelo script antes de executá-lo.
+O script `./reset-e-popular.sh --yes` recria o banco configurado e limpa o bucket MinIO configurado. Ele importa professores, um aluno ativo, egressos históricos e perfis adicionais da genealogia acadêmica (atualmente 244 pessoas entre aluno ativo e egressos), além de publicações, projetos, infraestrutura, blog e Docs. **A execução apaga todas as contas, reservas, solicitações e alterações feitas no painel nesse banco.** Confira o banco e o bucket indicados pelo script antes de executá-lo.
