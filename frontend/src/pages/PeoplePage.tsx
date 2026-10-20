@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
@@ -352,6 +353,7 @@ const PeoplePage = () => {
           countLabel={isPt ? "pessoas" : "people"}
           hint={isPt ? "Busque por nome, área, ano ou nível" : "Search by name, area, year or level"}
           clearLabel={t("people.clearFilters")}
+          filtersLabel={isPt ? "Filtros" : "Filters"}
           active={Boolean(hasAnyFilter)}
           onClear={clearFilters}
         >
@@ -363,8 +365,18 @@ const PeoplePage = () => {
                   onChange={(e) => setFilter("name", e.target.value, true)}
                   placeholder={t("people.searchPlaceholder")}
                   aria-label={t("people.searchPlaceholder")}
-                  className="pl-10 text-sm"
+                  className="pl-10 pr-9 text-sm"
                 />
+                {nameSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setFilter("name", "", true)}
+                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    aria-label={isPt ? "Limpar busca" : "Clear search"}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
             {areaOptions.areas.length > 0 && (
@@ -407,7 +419,7 @@ const PeoplePage = () => {
         </DiscoveryFilters>
 
         {/* Faculty section */}
-        <div id="faculty-section" className="mb-8 flex flex-wrap items-end justify-between gap-4 scroll-mt-24 border-b border-border pb-5">
+        <div id="faculty-section" className="mb-8 flex scroll-mt-60 flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
           <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">01 / {isPt ? "Orientação" : "Mentorship"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">{t("section.faculty")}</h2></div>
           <span className="font-mono text-sm text-muted-foreground">{String(currentDocentes.length).padStart(2, "0")}</span>
         </div>
@@ -424,7 +436,7 @@ const PeoplePage = () => {
                   viewport={{ once: true }}
                   variants={fadeUp}
                   custom={i}
-                  className="h-full bg-card/80 rounded-[1.5rem] p-6 border border-border hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="h-full rounded-[1.25rem] border border-border bg-card/80 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => navigate(`/profile/${d.id}`)}
                   onKeyDown={(event) => { if (event.key === "Enter") navigate(`/profile/${d.id}`); }}
                   tabIndex={0}
@@ -435,20 +447,20 @@ const PeoplePage = () => {
                       <img
                         src={mediaUrl(d.photo)}
                         alt={d.name}
-                        className="w-20 h-20 rounded-2xl object-cover shrink-0"
+                        className="h-16 w-16 shrink-0 rounded-xl object-cover"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-xl shrink-0">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-primary/10 font-display text-lg font-bold text-primary">
                         {d.initials}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-xl font-semibold text-foreground line-clamp-2">{d.name}</h3>
+                      <h3 className="font-display text-lg font-semibold text-foreground line-clamp-2">{d.name}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-1">{isPt ? d.titlePt : d.title}</p>
                       <p className="text-sm text-accent mt-1 line-clamp-1">
                         {localizeResearchArea((isPt ? d.areaPt || d.area : d.area || d.areaPt) || "", isPt)}
                       </p>
-                      <div className="flex flex-wrap gap-3 mt-3 text-xs max-h-10 overflow-hidden">
+                      <div className="mt-2 flex max-h-8 flex-wrap gap-2 overflow-hidden text-xs">
                         <span className="flex items-center gap-1 text-muted-foreground"><Mail size={12} /> {isPt ? "E-mail no perfil" : "Email on profile"}</span>
                         {d.lattes && <a href={d.lattes} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> Lattes</a>}
                         {d.orcid && <a href={d.orcid} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> ORCID</a>}
@@ -495,7 +507,7 @@ const PeoplePage = () => {
         )}
 
         {/* Former students only — former faculty are intentionally excluded. */}
-        <div id="former-students-section" className="mb-4 flex scroll-mt-24 items-end justify-between border-b border-border pb-5">
+        <div id="former-students-section" className="mb-4 flex scroll-mt-60 items-end justify-between border-b border-border pb-5">
           <div>
             <p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">
               03 / {isPt ? "Trajetórias" : "Journeys"}
@@ -589,14 +601,14 @@ const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
         viewport={{ once: true }}
         variants={fadeUp}
         custom={i}
-        className="h-full w-full min-h-[190px] rounded-[1.3rem] border border-border bg-card/75 p-5 text-left cursor-pointer hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 flex flex-col overflow-hidden"
+        className="flex h-full min-h-[150px] w-full flex-col overflow-hidden rounded-[1.15rem] border border-border bg-card/75 p-4 text-left cursor-pointer hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300"
         onClick={onClick}
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          {person.photo ? <img src={mediaUrl(person.photo)} alt="" className="h-12 w-12 rounded-xl object-cover" loading="lazy" /> : <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 font-display font-bold text-primary">{person.initials || person.name.slice(0, 2)}</span>}
+        <div className="mb-3 flex items-start justify-between gap-3">
+          {person.photo ? <img src={mediaUrl(person.photo)} alt="" className="h-10 w-10 rounded-lg object-cover" loading="lazy" /> : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 font-display text-sm font-bold text-primary">{person.initials || person.name.slice(0, 2)}</span>}
           <ArrowUpRight size={18} className="text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
         </div>
-        <p className="font-display text-lg font-semibold text-foreground line-clamp-2">{person.name}</p>
+        <p className="font-display text-base font-semibold text-foreground line-clamp-2">{person.name}</p>
         {subtitle && <p className="text-sm text-accent line-clamp-1">{subtitle}</p>}
         {area && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{area}</p>}
         {person.year_joined && (
@@ -611,7 +623,7 @@ const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
           </p>
         )}
         {person.research_areas && person.research_areas.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-auto pt-2 max-h-12 overflow-hidden">
+          <div className="mt-auto flex max-h-7 flex-wrap gap-1 overflow-hidden pt-2">
             {person.research_areas.slice(0, 2).map((a) => (
               <span
                 key={a}

@@ -402,6 +402,7 @@ const ProfilePage = () => {
   }
 
   const isOwnProfile = currentUser?.id === profile.id;
+  const canEditProfile = isOwnProfile || Boolean(currentUser?.is_admin);
   const roleLabel = ROLE_LABELS[profile.role]?.[isPt ? "pt" : "en"] ?? profile.role;
   const roleIcon = ROLE_ICONS[profile.role];
   const visibleTitle = isPt ? profile.titlePt || profile.title : profile.title || profile.titlePt;
@@ -416,9 +417,9 @@ const ProfilePage = () => {
   const missingFields = getMissingFields(activeValues);
   const selectedResearchAreas = listValue(draft.research_areas);
   const selectedSkills = listValue(draft.skills);
-  const hasBio = visibleBio || (isEditing && isOwnProfile);
-  const hasResearchAreas = (profile.research_areas && profile.research_areas.length > 0) || (isEditing && isOwnProfile);
-  const hasSkills = (profile.skills && profile.skills.length > 0) || (isEditing && isOwnProfile);
+  const hasBio = visibleBio || (isEditing && canEditProfile);
+  const hasResearchAreas = (profile.research_areas && profile.research_areas.length > 0) || (isEditing && canEditProfile);
+  const hasSkills = (profile.skills && profile.skills.length > 0) || (isEditing && canEditProfile);
   const pageTitlePlaceholder = isPt ? "Cargo ou titulo" : "Role or title";
   const areaPlaceholder = isPt ? "Area principal" : "Main area";
   const levelPlaceholder = isPt ? "Nivel academico" : "Academic level";
@@ -611,16 +612,27 @@ const ProfilePage = () => {
             </button>
             <p className="font-mono text-xs font-bold uppercase tracking-[0.22em] text-primary">{isOwnProfile ? (isPt ? "Área pessoal / perfil" : "Personal area / profile") : (isPt ? "Pessoas / perfil" : "People / profile")}</p>
           </div>
-          {isOwnProfile && !isEditing && (
-            <Button onClick={startEditing} className="rounded-xl px-5">
-              <Pencil size={16} className="mr-2" /> {isPt ? "Editar meu perfil" : "Edit my profile"}
-            </Button>
+          {canEditProfile && !isEditing && (
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={startEditing} className="rounded-xl px-5">
+                <Pencil size={16} className="mr-2" /> {isOwnProfile ? (isPt ? "Editar meu perfil" : "Edit my profile") : (isPt ? "Editar perfil" : "Edit profile")}
+              </Button>
+              {currentUser?.is_admin && !isOwnProfile && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/admin/edit/${profile.role === "docente" ? "docente" : "student"}/${profile.id}`)}
+                  className="rounded-xl px-5"
+                >
+                  <Settings size={16} className="mr-2" /> {isPt ? "Edição completa" : "Full editor"}
+                </Button>
+              )}
+            </div>
           )}
         </div>
         <section className="surface-panel overflow-hidden rounded-3xl">
           <div className="relative h-32 overflow-hidden bg-[radial-gradient(circle_at_18%_22%,hsl(var(--accent)/0.3),transparent_30%),linear-gradient(115deg,hsl(var(--primary)/0.22),hsl(var(--accent)/0.12),hsl(var(--background)))] sm:h-40">
             {profile.banner ? <img src={mediaUrl(profile.banner)} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <div className="tech-grid absolute inset-0 opacity-40" />}
-            {isOwnProfile && (
+            {canEditProfile && (
               <div className="absolute right-3 top-3 flex items-center gap-2 sm:right-5 sm:top-5">
                 <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerUpload} className="hidden" aria-label={isPt ? "Selecionar imagem de capa" : "Select cover image"} />
                 <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={uploadingBanner} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/20 bg-black/65 px-3 text-xs font-semibold text-white shadow-sm backdrop-blur-md transition-colors hover:bg-black/80 disabled:opacity-60">
@@ -633,13 +645,13 @@ const ProfilePage = () => {
           <div className="px-4 pb-5 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <div id="profile-photo" className="relative -mt-14 w-fit shrink-0 scroll-mt-28 sm:-mt-16">
-                {isOwnProfile ? (
+                {canEditProfile ? (
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} aria-label={isPt ? "Alterar foto de perfil" : "Change profile photo"} className="group relative block rounded-full transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/35 disabled:opacity-60">
                     {profileAvatar}
                     <span className="pointer-events-none absolute inset-1 flex items-center justify-center rounded-full bg-black/45 px-3 text-center text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{uploading ? (isPt ? "Enviando..." : "Uploading...") : (isPt ? "Trocar foto" : "Change photo")}</span>
                   </button>
                 ) : profileAvatar}
-                {isOwnProfile && (
+                {canEditProfile && (
                   <>
                     <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handlePhotoUpload} className="hidden" aria-label={isPt ? "Selecionar foto de perfil" : "Select profile photo"} />
                     <p className="mt-2 max-w-32 text-center text-[11px] leading-4 text-muted-foreground">{uploading ? (isPt ? "Enviando..." : "Uploading...") : (isPt ? "Clique na foto para trocar" : "Click photo to change")}</p>
@@ -791,7 +803,7 @@ const ProfilePage = () => {
                     </div>
                   </div>
 
-                  {isOwnProfile && (
+                  {canEditProfile && (
                     <div className="flex shrink-0 gap-2">
                       {isEditing ? (
                         <>
@@ -804,9 +816,9 @@ const ProfilePage = () => {
                             {t("profile.cancel")}
                           </Button>
                         </>
-                      ) : (
+                      ) : isOwnProfile ? (
                         <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} aria-label={t("menu.settings")}><Settings size={16} /></Button>
-                      )}
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -821,12 +833,12 @@ const ProfilePage = () => {
           <p className="mt-1 text-sm text-muted-foreground">{isOwnProfile ? (isPt ? "Apresente sua trajetória, interesses e formas de contato para quem visita o laboratório." : "Share your background, interests, and contact details with visitors.") : (isPt ? "Conheça a trajetória, os interesses e as formas de contato desta pessoa." : "Explore this member's background, interests, and contact details.")}</p>
         </div>
 
-        {isOwnProfile && isEditing && (
+        {canEditProfile && isEditing && (
           <section className="surface-panel mt-6 rounded-2xl p-5 md:p-6" aria-label={isPt ? "Orientações para editar o perfil" : "Profile editing guide"}>
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-primary/10 p-2.5 text-primary"><Info size={20} /></div>
               <div className="min-w-0 flex-1">
-                <h2 className="font-display text-lg font-semibold text-foreground">{isPt ? "Seu perfil, do seu jeito" : "Make this profile yours"}</h2>
+                <h2 className="font-display text-lg font-semibold text-foreground">{isOwnProfile ? (isPt ? "Seu perfil, do seu jeito" : "Make this profile yours") : (isPt ? "Edição administrativa" : "Administrative editing")}</h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">{isPt ? "Edite os campos diretamente nesta página. Clique na foto para trocá-la; os demais dados são salvos juntos em Salvar alterações." : "Edit fields directly on this page. Click the photo to change it; save the other details together with Save changes."}</p>
                 <p className="mt-2 text-xs text-muted-foreground">{isPt ? "Apenas o Lattes é obrigatório. Foto, categoria acadêmica, outros links e vínculo são opcionais." : "Only Lattes is required. Photo, academic category, other links, and affiliation are optional."}</p>
               </div>
@@ -952,7 +964,7 @@ const ProfilePage = () => {
                 <UserIcon size={22} className="text-primary" />
                 <h3 className="mt-4 font-display text-xl font-semibold text-foreground">{isPt ? "Sobre este perfil" : "About this profile"}</h3>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{isOwnProfile ? (isPt ? "Conte um pouco sobre sua pesquisa e seus interesses para apresentar melhor seu trabalho." : "Share your research and interests to introduce your work.") : (isPt ? "Este integrante ainda não adicionou uma biografia ou áreas de pesquisa." : "This member has not added a biography or research areas yet.")}</p>
-                {isOwnProfile && <Button variant="outline" size="sm" className="mt-5" onClick={startEditing}><Pencil size={14} className="mr-2" />{isPt ? "Adicionar informações" : "Add details"}</Button>}
+                {canEditProfile && <Button variant="outline" size="sm" className="mt-5" onClick={startEditing}><Pencil size={14} className="mr-2" />{isPt ? "Adicionar informações" : "Add details"}</Button>}
               </section>
             )}
             {hasBio && (
@@ -1119,9 +1131,9 @@ const ProfilePage = () => {
               )}
             </section>
 
-            {isOwnProfile && !isEditing && (
+            {canEditProfile && !isEditing && (
               <section className="surface-panel rounded-2xl p-5 md:p-6">
-                <h2 className="mb-2 font-display text-lg font-semibold text-foreground">{isPt ? "Seu perfil público" : "Your public profile"}</h2>
+                <h2 className="mb-2 font-display text-lg font-semibold text-foreground">{isOwnProfile ? (isPt ? "Seu perfil público" : "Your public profile") : (isPt ? "Gerenciar perfil" : "Manage profile")}</h2>
                 <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
                   {missingFields.length ? <CircleAlert size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" /> : <CircleCheck size={16} className="mt-0.5 shrink-0 text-primary" />}
                   {missingFields.length ? (isPt ? "Adicione seu Lattes para salvar alterações. Os demais campos são opcionais." : "Add your Lattes link to save changes. All other fields are optional.") : (isPt ? "Lattes cadastrado. Você pode acrescentar mais informações quando quiser." : "Lattes is set. Add more details whenever you like.")}
@@ -1134,9 +1146,9 @@ const ProfilePage = () => {
             )}
           </aside>
         </div>
-        {isOwnProfile && isEditing && (
+        {canEditProfile && isEditing && (
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm md:p-5">
-            <p className="text-xs text-muted-foreground">{isPt ? "Revise seus dados e salve as alterações." : "Review your details and save your changes."}</p>
+            <p className="text-xs text-muted-foreground">{isPt ? "Revise os dados e salve as alterações." : "Review the details and save your changes."}</p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={cancelEditing} disabled={saving}>{t("profile.cancel")}</Button>
               <Button onClick={handleSave} disabled={saving || uploading}><Save size={15} className="mr-2" />{saving ? (isPt ? "Salvando..." : "Saving...") : (isPt ? "Salvar alterações" : "Save changes")}</Button>

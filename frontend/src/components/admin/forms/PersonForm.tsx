@@ -85,6 +85,7 @@ const studentSchema = z.object({
   github: z.string().optional(),
   twitter: z.string().optional(),
   researchgate: z.string().optional(),
+  page: z.string().optional(),
   usp_number: z.string().optional(),
   lattes: requiredText,
   orcid: z.string().optional(),
@@ -100,6 +101,7 @@ interface DocenteFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
   loading?: boolean;
   lang?: "en" | "pt";
+  emailEditable?: boolean;
 }
 
 interface StudentFormProps {
@@ -108,6 +110,7 @@ interface StudentFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
   loading?: boolean;
   lang?: "en" | "pt";
+  emailEditable?: boolean;
 }
 
 type PersonFormProps = DocenteFormProps | StudentFormProps;
@@ -246,6 +249,11 @@ function ProfilePhotoField({
           <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
             <Camera size={15} />{uploading ? "..." : photo ? (pt ? "Trocar foto" : "Change photo") : pt ? "Enviar foto" : "Upload photo"}
           </Button>
+          {photo && !required && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setPhoto("")} disabled={uploading}>
+              {pt ? "Remover foto" : "Remove photo"}
+            </Button>
+          )}
           <input
             ref={inputRef}
             type="file"
@@ -334,7 +342,7 @@ const PersonForm = (props: PersonFormProps) => {
   return <DocenteFormInner {...props} />;
 };
 
-const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteFormProps, "type">) => {
+const DocenteFormInner = ({ initial, onSubmit, loading, lang, emailEditable = true }: Omit<DocenteFormProps, "type">) => {
   const isEdit = !!initial;
   const pt = lang === "pt";
   const [photo, setPhoto] = useState(initial?.photo ?? "");
@@ -376,6 +384,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
       const data: Record<string, unknown> = {
         ...v,
         role: "docente",
+        initials: initialsFor(v.name),
         photo,
         page: v.page || null,
         title: v.title || null,
@@ -394,7 +403,6 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
         usp_number: v.usp_number || null,
       };
       if (!isEdit) {
-        data.initials = initialsFor(v.name);
         data.password = v.password;
       }
       onSubmit(data);
@@ -404,9 +412,9 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
           <ProfilePhotoField photo={photo} setPhoto={setPhoto} pt={pt} required={!isEdit} />
           <div className="grid gap-4 sm:grid-cols-2">
             <div><Label htmlFor="docente-name">{pt ? "Nome" : "Name"} *</Label><Input id="docente-name" {...register("name")} />{errors.name && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
-            <div><Label htmlFor="docente-email">E-mail *</Label><Input id="docente-email" type="email" readOnly={isEdit} className={isEdit ? "bg-secondary/60 text-muted-foreground" : ""} {...register("email")} />{errors.email && <p className="mt-1 text-xs text-destructive">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
+            <div><Label htmlFor="docente-email">E-mail *</Label><Input id="docente-email" type="email" readOnly={isEdit && !emailEditable} className={isEdit && !emailEditable ? "bg-secondary/60 text-muted-foreground" : ""} {...register("email")} />{errors.email && <p className="mt-1 text-xs text-destructive">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
           </div>
-          {isEdit ? <p className="text-xs text-muted-foreground">{pt ? "O e-mail de login não pode ser alterado nesta tela." : "The login email cannot be changed here."}</p> : <div><Label htmlFor="docente-password">{pt ? "Senha inicial" : "Initial password"} *</Label><Input id="docente-password" type="password" autoComplete="new-password" {...register("password")} /><p className="mt-1 text-xs text-muted-foreground">{pt ? "Use entre 12 e 72 bytes. A senha poderá ser alterada depois." : "Use 12 to 72 bytes. The password can be changed later."}</p>{errors.password && <p className="mt-1 text-xs text-destructive">{pt ? "Informe uma senha de 12 a 72 bytes." : "Enter a password of 12 to 72 bytes."}</p>}</div>}
+          {isEdit ? <p className="text-xs text-muted-foreground">{emailEditable ? (pt ? "Alterar o e-mail encerra as sessões atuais desse usuário." : "Changing the email ends this user's current sessions.") : (pt ? "O e-mail desta conta não pode ser alterado nesta tela." : "This account's email cannot be changed here.")}</p> : <div><Label htmlFor="docente-password">{pt ? "Senha inicial" : "Initial password"} *</Label><Input id="docente-password" type="password" autoComplete="new-password" {...register("password")} /><p className="mt-1 text-xs text-muted-foreground">{pt ? "Use entre 12 e 72 bytes. A senha poderá ser alterada depois." : "Use 12 to 72 bytes. The password can be changed later."}</p>{errors.password && <p className="mt-1 text-xs text-destructive">{pt ? "Informe uma senha de 12 a 72 bytes." : "Enter a password of 12 to 72 bytes."}</p>}</div>}
         </FormSection>
 
         <FormSection id="academic" number="02" icon={GraduationCap} title={pt ? "Vínculo acadêmico" : "Academic details"} description={pt ? "Título e área de atuação em português e inglês." : "Title and research area in Portuguese and English."}>
@@ -465,7 +473,7 @@ const DocenteFormInner = ({ initial, onSubmit, loading, lang }: Omit<DocenteForm
   );
 };
 
-const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentFormProps, "type">) => {
+const StudentFormInner = ({ initial, onSubmit, loading, lang, emailEditable = true }: Omit<StudentFormProps, "type">) => {
   const isEdit = !!initial;
   const pt = lang === "pt";
   const { data: docentes = [] } = useDocentes();
@@ -493,6 +501,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       github: initial?.github ?? "",
       twitter: initial?.twitter ?? "",
       researchgate: initial?.researchgate ?? "",
+      page: initial?.page ?? "",
       usp_number: initial?.usp_number ?? "",
       lattes: initial?.lattes ?? "",
       orcid: initial?.orcid ?? "",
@@ -512,6 +521,7 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
       const data: Record<string, unknown> = {
         ...v,
         role: v.role,
+        initials: initialsFor(v.name),
         photo,
         advisor_id: v.advisor_id,
         advisor_name: advisor?.name ?? initial?.advisor_name ?? null,
@@ -527,10 +537,10 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
         linkedin: v.linkedin || null,
         twitter: v.twitter || null,
         researchgate: v.researchgate || null,
+        page: v.page || null,
         usp_number: v.usp_number || null,
       };
       if (!isEdit) {
-        data.initials = initialsFor(v.name);
         data.password = v.password;
       }
       onSubmit(data);
@@ -540,9 +550,9 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
           <ProfilePhotoField photo={photo} setPhoto={setPhoto} pt={pt} required={!isEdit} />
           <div className="grid gap-4 sm:grid-cols-2">
             <div><Label htmlFor="student-name">{pt ? "Nome" : "Name"} *</Label><Input id="student-name" {...register("name")} />{errors.name && <p className="mt-1 text-xs text-destructive">{requiredMessage(pt)}</p>}</div>
-            <div><Label htmlFor="student-email">E-mail *</Label><Input id="student-email" type="email" readOnly={isEdit} className={isEdit ? "bg-secondary/60 text-muted-foreground" : ""} {...register("email")} />{errors.email && <p className="mt-1 text-xs text-destructive">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
+            <div><Label htmlFor="student-email">E-mail *</Label><Input id="student-email" type="email" readOnly={isEdit && !emailEditable} className={isEdit && !emailEditable ? "bg-secondary/60 text-muted-foreground" : ""} {...register("email")} />{errors.email && <p className="mt-1 text-xs text-destructive">{pt ? "E-mail válido obrigatório" : "Valid email required"}</p>}</div>
           </div>
-          {isEdit ? <p className="text-xs text-muted-foreground">{pt ? "O e-mail de login não pode ser alterado nesta tela." : "The login email cannot be changed here."}</p> : <div><Label htmlFor="student-password">{pt ? "Senha inicial" : "Initial password"} *</Label><Input id="student-password" type="password" autoComplete="new-password" {...register("password")} /><p className="mt-1 text-xs text-muted-foreground">{pt ? "Use entre 12 e 72 bytes. A senha poderá ser alterada depois." : "Use 12 to 72 bytes. The password can be changed later."}</p>{errors.password && <p className="mt-1 text-xs text-destructive">{pt ? "Informe uma senha de 12 a 72 bytes." : "Enter a password of 12 to 72 bytes."}</p>}</div>}
+          {isEdit ? <p className="text-xs text-muted-foreground">{emailEditable ? (pt ? "Alterar o e-mail encerra as sessões atuais desse usuário." : "Changing the email ends this user's current sessions.") : (pt ? "O e-mail desta conta não pode ser alterado nesta tela." : "This account's email cannot be changed here.")}</p> : <div><Label htmlFor="student-password">{pt ? "Senha inicial" : "Initial password"} *</Label><Input id="student-password" type="password" autoComplete="new-password" {...register("password")} /><p className="mt-1 text-xs text-muted-foreground">{pt ? "Use entre 12 e 72 bytes. A senha poderá ser alterada depois." : "Use 12 to 72 bytes. The password can be changed later."}</p>{errors.password && <p className="mt-1 text-xs text-destructive">{pt ? "Informe uma senha de 12 a 72 bytes." : "Enter a password of 12 to 72 bytes."}</p>}</div>}
         </FormSection>
 
         <FormSection id="academic" number="02" icon={GraduationCap} title={pt ? "Vínculo acadêmico" : "Academic details"} description={pt ? "Situação no laboratório, nível e orientação." : "Lab status, academic level, and advisor."}>
@@ -596,7 +606,10 @@ const StudentFormInner = ({ initial, onSubmit, loading, lang }: Omit<StudentForm
           <div><Label>LinkedIn</Label><Input {...register("linkedin")} placeholder="https://linkedin.com/in/..." /></div>
           <div><Label>Twitter / X</Label><Input {...register("twitter")} placeholder="https://twitter.com/..." /></div>
         </div>
-        <div><Label>ResearchGate</Label><Input {...register("researchgate")} placeholder="https://researchgate.net/..." /></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><Label>ResearchGate</Label><Input {...register("researchgate")} placeholder="https://researchgate.net/..." /></div>
+          <div><Label>{pt ? "Página pessoal" : "Personal page"}</Label><Input {...register("page")} placeholder="https://..." /></div>
+        </div>
       </FormSection>
       </PersonFormShell>
     </form>

@@ -235,6 +235,7 @@ const BlogPage = () => {
           countLabel={isPt ? "histórias" : "stories"}
           hint={isPt ? "Explore por tema, ano, autoria ou categoria" : "Explore by topic, year, author or category"}
           clearLabel={t("blog.clearFilters")}
+          filtersLabel={isPt ? "Filtros" : "Filters"}
           active={hasAnyFilter}
           onClear={clearFilters}
         >
@@ -321,7 +322,7 @@ const BlogPage = () => {
 
         <div
           id="blog-posts-section"
-          className="flex items-end justify-between mb-8 scroll-mt-24 border-b border-border pb-5"
+          className="mb-8 flex scroll-mt-60 items-end justify-between border-b border-border pb-5"
         >
           <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">{isPt ? "O que há de novo" : "Latest from the lab"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.blog")}
@@ -333,18 +334,18 @@ const BlogPage = () => {
             {paginatedBlog.map((post, i) => (
               <div key={post.id} className={`relative group h-full ${i === 0 && safePage === 1 && !hasAnyFilter ? "lg:col-span-2" : ""}`}>
                 <Link to={`/blog/${post.id}`} className="block h-full">
-                  <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className={`flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-border bg-card/80 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10 cursor-pointer ${i === 0 && safePage === 1 && !hasAnyFilter ? "lg:grid lg:grid-cols-2" : ""}`}>
+                  <motion.article initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className={`flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-border bg-card/80 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10 cursor-pointer ${i === 0 && safePage === 1 && !hasAnyFilter ? "lg:grid lg:grid-cols-2" : ""}`}>
                     <div className="overflow-hidden"><img
                       src={mediaUrl(post.coverImage) || FALLBACK_IMAGE}
                       alt={isPt ? post.titlePt : post.title}
-                      className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 ${i === 0 && safePage === 1 && !hasAnyFilter ? "h-52 lg:h-full lg:min-h-[340px]" : "h-52"}`}
+                      className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 ${i === 0 && safePage === 1 && !hasAnyFilter ? "h-40 lg:h-full lg:min-h-[270px]" : "h-40"}`}
                       loading="lazy"
                     /></div>
-                    <div className="p-6 md:p-7 flex flex-col flex-1">
+                    <div className="flex flex-1 flex-col p-5">
                       <div className="flex items-start justify-between gap-3"><span className="text-xs font-mono font-bold uppercase tracking-[.12em] text-accent">{post.tag || post.category || (isPt ? "História" : "Story")}</span><ArrowUpRight size={20} className="shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" /></div>
-                      <h2 className={`font-display font-semibold tracking-tight text-foreground mt-6 mb-3 line-clamp-3 shrink-0 ${i === 0 && safePage === 1 && !hasAnyFilter ? "text-2xl md:text-3xl" : "text-xl"}`}>{isPt ? post.titlePt || post.title : post.title || post.titlePt}</h2>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1 overflow-hidden">{isPt ? post.excerptPt : post.excerpt}</p>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-4 text-xs text-muted-foreground"><time>{post.date}</time>{post.author && <span>· {post.author}</span>}</div>
+                      <h2 className={`mt-4 mb-2 line-clamp-2 shrink-0 font-display font-semibold tracking-tight text-foreground ${i === 0 && safePage === 1 && !hasAnyFilter ? "text-2xl" : "text-lg"}`}>{isPt ? post.titlePt || post.title : post.title || post.titlePt}</h2>
+                      <p className="mb-3 line-clamp-2 flex-1 overflow-hidden text-sm text-muted-foreground">{isPt ? post.excerptPt : post.excerpt}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground"><time>{post.date}</time>{post.author && <span>· {post.author}</span>}</div>
                     </div>
                   </motion.article>
                 </Link>

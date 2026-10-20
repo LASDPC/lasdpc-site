@@ -10,13 +10,15 @@ const mocks = vi.hoisted(() => ({
   refreshUser: vi.fn(),
   toastError: vi.fn(),
   uploadBanner: vi.fn(),
+  uploadPhoto: vi.fn(),
+  currentUser: { id: "member-1", is_admin: false },
 }));
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return { ...actual, useParams: () => ({ userId: "member-1" }) };
 });
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "member-1" }, refreshUser: mocks.refreshUser }) }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: mocks.currentUser, refreshUser: mocks.refreshUser }) }));
 vi.mock("@/contexts/LanguageContext", () => ({ useLang: () => ({ lang: "pt-BR", t: (key: string) => key }) }));
 vi.mock("@/hooks/usePeople", () => ({
   useUser: () => ({ data: mocks.profile, isLoading: false }),
@@ -24,7 +26,7 @@ vi.mock("@/hooks/usePeople", () => ({
   useStudents: () => ({ data: [] }),
 }));
 vi.mock("@/services/people", () => ({ peopleService: { updateUser: mocks.updateUser } }));
-vi.mock("@/services/uploads", () => ({ uploadProfilePhoto: vi.fn(), uploadProfileBanner: mocks.uploadBanner }));
+vi.mock("@/services/uploads", () => ({ uploadProfilePhoto: mocks.uploadPhoto, uploadProfileBanner: mocks.uploadBanner }));
 vi.mock("@/components/profile/ProfileTermPicker", () => ({ default: () => null }));
 vi.mock("@/components/profile/AffiliationInput", () => ({
   default: ({ value, onChange }: { value: string; onChange: (value: string) => void }) =>
@@ -54,6 +56,8 @@ describe("ProfilePage validation", () => {
     mocks.updateUser.mockImplementation(async (_id: string, payload: Partial<User>) => ({ ...mocks.profile, ...payload }));
     mocks.refreshUser.mockResolvedValue(undefined);
     mocks.uploadBanner.mockResolvedValue({ key: "banner/new-cover.webp" });
+    mocks.uploadPhoto.mockResolvedValue({ key: "profile/admin-updated.jpg" });
+    mocks.currentUser = { id: "member-1", is_admin: false };
     Element.prototype.scrollIntoView = vi.fn();
   });
 
@@ -100,6 +104,22 @@ describe("ProfilePage validation", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
     await waitFor(() => expect(mocks.uploadBanner).toHaveBeenCalledWith(file));
     await waitFor(() => expect(mocks.updateUser).toHaveBeenCalledWith("member-1", { banner: "banner/new-cover.webp" }));
+  });
+
+  it("lets an admin edit another user's profile and photo", async () => {
+    mocks.currentUser = { id: "admin-1", is_admin: true };
+    renderProfile();
+
+    fireEvent.click(screen.getByRole("button", { name: "Editar perfil" }));
+    fireEvent.change(screen.getByPlaceholderText("Nome"), { target: { value: "Nome atualizado" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    await waitFor(() => expect(mocks.updateUser).toHaveBeenCalledWith("member-1", expect.objectContaining({ name: "Nome atualizado" })));
+
+    const fileInput = screen.getByLabelText("Selecionar foto de perfil") as HTMLInputElement;
+    const file = new File(["image"], "profile.jpg", { type: "image/jpeg" });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() => expect(mocks.uploadPhoto).toHaveBeenCalledWith(file));
+    await waitFor(() => expect(mocks.updateUser).toHaveBeenCalledWith("member-1", { photo: "profile/admin-updated.jpg" }));
   });
 
   it("does not offer a copyable email link on the public profile", () => {

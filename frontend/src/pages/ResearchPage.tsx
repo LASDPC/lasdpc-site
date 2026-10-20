@@ -311,6 +311,7 @@ const ResearchPage = () => {
           countLabel={isPt ? "resultados" : "results"}
           hint={isPt ? "Filtre projetos e publicações por assunto, ano ou tipo" : "Filter projects and publications by topic, year or type"}
           clearLabel={t("research.clearFilters")}
+          filtersLabel={isPt ? "Filtros" : "Filters"}
           active={hasAnyFilter}
           onClear={clearFilters}
         >
@@ -383,7 +384,7 @@ const ResearchPage = () => {
 
         <div
           id="research-projects-section"
-          className="flex items-end justify-between mb-8 scroll-mt-24 border-b border-border pb-5"
+          className="mb-8 flex scroll-mt-60 items-end justify-between border-b border-border pb-5"
         >
           <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">01 / {isPt ? "Em desenvolvimento" : "In progress"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.projects")}
@@ -400,9 +401,9 @@ const ResearchPage = () => {
                     viewport={{ once: true }}
                     variants={fadeUp}
                     custom={i}
-                    className="h-full min-h-[260px] flex flex-col rounded-[1.5rem] border border-border bg-card/80 p-7 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10 cursor-pointer"
+                    className="flex h-full min-h-[210px] flex-col rounded-[1.25rem] border border-border bg-card/80 p-5 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-primary/10 cursor-pointer"
                   >
-                    <div className="flex items-start justify-between gap-4 mb-8 shrink-0">
+                    <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
                       <div className="flex flex-wrap gap-2">
                         {p.tags.map((tag) => (
                           <span key={tag} className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">{tag}</span>
@@ -410,9 +411,9 @@ const ResearchPage = () => {
                       </div>
                       <ArrowUpRight size={22} className="shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" />
                     </div>
-                    <h3 className="font-display text-2xl font-semibold tracking-tight text-foreground mb-3 line-clamp-2 shrink-0">{isPt ? p.titlePt : p.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-4 flex-1 overflow-hidden">{isPt ? p.descriptionPt : p.description}</p>
-                    <div className="flex flex-wrap gap-4 border-t border-border pt-4 text-xs text-muted-foreground mt-auto shrink-0">
+                    <h3 className="mb-2 line-clamp-2 shrink-0 font-display text-xl font-semibold tracking-tight text-foreground">{isPt ? p.titlePt : p.title}</h3>
+                    <p className="mb-3 line-clamp-3 flex-1 overflow-hidden text-sm text-muted-foreground">{isPt ? p.descriptionPt : p.description}</p>
+                    <div className="mt-auto flex shrink-0 flex-wrap gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
                       <span className={p.status === "active" ? "text-accent" : ""}>● {statusLabel(p.status)}</span>
                       <span>{p.publications} {isPt ? "publicações" : "publications"}</span>
                       {p.impact && <span>{isPt ? "Impacto" : "Impact"}: {p.impact}</span>}
@@ -441,7 +442,7 @@ const ResearchPage = () => {
 
         <div
           id="research-publications-section"
-          className="flex items-end justify-between mb-8 mt-20 scroll-mt-24 border-b border-border pb-5"
+          className="mb-8 mt-20 flex scroll-mt-60 items-end justify-between border-b border-border pb-5"
         >
           <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">02 / {isPt ? "Conhecimento aberto" : "Open knowledge"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             {t("section.publications")}
@@ -459,7 +460,7 @@ const ResearchPage = () => {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className="group flex h-full min-h-[120px] flex-col justify-center py-5 px-2 transition-all duration-300 hover:bg-primary/5 md:px-5"
+                className="group flex h-full min-h-[100px] flex-col justify-center px-2 py-4 transition-all duration-300 hover:bg-primary/5 md:px-5"
               >
                 <div className="flex items-center justify-between gap-5"><span className="font-mono text-xs font-bold text-primary">{pub.year}</span><ArrowUpRight size={18} className="text-muted-foreground transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-primary" /></div>
                 <div className="flex flex-wrap items-center gap-2 mb-1">

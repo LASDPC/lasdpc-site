@@ -17,6 +17,7 @@ def make_user(*, is_admin: bool = False, status: str = "active", email: str = "m
         "role": "aluno_ativo",
         "status": status,
         "is_admin": is_admin,
+        "lattes": "https://lattes.cnpq.br/123",
     }
 
 
@@ -100,6 +101,46 @@ async def test_generic_profile_update_cannot_change_admin_privilege():
     with patch("routers.users.get_db", return_value=db):
         with pytest.raises(HTTPException) as error:
             await update_user(str(target["_id"]), UserUpdate(is_admin=True), admin)
+    assert error.value.status_code == 400
+    db.users.update_one.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_admin_can_change_another_users_email():
+    admin = make_user(is_admin=True, email="admin@example.com")
+    target = make_user()
+    updated = {**target, "email": "new-member@example.com"}
+    db = MagicMock()
+    db.users.find_one = AsyncMock(side_effect=[target, None, updated])
+    db.users.update_one = AsyncMock(return_value=MagicMock(matched_count=1))
+
+    with patch("routers.users.get_db", return_value=db), patch(
+        "routers.users.upsert_profile_terms", new_callable=AsyncMock
+    ):
+        result = await update_user(
+            str(target["_id"]),
+            UserUpdate(email="new-member@example.com"),
+            admin,
+        )
+
+    assert result.email == "new-member@example.com"
+    assert db.users.update_one.await_args.args[1]["$set"]["email"] == "new-member@example.com"
+
+
+@pytest.mark.asyncio
+async def test_user_cannot_change_own_email():
+    user = make_user()
+    db = MagicMock()
+    db.users.update_one = AsyncMock()
+
+    with patch("routers.users.get_db", return_value=db):
+        with pytest.raises(HTTPException) as error:
+            await update_user(
+                str(user["_id"]),
+                UserUpdate(email="other@example.com"),
+                user,
+            )
+
     assert error.value.status_code == 400
     db.users.update_one.assert_not_awaited()
 

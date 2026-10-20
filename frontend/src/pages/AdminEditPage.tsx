@@ -267,6 +267,7 @@ const DocenteResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrap
       <PersonForm
         type="docente"
         initial={isEdit ? data : undefined}
+        emailEditable={!isEdit || (data?.id !== currentUser?.id && !data?.is_bootstrap_admin)}
         lang={lang}
         loading={create.isPending || update.isPending}
         onSubmit={(values: Record<string, unknown>) => {
@@ -295,6 +296,7 @@ const StudentResourceForm = ({ id, lang, isEdit, onSuccess, onDelete }: FormWrap
       <PersonForm
         type="student"
         initial={isEdit ? data : undefined}
+        emailEditable={!isEdit || (data?.id !== currentUser?.id && !data?.is_bootstrap_admin)}
         lang={lang}
         loading={create.isPending || update.isPending}
         onSubmit={(values: Record<string, unknown>) => {

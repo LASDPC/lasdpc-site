@@ -26,7 +26,7 @@ from models.user import (
 router = APIRouter()
 
 # Fields that non-admins cannot modify
-ADMIN_ONLY_FIELDS = {"is_admin", "role", "usp_number", "lgpd_consent", "lgpd_consent_at", "lgpd_consent_version"}
+ADMIN_ONLY_FIELDS = {"email", "is_admin", "role", "usp_number", "lgpd_consent", "lgpd_consent_at", "lgpd_consent_version"}
 STUDENT_ROLES = {"aluno_ativo", "alumni"}
 ACTIVE_ADMIN_QUERY = {"is_admin": True, "status": {"$nin": ["pending", "rejected"]}}
 
@@ -414,6 +414,19 @@ async def update_user(user_id: str, body: UserUpdate, current_user: dict = Depen
     existing = await db.users.find_one({"_id": oid})
     if not existing:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if "email" in update_data and update_data["email"] is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
+    if "email" in update_data and update_data["email"] != existing.get("email"):
+        if is_own_profile:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change your own login email here")
+        if settings.admin_email and existing.get("email", "").casefold() == settings.admin_email.casefold():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bootstrap admin email is managed by configuration")
+        duplicate = await db.users.find_one({
+            "_id": {"$ne": oid},
+            "email": {"$regex": f"^{re.escape(str(update_data['email']))}$", "$options": "i"},
+        })
+        if duplicate:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
     normalize_profile_payload(update_data)
     updated_doc = {**existing, **update_data}
     if not _is_media_only_update(update_data):
