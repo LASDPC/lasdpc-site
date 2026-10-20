@@ -5,14 +5,12 @@ from routers.stats import _count_researchers
 from scripts.reset_and_populate import clear_bucket, load_docs, load_genealogy, prepare_content
 
 
-def test_seed_content_is_valid_and_has_all_students():
+def test_seed_content_contains_genealogy_people_and_luiz():
     data = prepare_content()
-    active_students = [person for person in data["students"] if person["role"] == "aluno_ativo"]
-    alumni = [person for person in data["students"] if person["role"] == "alumni"]
-    assert [person["name"] for person in active_students] == ["Luiz Felipe Diniz Costa"]
-    assert active_students[0]["year_joined"] == 2024
-    assert len(alumni) == 198
-    assert len(data["students"]) == 199
+    assert len(data["docentes"]) == 6
+    assert [student["name"] for student in data["students"]] == ["Luiz Felipe Diniz Costa"]
+    assert data["students"][0]["role"] == "aluno_ativo"
+    assert data["students"][0]["year_joined"] == 2024
     assert len(data["publications"]) == 2
     assert len(data["blog_posts"]) == 2
     assert len(load_docs()) == 8
@@ -21,6 +19,14 @@ def test_seed_content_is_valid_and_has_all_students():
     assert len(genealogy["nodes"]) == 156
     assert len(genealogy["edges"]) == 187
     assert genealogy["meta"]["direct_advisees_total"] == 153
+    direct_advisees = [
+        node
+        for node in genealogy["nodes"]
+        if not node.get("is_docente") and node.get("generation") == 1
+    ]
+    assert len(direct_advisees) == 150
+    assert data["students"][0]["name"] not in {node["name"] for node in direct_advisees}
+    assert len(data["docentes"]) + len(direct_advisees) + len(data["students"]) == 157
 
 
 def test_bucket_cleanup_removes_versions_and_current_objects():

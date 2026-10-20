@@ -77,11 +77,16 @@ def prepare_content() -> dict[str, list[dict]]:
     missing = [str(path) for path in required_images if not path.is_file()]
     if missing:
         raise ValueError(f"Imagens de origem ausentes: {', '.join(missing)}")
-    docentes, students = people.parse_everyone()
-    active_students = [student for student in students if student.get("role") == "aluno_ativo"]
-    if len(active_students) != 1 or active_students[0]["name"] != "Luiz Felipe Diniz Costa":
-        raise ValueError("O seed deve ter Luiz Felipe Diniz Costa como único aluno ativo.")
-    active_students[0]["year_joined"] = 2024
+    docentes = people.parse_docentes()
+    students = people.parse_active_students()
+    if len(students) != 1 or students[0]["name"] != "Luiz Felipe Diniz Costa":
+        raise ValueError("O seed deve ter somente Luiz Felipe Diniz Costa fora da genealogia.")
+    students[0]["year_joined"] = 2024
+    genealogy = load_genealogy()
+    faculty_names = {person["name"] for person in docentes}
+    genealogy_roots = {node["name"] for node in genealogy["nodes"] if node.get("is_docente")}
+    if genealogy_roots != faculty_names:
+        raise ValueError("Os docentes do seed não correspondem às raízes da genealogia.")
     pubs = [publications._enrich(p) for p in publications.parse_smart_lasdpc()[:2]]
     data = {
         "docentes": docentes,
@@ -210,19 +215,10 @@ async def seed(db, data: dict[str, list[dict]]) -> tuple[str, str, dict[str, int
         person = await insert_person(db, raw, secrets.token_urlsafe(32))
         by_name[person["name"]] = str(person["_id"])
 
-    # Every historical profile receives an unusable-by-default random password.
-    # Only the active student's initial credentials are emitted to the terminal.
-    active_student_credentials: tuple[str, str] | None = None
-    for raw in data["students"]:
-        student_password = secrets.token_urlsafe(24)
-        student = dict(raw)
-        student["advisor_id"] = by_name.get(student.get("advisor_name"))
-        await insert_person(db, student, student_password)
-        if student.get("role") == "aluno_ativo":
-            active_student_credentials = (student["email"], student_password)
-
-    if active_student_credentials is None:
-        raise RuntimeError("Nenhum aluno ativo foi inserido.")
+    student_password = secrets.token_urlsafe(24)
+    student = dict(data["students"][0])
+    student["advisor_id"] = by_name.get(student.get("advisor_name"))
+    await insert_person(db, student, student_password)
 
     for collection in ("publications", "projects", "clusters", "blog_posts", "docs"):
         if data[collection]:
@@ -244,7 +240,7 @@ async def seed(db, data: dict[str, list[dict]]) -> tuple[str, str, dict[str, int
         await db.genealogy_meta.insert_one({"_id": "current", "stats": genealogy["meta"]})
 
     await initialize_default_rooms(db)
-    return (*active_student_credentials, genealogy_profile_stats)
+    return student["email"], student_password, genealogy_profile_stats
 
 
 async def run(confirmed: bool) -> None:
@@ -267,7 +263,10 @@ async def run(confirmed: bool) -> None:
         await client.admin.command("ping")
         ensure_bucket_available()
         db = client[settings.mongo_db_name]
-        if any(p["email"].casefold() == settings.admin_email.casefold() for p in data["docentes"] + data["students"]):
+        if any(
+            person["email"].casefold() == settings.admin_email.casefold()
+            for person in data["docentes"] + data["students"]
+        ):
             raise ValueError("ADMIN_EMAIL coincide com o email de uma pessoa do seed.")
 
         try:
@@ -276,18 +275,21 @@ async def run(confirmed: bool) -> None:
             print(f"Objetos/versões removidos: {deleted}")
             await client.drop_database(settings.mongo_db_name)
             print("Banco MongoDB apagado. Inserindo conteúdo...")
-            active_student_email, active_student_password, genealogy_profile_stats = await seed(db, data)
+            student_email, student_password, genealogy_profile_stats = await seed(db, data)
         except Exception:
             print("Reset interrompido. MongoDB e MinIO podem estar parcialmente populados; corrija o erro e execute novamente.")
             raise
-        active_count = sum(student.get("role") == "aluno_ativo" for student in data["students"])
-        alumni_count = (
-            sum(student.get("role") == "alumni" for student in data["students"])
+        public_people_count = (
+            len(data["docentes"])
+            + len(data["students"])
             + genealogy_profile_stats["created"]
         )
+        database_user_count = public_people_count + 1  # administrador técnico
         print(
-            f"Concluído: {len(data['docentes'])} docentes, {active_count} aluno ativo, "
-            f"{alumni_count} egressos, 2 publicações, {len(data['blog_posts'])} posts, "
+            f"Concluído: {len(data['docentes'])} docentes, "
+            f"{genealogy_profile_stats['created']} orientados, 1 aluno ativo adicional, "
+            f"{public_people_count} pessoas públicas, {database_user_count} usuários no banco, "
+            f"2 publicações, {len(data['blog_posts'])} posts, "
             f"{len(data['docs'])} Docs."
         )
         print(
@@ -295,8 +297,8 @@ async def run(confirmed: bool) -> None:
             f"{genealogy_profile_stats['created']} perfis criados e "
             f"{genealogy_profile_stats['updated']} perfis enriquecidos."
         )
-        print(f"Login inicial do aluno ativo: {active_student_email} | senha: {active_student_password}")
-        print("Guarde a senha; ela não será exibida novamente.")
+        print(f"Login inicial do aluno ativo: {student_email} | senha: {student_password}")
+        print("A conta administrativa usa ADMIN_EMAIL e ADMIN_PASSWORD de backend/.env.")
     finally:
         client.close()
 

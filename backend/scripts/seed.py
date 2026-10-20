@@ -52,20 +52,13 @@ async def _insert_users(db, docs: list[dict], label: str) -> int:
 
 
 async def _resolve_advisor_ids(db) -> None:
-    """For every user with `advisor_name`, attempt to fill `advisor_id` by
-    looking up the matching docente. Unmatched names stay as strings.
-    """
+    """Resolve o orientador do único aluno ativo adicional."""
     docentes = await db.users.find({"role": "docente"}).to_list(length=None)
-    by_name = {d["name"]: str(d["_id"]) for d in docentes}
-    unresolved = 0
-    async for user in db.users.find({"advisor_name": {"$ne": None}, "role": {"$ne": "docente"}}):
-        advisor = by_name.get(user.get("advisor_name") or "")
-        if advisor:
-            await db.users.update_one({"_id": user["_id"]}, {"$set": {"advisor_id": advisor}})
-        else:
-            unresolved += 1
-    if unresolved:
-        print(f"[!] {unresolved} alunos com advisor_name fora do corpo docente (preservados como string)")
+    by_name = {docente["name"]: str(docente["_id"]) for docente in docentes}
+    async for user in db.users.find({"role": "aluno_ativo", "advisor_name": {"$ne": None}}):
+        advisor_id = by_name.get(user.get("advisor_name") or "")
+        if advisor_id:
+            await db.users.update_one({"_id": user["_id"]}, {"$set": {"advisor_id": advisor_id}})
 
 
 async def main() -> None:
@@ -110,9 +103,12 @@ async def main() -> None:
     await upsert_default_profile_terms(db)
 
     # 1. Pessoas
-    docentes_docs, others_docs = people.parse_everyone()
+    docentes_docs = people.parse_docentes()
+    active_students = people.parse_active_students()
+    if len(active_students) != 1 or active_students[0]["name"] != "Luiz Felipe Diniz Costa":
+        raise ValueError("O seed deve ter somente Luiz Felipe Diniz Costa fora da genealogia.")
     await _insert_users(db, docentes_docs, "docentes")
-    await _insert_users(db, others_docs, "alunos/alumni")
+    await _insert_users(db, active_students, "aluno ativo adicional")
     await _resolve_advisor_ids(db)
 
     # 2. Publicações
