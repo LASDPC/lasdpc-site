@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -11,9 +11,9 @@ import {
   Github,
   Twitter,
   Users,
+  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  ArrowUpRight,
 } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
@@ -25,16 +25,15 @@ import FilterCombobox from "@/components/FilterCombobox";
 import DiscoveryFilters from "@/components/DiscoveryFilters";
 import EditorialHero from "@/components/EditorialHero";
 import { mediaUrl } from "@/lib/media";
-import { normalizeResearchArea } from "@/lib/researchAreas";
+import { localizeResearchArea, normalizeResearchArea } from "@/lib/researchAreas";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.025, duration: 0.2, ease: "easeOut" } }),
 };
 
-const FORMER_MEMBERS_PAGE_SIZE = 30;
-const UNKNOWN_YEAR_BUCKET = -1; // sorts last (handled in code)
 const CURRENT_YEAR = new Date().getFullYear();
+const FORMER_STUDENTS_PAGE_SIZE = 24;
 
 const PeoplePageSkeleton = () => (
   <div className="py-10">
@@ -66,14 +65,18 @@ const personAreaValues = (person: User) =>
     .filter(Boolean) as string[];
 
 const matchesAreaExact = (person: User, area: string) => {
-  const target = normalizeResearchArea(area);
-  return personAreaValues(person).some((value) => normalizeResearchArea(value) === target);
+  const target = normalizeResearchArea(localizeResearchArea(area, false));
+  return personAreaValues(person).some((value) =>
+    normalizeResearchArea(localizeResearchArea(value, false)) === target
+  );
 };
 
 const matchesAreaSearch = (person: User, query: string) => {
-  const target = normalizeResearchArea(query);
+  const target = normalizeResearchArea(localizeResearchArea(query, false));
   if (!target) return true;
-  return personAreaValues(person).some((value) => normalizeResearchArea(value).includes(target));
+  return personAreaValues(person).some((value) =>
+    normalizeResearchArea(localizeResearchArea(value, false)).includes(target)
+  );
 };
 
 const matchesLevel = (student: User, level: string) => {
@@ -124,7 +127,7 @@ const presenceYearsForPerson = (person: User) => {
 
 const isFormerMember = (person: User) => person.role === "alumni" || Boolean(exitYear(person));
 
-const exitSortValue = (person: User) => {
+const formerStudentSortValue = (person: User) => {
   const match = person.exit_date?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (match) return Number(`${match[1]}${match[2]}${match[3]}`);
   const year = exitYear(person);
@@ -148,29 +151,6 @@ function sortByEntryDate(items: User[]) {
   });
 }
 
-/** Group former members by exit year, sort years descending, and place unknown
- * dates last. Returns an array of [year, users[]] pairs preserving order.
- */
-function groupFormerMembersByExitYear(items: User[]): Array<[number, User[]]> {
-  const buckets = new Map<number, User[]>();
-  for (const s of items) {
-    const y = exitYear(s) ?? UNKNOWN_YEAR_BUCKET;
-    if (!buckets.has(y)) buckets.set(y, []);
-    buckets.get(y)!.push(s);
-  }
-  const keys = Array.from(buckets.keys());
-  // Sort by year desc; unknown bucket last
-  keys.sort((a, b) => {
-    if (a === UNKNOWN_YEAR_BUCKET) return 1;
-    if (b === UNKNOWN_YEAR_BUCKET) return -1;
-    return b - a;
-  });
-  return keys.map((k) => [
-    k,
-    buckets.get(k)!.sort((x, y) => exitSortValue(y) - exitSortValue(x) || x.name.localeCompare(y.name)),
-  ]);
-}
-
 const PeoplePage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
@@ -188,11 +168,7 @@ const PeoplePage = () => {
   const areaFilter = searchParams.get("area") ?? legacyAreaTextFilter;
   const yearFilter = searchParams.get("year") ?? "";
   const levelFilter = searchParams.get("level") ?? "";
-  const formerPage = Math.max(
-    1,
-    Number(searchParams.get("formerPage") || searchParams.get("alumniPage") || "1") || 1,
-  );
-
+  const formerPage = Math.max(1, Number(searchParams.get("formerPage") || "1") || 1);
   const setFilter = (key: string, value: string, replace = false) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -202,13 +178,7 @@ const PeoplePage = () => {
         next.delete(key);
       }
       if (key === "area") next.delete("areaText");
-      if (key === "formerPage") next.delete("alumniPage");
-      // Any filter change resets the former-member pagination so the user
-      // doesn't land on an empty page.
-      if (key !== "formerPage") {
-        next.delete("formerPage");
-        next.delete("alumniPage");
-      }
+      if (key !== "formerPage") next.delete("formerPage");
       return next;
     }, { replace });
   };
@@ -225,7 +195,6 @@ const PeoplePage = () => {
 
       next.delete("yearMode");
       next.delete("formerPage");
-      next.delete("alumniPage");
       return next;
     }, { replace });
   };
@@ -237,12 +206,15 @@ const PeoplePage = () => {
     const addArea = (value?: string | null) => {
       const clean = value?.trim();
       if (!clean) return;
-      const key = normalizeResearchArea(clean);
-      if (!values.has(key)) values.set(key, clean);
+      const key = normalizeResearchArea(localizeResearchArea(clean, false));
+      if (!values.has(key)) values.set(key, localizeResearchArea(clean, isPt));
     };
 
     researchAreaTerms.forEach((term) => addArea(term.value));
-    [...docentes, ...students].forEach((person) => personAreaValues(person).forEach((area) => addArea(area)));
+    [
+      ...docentes.filter((person) => !isFormerMember(person)),
+      ...students,
+    ].forEach((person) => personAreaValues(person).forEach((area) => addArea(area)));
 
     const areas = Array.from(values.values()).sort((a, b) =>
       a.localeCompare(b, undefined, { sensitivity: "base" }),
@@ -251,7 +223,7 @@ const PeoplePage = () => {
       areas,
       knownKeys: new Set(areas.map(normalizeResearchArea)),
     };
-  }, [docentes, students, researchAreaTerms]);
+  }, [docentes, isPt, students, researchAreaTerms]);
 
   const areaFilterMatchesKnownOption = areaOptions.knownKeys.has(normalizeResearchArea(areaFilter));
 
@@ -264,7 +236,10 @@ const PeoplePage = () => {
 
   const presenceYears = useMemo(() => {
     const years = new Set<number>();
-    [...docentes, ...students].forEach((person) => {
+    [
+      ...docentes.filter((person) => !isFormerMember(person)),
+      ...students,
+    ].forEach((person) => {
       presenceYearsForPerson(person).forEach((year) => years.add(year));
     });
     return Array.from(years).sort((a, b) => b - a);
@@ -309,85 +284,34 @@ const PeoplePage = () => {
     [filteredDocentes],
   );
 
-  // Split by status so the page can render current and former members separately.
   const activeStudents = useMemo(
     () => sortByEntryDate(filteredStudents.filter((s) => s.role === "aluno_ativo" && !isFormerMember(s))),
     [filteredStudents],
   );
-  const formerMembers = useMemo(
-    () => [
-      ...filteredDocentes.filter(isFormerMember),
-      ...filteredStudents.filter(isFormerMember),
-    ],
-    [filteredDocentes, filteredStudents],
+  const formerStudents = useMemo(
+    () => filteredStudents
+      .filter(isFormerMember)
+      .sort((left, right) => formerStudentSortValue(right) - formerStudentSortValue(left) || left.name.localeCompare(right.name)),
+    [filteredStudents],
   );
-
-  // Group former members by exit year. Pagination paginates over the year
-  // groups so each page is a coherent former-member view.
-  const formerGroups = useMemo(
-    () => groupFormerMembersByExitYear(formerMembers),
-    [formerMembers],
-  );
-
-  // Pagination across the flat former-member list, preserving the year grouping
-  // inside each page.
-  const formerPageCount = Math.max(
-    1,
-    Math.ceil(formerMembers.length / FORMER_MEMBERS_PAGE_SIZE),
-  );
+  const formerPageCount = Math.max(1, Math.ceil(formerStudents.length / FORMER_STUDENTS_PAGE_SIZE));
   const safeFormerPage = Math.min(formerPage, formerPageCount);
+  const paginatedFormerStudents = formerStudents.slice(
+    (safeFormerPage - 1) * FORMER_STUDENTS_PAGE_SIZE,
+    safeFormerPage * FORMER_STUDENTS_PAGE_SIZE,
+  );
 
-  // If the page param is past the end (because filters shrank the list), pull
-  // it back so links stay valid.
-  useEffect(() => {
-    if (formerPage !== safeFormerPage) {
-      setFilter("formerPage", safeFormerPage === 1 ? "" : String(safeFormerPage), true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formerPage, safeFormerPage]);
-
-  const paginatedFormerGroups = useMemo(() => {
-    const start = (safeFormerPage - 1) * FORMER_MEMBERS_PAGE_SIZE;
-    const end = start + FORMER_MEMBERS_PAGE_SIZE;
-    const out: Array<[number, User[]]> = [];
-    let offset = 0;
-    for (const [year, group] of formerGroups) {
-      const groupStart = offset;
-      const groupEnd = offset + group.length;
-      if (groupEnd > start && groupStart < end) {
-        const sliceStart = Math.max(0, start - groupStart);
-        const sliceEnd = Math.min(group.length, end - groupStart);
-        out.push([year, group.slice(sliceStart, sliceEnd)]);
-      }
-      offset = groupEnd;
-      if (offset >= end) break;
-    }
-    return out;
-  }, [formerGroups, safeFormerPage]);
-
-  const goToPage = (n: number) => {
-    const clamped = Math.min(Math.max(1, n), formerPageCount);
-    setFilter("formerPage", clamped === 1 ? "" : String(clamped));
-    // Scroll former-member heading back into view
+  const goToFormerPage = (page: number) => {
+    const nextPage = Math.min(Math.max(1, page), formerPageCount);
+    setFilter("formerPage", nextPage === 1 ? "" : String(nextPage));
     requestAnimationFrame(() => {
-      document
-        .getElementById("former-section")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("former-students-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
 
   const clearFilters = () => setSearchParams({});
 
   if (loadingDocentes || loadingStudents) return <PeoplePageSkeleton />;
-
-  const yearLabel = (y: number) =>
-    y === UNKNOWN_YEAR_BUCKET
-      ? isPt
-        ? "Data de saída não informada"
-        : "Exit date unknown"
-      : isPt
-        ? `Saída em ${y}`
-        : `Left in ${y}`;
 
   return (
     <div>
@@ -415,7 +339,7 @@ const PeoplePage = () => {
             <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[2rem] border border-primary/20 bg-card/90 text-primary shadow-2xl shadow-primary/15 backdrop-blur md:h-32 md:w-32"><Users className="h-11 w-11 md:h-14 md:w-14" strokeWidth={1.25} /></div>
           </div>
         }
-        footer={<div className="flex flex-wrap gap-x-10 gap-y-3 text-sm text-muted-foreground"><span><strong className="mr-2 font-display text-2xl text-foreground">{currentDocentes.length}</strong>{isPt ? "docentes" : "faculty"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{activeStudents.length}</strong>{isPt ? "estudantes" : "students"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{formerMembers.length}</strong>{isPt ? "ex-integrantes" : "alumni"}</span></div>}
+        footer={<div className="flex flex-wrap gap-x-10 gap-y-3 text-sm text-muted-foreground"><span><strong className="mr-2 font-display text-2xl text-foreground">{currentDocentes.length}</strong>{isPt ? "docentes" : "faculty"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{activeStudents.length}</strong>{isPt ? "estudantes" : "students"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{formerStudents.length}</strong>{isPt ? "ex-alunos" : "former students"}</span></div>}
       />
       <div className="container mx-auto px-4 py-14 md:py-20">
 
@@ -424,7 +348,7 @@ const PeoplePage = () => {
           icon={Users}
           eyebrow={isPt ? "Encontre sua conexão" : "Find your connection"}
           title={isPt ? "Explore a comunidade" : "Explore the community"}
-          count={currentDocentes.length + activeStudents.length + formerMembers.length}
+          count={currentDocentes.length + activeStudents.length + formerStudents.length}
           countLabel={isPt ? "pessoas" : "people"}
           hint={isPt ? "Busque por nome, área, ano ou nível" : "Search by name, area, year or level"}
           clearLabel={t("people.clearFilters")}
@@ -483,7 +407,7 @@ const PeoplePage = () => {
         </DiscoveryFilters>
 
         {/* Faculty section */}
-        <div id="faculty-section" className="mb-8 flex items-end justify-between scroll-mt-24 border-b border-border pb-5">
+        <div id="faculty-section" className="mb-8 flex flex-wrap items-end justify-between gap-4 scroll-mt-24 border-b border-border pb-5">
           <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">01 / {isPt ? "Orientação" : "Mentorship"}</p><h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">{t("section.faculty")}</h2></div>
           <span className="font-mono text-sm text-muted-foreground">{String(currentDocentes.length).padStart(2, "0")}</span>
         </div>
@@ -521,7 +445,9 @@ const PeoplePage = () => {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-display text-xl font-semibold text-foreground line-clamp-2">{d.name}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-1">{isPt ? d.titlePt : d.title}</p>
-                      <p className="text-sm text-accent mt-1 line-clamp-1">{isPt ? d.areaPt : d.area}</p>
+                      <p className="text-sm text-accent mt-1 line-clamp-1">
+                        {localizeResearchArea((isPt ? d.areaPt || d.area : d.area || d.areaPt) || "", isPt)}
+                      </p>
                       <div className="flex flex-wrap gap-3 mt-3 text-xs max-h-10 overflow-hidden">
                         <span className="flex items-center gap-1 text-muted-foreground"><Mail size={12} /> {isPt ? "E-mail no perfil" : "Email on profile"}</span>
                         {d.lattes && <a href={d.lattes} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 text-muted-foreground hover:text-primary"><ExternalLink size={12} /> Lattes</a>}
@@ -568,112 +494,70 @@ const PeoplePage = () => {
           </div>
         )}
 
-        {/* Former members section */}
-        <div id="former-section" className="flex items-end justify-between mb-4 scroll-mt-24 border-b border-border pb-5">
-          <div><p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">03 / {isPt ? "Trajetórias" : "Journeys"}</p>
-          <h2 className="font-display text-4xl font-bold tracking-tight text-foreground flex items-center gap-2 md:text-5xl">
-            {t("section.alumni")}
-          </h2></div><span className="font-mono text-sm text-muted-foreground">{String(formerMembers.length).padStart(2, "0")}</span>
+        {/* Former students only — former faculty are intentionally excluded. */}
+        <div id="former-students-section" className="mb-4 flex scroll-mt-24 items-end justify-between border-b border-border pb-5">
+          <div>
+            <p className="mb-2 font-mono text-xs font-bold uppercase tracking-[.2em] text-primary">
+              03 / {isPt ? "Trajetórias" : "Journeys"}
+            </p>
+            <h2 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+              {isPt ? "Alunos que passaram pelo laboratório" : "Former lab students"}
+            </h2>
+          </div>
+          <span className="font-mono text-sm text-muted-foreground">{String(formerStudents.length).padStart(2, "0")}</span>
         </div>
-        <p className="text-muted-foreground mb-8 text-sm font-mono">
-          {t("section.alumni.desc")}
+        <p className="mb-8 max-w-3xl text-sm text-muted-foreground">
+          {isPt
+            ? "Estudantes que fizeram parte do LaSDPC em diferentes etapas de sua formação."
+            : "Students who were part of LaSDPC during different stages of their academic training."}
         </p>
 
-        {formerMembers.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">{t("people.noResults")}</p>
+        {formerStudents.length === 0 ? (
+          <p className="py-8 text-center text-muted-foreground">{t("people.noResults")}</p>
         ) : (
           <>
-            <div className="space-y-10">
-              {paginatedFormerGroups.map(([year, group]) => (
-                <div key={year}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="font-display text-xl font-semibold text-foreground">
-                      {yearLabel(year)}
-                    </h3>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      ({group.length})
-                    </span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                  <div className="grid auto-rows-fr sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {group.map((s, i) => (
-                      <PersonCard
-                        key={s.id}
-                        person={s}
-                        index={i}
-                        isPt={isPt}
-                        onClick={() => navigate(`/profile/${s.id}`)}
-                      />
-                    ))}
-                  </div>
-                </div>
+            <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {paginatedFormerStudents.map((student, index) => (
+                <PersonCard
+                  key={student.id}
+                  person={student}
+                  index={index}
+                  isPt={isPt}
+                  onClick={() => navigate(`/profile/${student.id}`)}
+                />
               ))}
             </div>
 
-            {/* Pagination */}
             {formerPageCount > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-12 flex-wrap">
+              <div className="mt-10 flex items-center justify-center gap-3">
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => goToPage(safeFormerPage - 1)}
                   disabled={safeFormerPage === 1}
+                  onClick={() => goToFormerPage(safeFormerPage - 1)}
                 >
-                  <ChevronLeft size={16} className="mr-1" />
-                  {t("people.prev")}
+                  <ChevronLeft size={15} className="mr-1" />
+                  {isPt ? "Anterior" : "Previous"}
                 </Button>
-
-                {Array.from({ length: formerPageCount }).map((_, idx) => {
-                  const p = idx + 1;
-                  // Show first, last, current and neighbours; collapse the rest
-                  const isEdge = p === 1 || p === formerPageCount;
-                  const isNear = Math.abs(p - safeFormerPage) <= 1;
-                  if (!isEdge && !isNear) {
-                    // Render a single ellipsis between groups
-                    if (p === 2 || p === formerPageCount - 1) {
-                      return (
-                        <span
-                          key={`ellipsis-${p}`}
-                          className="text-muted-foreground px-2 select-none"
-                        >
-                          …
-                        </span>
-                      );
-                    }
-                    return null;
-                  }
-                  return (
-                    <Button
-                      key={p}
-                      variant={p === safeFormerPage ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => goToPage(p)}
-                      className="min-w-[36px]"
-                    >
-                      {p}
-                    </Button>
-                  );
-                })}
-
+                <span className="min-w-20 text-center font-mono text-xs text-muted-foreground">
+                  {safeFormerPage} / {formerPageCount}
+                </span>
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => goToPage(safeFormerPage + 1)}
                   disabled={safeFormerPage === formerPageCount}
+                  onClick={() => goToFormerPage(safeFormerPage + 1)}
                 >
-                  {t("people.next")}
-                  <ChevronRight size={16} className="ml-1" />
+                  {isPt ? "Próxima" : "Next"}
+                  <ChevronRight size={15} className="ml-1" />
                 </Button>
-
-                <span className="text-xs font-mono text-muted-foreground ml-3">
-                  {t("people.pageOf")
-                    .replace("{current}", String(safeFormerPage))
-                    .replace("{total}", String(formerPageCount))}
-                </span>
               </div>
             )}
           </>
         )}
+
       </div>
     </div>
   );
@@ -690,7 +574,8 @@ const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
   const subtitle = person.role === "docente"
     ? (isPt ? person.titlePt || person.title : person.title || person.titlePt) || (isPt ? "Docente" : "Faculty")
     : (isPt ? person.levelPt || person.level : person.level || person.levelPt);
-  const area = isPt ? person.areaPt || person.area : person.area || person.areaPt;
+  const rawArea = isPt ? person.areaPt || person.area : person.area || person.areaPt;
+  const area = rawArea ? localizeResearchArea(rawArea, isPt) : rawArea;
   const exitLabel = person.exit_date
     ? (isPt ? `Saiu em ${formatExitDate(person.exit_date, true)}` : `Left ${formatExitDate(person.exit_date)}`)
     : null;
@@ -719,11 +604,9 @@ const PersonCard = ({ person, index: i, isPt, onClick }: PersonCardProps) => {
             {isPt ? `Desde ${person.year_joined}` : `Since ${person.year_joined}`}
           </p>
         )}
-        {exitLabel && (
-          <p className="text-xs text-muted-foreground mt-0.5 shrink-0">{exitLabel}</p>
-        )}
+        {exitLabel && <p className="mt-0.5 shrink-0 text-xs text-muted-foreground">{exitLabel}</p>}
         {!exitLabel && person.graduation_year && person.role === "alumni" && (
-          <p className="text-xs text-muted-foreground mt-0.5 shrink-0">
+          <p className="mt-0.5 shrink-0 text-xs text-muted-foreground">
             {isPt ? `Formado em ${person.graduation_year}` : `Graduated ${person.graduation_year}`}
           </p>
         )}

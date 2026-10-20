@@ -45,6 +45,38 @@ export interface User {
   usp_number?: string | null;
   // LGPD
   lgpd_consent?: boolean | null;
+  academic_genealogy?: {
+    acacia_id?: string | null;
+    slug?: string | null;
+    profile_url?: string | null;
+    metrics?: Partial<{
+      genealogical_index: number;
+      descendants_count: number;
+      fecundity: number;
+      fertility: number;
+      generations: number;
+      relationships: number;
+      cousins: number;
+    }> | null;
+    qualifications?: Array<{
+      degree?: string | null;
+      degree_code?: string | null;
+      year?: number | null;
+      is_coorientation?: boolean;
+    }> | null;
+    relationships?: Array<{
+      advisor_name?: string | null;
+      advisor_slug?: string | null;
+      degree?: string | null;
+      degree_code?: string | null;
+      year?: number | null;
+      is_coorientation?: boolean;
+    }> | null;
+    is_faculty_root?: boolean;
+    source?: string | null;
+  } | null;
+  import_source?: string | null;
+  account_claim_required?: boolean;
 }
 
 export interface LoginResponse {

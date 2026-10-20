@@ -1,12 +1,12 @@
-"""Seed script: clears the database and repopulates it from the markdown
-sources in `organizado/banco-de-dados/`.
+"""Complete database rebuild from curated Markdown and Acacia cache sources.
 
 Run from the backend directory:
     python -m scripts.seed              # full reseed (drops collections)
     python -m scripts.seed --no-drop    # additive (keeps existing docs)
     python -m scripts.seed --skip-images  # skip MinIO uploads
 
-The admin user (where `is_admin: True`) is preserved across reseeds.
+All application collections are cleared. Admin accounts are preserved so a
+reseed cannot lock maintainers out.
 """
 
 from __future__ import annotations
@@ -80,12 +80,15 @@ async def main() -> None:
     db = client[settings.mongo_db_name]
 
     if drop:
-        # Drop content collections entirely
-        for coll in ("projects", "publications", "clusters", "blog_posts", "docs"):
-            await db[coll].drop()
-        # For users, preserve admins; remove everyone else
-        deleted = await db.users.delete_many({"is_admin": {"$ne": True}})
-        print(f"[-] Cleared collections (kept {await db.users.count_documents({})} admin user(s); removed {deleted.deleted_count} non-admins)")
+        # This is deliberately a complete rebuild, including operational data
+        # such as notifications and room events. Preserve only administrators.
+        admins = await db.users.find({"is_admin": True}).to_list(length=None)
+        collections = await db.list_collection_names()
+        for collection_name in collections:
+            await db[collection_name].drop()
+        if admins:
+            await db.users.insert_many(admins)
+        print(f"[-] Cleared {len(collections)} application collections; restored {len(admins)} admin account(s)")
 
     uploader = None
     if not skip_images:
@@ -129,6 +132,28 @@ async def main() -> None:
     if cluster_docs:
         await db.clusters.insert_many(cluster_docs)
         print(f"[+] Inserted {len(cluster_docs)} clusters")
+
+    # 5. Genealogia Acadêmica
+    genealogy_cache = Path(__file__).resolve().parent.parent / "data" / "genealogy_data.json"
+    if genealogy_cache.exists():
+        import json
+        from scripts.sync_genealogy import correlate_with_lasdpc_users, upsert_direct_advisee_accounts
+
+        with open(genealogy_cache, "r", encoding="utf-8") as f:
+            gen_data = json.load(f)
+        # Create one deduplicated, non-login profile for every verified direct
+        # advisee, then attach stable internal ids to all genealogy nodes.
+        await upsert_direct_advisee_accounts(db, gen_data)
+        await correlate_with_lasdpc_users(db, gen_data)
+        if gen_data.get("professors"):
+            await db.genealogy_professors.insert_many(gen_data["professors"])
+        if gen_data.get("nodes"):
+            await db.genealogy_nodes.insert_many(gen_data["nodes"])
+        if gen_data.get("edges"):
+            await db.genealogy_edges.insert_many(gen_data["edges"])
+        if gen_data.get("meta"):
+            await db.genealogy_meta.insert_one({"_id": "current", "stats": gen_data["meta"]})
+        print(f"[+] Seeded genealogy: {len(gen_data.get('nodes', []))} nodes, {len(gen_data.get('edges', []))} edges")
 
     print("\nSeed complete.")
     client.close()

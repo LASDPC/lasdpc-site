@@ -4,26 +4,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDocentes, useStudents, useUser } from "@/hooks/usePeople";
+import { useGenealogyTree } from "@/hooks/useGenealogy";
 import { peopleService } from "@/services/people";
 import type { User } from "@/services/auth";
 import { uploadProfilePhoto, uploadProfileBanner } from "@/services/uploads";
 import { mediaUrl } from "@/lib/media";
 import AffiliationInput from "@/components/profile/AffiliationInput";
 import ProfileTermPicker from "@/components/profile/ProfileTermPicker";
+import { ProfessorGenealogyTree } from "@/components/genealogy/ProfessorGenealogyTree";
 import {
   Mail, ExternalLink, GraduationCap, BookOpen, User as UserIcon,
   Linkedin, Github, Twitter, Pencil, Save, XCircle, Plus,
   X, Check, Link2, CalendarDays, Briefcase, Search, Sparkles, Settings,
-  ArrowLeft, ArrowUpRight, CircleCheck, CircleAlert, Info, ImagePlus, Trash2,
+  ArrowLeft, ArrowUpRight, CircleCheck, CircleAlert, Info, ImagePlus, Trash2, Network,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { CLASSIC_RESEARCH_AREAS } from "@/lib/researchAreas";
+import { CLASSIC_RESEARCH_AREAS, localizeResearchArea } from "@/lib/researchAreas";
 
 const ROLE_LABELS: Record<string, { en: string; pt: string }> = {
   docente: { en: "Faculty", pt: "Docente" },
@@ -77,6 +80,13 @@ const uniqueSorted = (items: Array<string | null | undefined>) =>
   );
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase();
+
+const normalizePersonName = (value: string) => value
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-zA-Z0-9]+/g, " ")
+  .trim()
+  .toLowerCase();
 
 const stringValue = (value: unknown) => (typeof value === "string" ? value : "");
 
@@ -297,6 +307,7 @@ const ProfilePage = () => {
   const { data: profile, isLoading } = useUser(userId || "");
   const { data: docentes = [] } = useDocentes();
   const { data: students = [] } = useStudents();
+  const { data: genealogyData } = useGenealogyTree({ max_depth: 1 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -308,6 +319,7 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [showValidation, setShowValidation] = useState(false);
+  const [showGenealogyTree, setShowGenealogyTree] = useState(false);
 
   const globalResearchAreas = useMemo(() => {
     const people = [...docentes, ...students];
@@ -320,6 +332,65 @@ const ProfilePage = () => {
       ]),
     ]);
   }, [docentes, students]);
+
+  const academicGenealogy = useMemo(() => {
+    if (!profile) return null;
+    if (profile.academic_genealogy) return profile.academic_genealogy;
+
+    const node = genealogyData?.nodes.find(
+      (item) => normalizePersonName(item.name) === normalizePersonName(profile.name),
+    );
+    if (!node) return null;
+
+    const professorsById = new Map(
+      (genealogyData?.professors || []).map((professor) => [String(professor.acacia_id), professor]),
+    );
+    const facultyCard = genealogyData?.professors.find(
+      (professor) => String(professor.acacia_id) === String(node.id),
+    );
+    const relationships = (genealogyData?.edges || [])
+      .filter((edge) => String(edge.target) === String(node.id))
+      .map((edge) => {
+        const advisor = professorsById.get(String(edge.source));
+        return {
+          advisor_name: advisor?.name,
+          advisor_slug: advisor?.slug,
+          degree: edge.degree,
+          degree_code: edge.degree_code,
+          year: edge.year,
+          is_coorientation: edge.is_coorientation,
+        };
+      })
+      .filter((relationship) => relationship.advisor_name);
+
+    return {
+      acacia_id: node.id,
+      slug: node.slug,
+      profile_url: node.profile_url,
+      metrics: facultyCard?.metrics || node.metrics || {},
+      qualifications: node.table_qualifications || [],
+      relationships,
+      is_faculty_root: Boolean(node.is_docente),
+      source: "Plataforma Acácia",
+    };
+  }, [genealogyData, profile]);
+
+  const facultyGenealogy = useMemo(() => {
+    if (!profile || profile.role !== "docente") return null;
+    return genealogyData?.professors.find((professor) =>
+      String(professor.acacia_id) === String(academicGenealogy?.acacia_id)
+      || normalizePersonName(professor.name) === normalizePersonName(profile.name)
+    ) || null;
+  }, [academicGenealogy?.acacia_id, genealogyData?.professors, profile]);
+
+  const facultyTree = useMemo(() => {
+    if (!facultyGenealogy) return { nodes: [], edges: [] };
+    const rootId = String(facultyGenealogy.acacia_id);
+    const edges = (genealogyData?.edges || []).filter((edge) => String(edge.source) === rootId);
+    const visibleIds = new Set([rootId, ...edges.map((edge) => String(edge.target))]);
+    const nodes = (genealogyData?.nodes || []).filter((node) => visibleIds.has(String(node.id)));
+    return { nodes, edges };
+  }, [facultyGenealogy, genealogyData?.edges, genealogyData?.nodes]);
 
   if (isLoading) return <ProfilePageSkeleton />;
   if (!profile) {
@@ -334,7 +405,8 @@ const ProfilePage = () => {
   const roleLabel = ROLE_LABELS[profile.role]?.[isPt ? "pt" : "en"] ?? profile.role;
   const roleIcon = ROLE_ICONS[profile.role];
   const visibleTitle = isPt ? profile.titlePt || profile.title : profile.title || profile.titlePt;
-  const visibleArea = isPt ? profile.areaPt || profile.area : profile.area || profile.areaPt;
+  const rawVisibleArea = isPt ? profile.areaPt || profile.area : profile.area || profile.areaPt;
+  const visibleArea = rawVisibleArea ? localizeResearchArea(rawVisibleArea, isPt) : rawVisibleArea;
   const visibleLevel = isPt ? profile.levelPt || profile.level : profile.level || profile.levelPt;
   const visibleBio = isPt ? profile.bioPt || profile.bio : profile.bio || profile.bioPt;
   const visibleRelationship = profile.lab_relationship_type
@@ -782,6 +854,99 @@ const ProfilePage = () => {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <main className="space-y-6">
+            {academicGenealogy && (
+              <section className="surface-panel rounded-2xl p-5 md:p-7">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Network size={19} className="text-primary" />
+                      <h2 className="font-display text-xl font-semibold text-foreground">
+                        {isPt ? "Genealogia acadêmica" : "Academic genealogy"}
+                      </h2>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                      {academicGenealogy.is_faculty_root
+                        ? (isPt
+                          ? "Docente do LaSDPC e orientador raiz na árvore de descendência do laboratório."
+                          : "LaSDPC faculty member and root advisor in the lab descendant tree.")
+                        : (isPt
+                          ? "Relações de orientação direta encontradas entre este perfil e docentes do LaSDPC."
+                          : "Direct supervision relationships found between this profile and LaSDPC faculty.")}
+                    </p>
+                  </div>
+                  {facultyGenealogy && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowGenealogyTree(true)}
+                    >
+                      <Network size={14} className="mr-2" />
+                      {isPt ? "Árvore de orientação" : "Supervision tree"}
+                    </Button>
+                  )}
+                </div>
+
+                {facultyGenealogy && (
+                  <Dialog open={showGenealogyTree} onOpenChange={setShowGenealogyTree}>
+                    <DialogContent className="inset-0 left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden border-0 p-0 sm:rounded-none">
+                      <DialogHeader className="shrink-0 border-b border-border bg-background/95 px-5 py-4 pr-14 text-left backdrop-blur md:px-8">
+                        <DialogTitle className="font-display text-xl md:text-2xl">
+                          {isPt ? "Árvore de orientação" : "Supervision tree"} · {facultyGenealogy.name}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {isPt
+                            ? "Orientações diretas registradas para este docente."
+                            : "Direct supervision relationships recorded for this faculty member."}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-7 sm:px-7 md:px-10 md:py-10">
+                        <ProfessorGenealogyTree
+                          nodes={facultyTree.nodes}
+                          edges={facultyTree.edges}
+                          professor={facultyGenealogy}
+                          onSelectNode={(node) => {
+                            if (node.lasdpc_user_id && node.lasdpc_user_id !== profile.id) {
+                              setShowGenealogyTree(false);
+                              navigate(`/profile/${node.lasdpc_user_id}`);
+                            }
+                          }}
+                          isPt={isPt}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                {(academicGenealogy.relationships?.length ?? 0) > 0 && (
+                  <div className="mt-5 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {isPt ? "Orientação no LaSDPC" : "LaSDPC supervision"}
+                    </p>
+                    {academicGenealogy.relationships!.map((relationship, index) => (
+                      <div key={`${relationship.advisor_slug || relationship.advisor_name}-${relationship.degree_code}-${relationship.year}-${index}`} className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-secondary/35 px-3.5 py-3 text-sm">
+                        <span className="font-medium text-foreground">{relationship.advisor_name}</span>
+                        {relationship.degree && (
+                          <Badge variant="outline" className={relationship.degree_code === "D" ? "border-blue-500/40 text-blue-500" : "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"}>
+                            {relationship.degree}{relationship.year ? ` · ${relationship.year}` : ""}
+                          </Badge>
+                        )}
+                        {relationship.is_coorientation && (
+                          <Badge variant="secondary">{isPt ? "Coorientação" : "Co-supervision"}</Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {academicGenealogy.profile_url && (
+                  <a href={academicGenealogy.profile_url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+                    {isPt ? "Consultar perfil na Plataforma Acácia" : "View profile on Plataforma Acácia"}
+                    <ArrowUpRight size={14} />
+                  </a>
+                )}
+              </section>
+            )}
+
             {!hasBio && !hasResearchAreas && !hasSkills && !isEditing && (
               <section className="surface-panel rounded-2xl p-6 md:p-8">
                 <UserIcon size={22} className="text-primary" />
@@ -832,7 +997,7 @@ const ProfilePage = () => {
                         className="inline-flex min-h-8 items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
                         title={isPt ? `Ver todos com "${area}"` : `View all with "${area}"`}
                       >
-                        {area}
+                        {localizeResearchArea(area, isPt)}
                       </button>
                     ))}
                   </div>
@@ -876,10 +1041,12 @@ const ProfilePage = () => {
               {isEditing && <p className="mb-5 text-xs leading-5 text-muted-foreground">{isPt ? "Só o Lattes é obrigatório; o vínculo e os outros links são opcionais." : "Only Lattes is required; your affiliation and other links are optional."}</p>}
               {isEditing ? (
                 <div className="space-y-3 text-sm">
-                  <div className="flex min-h-10 items-center gap-2 rounded-lg bg-secondary/60 px-3 text-muted-foreground">
-                    <Mail size={16} />
-                    <NonCopyableEmail email={profile.email} />
-                  </div>
+                  {!profile.account_claim_required && !profile.email.endsWith("@profiles.invalid") && (
+                    <div className="flex min-h-10 items-center gap-2 rounded-lg bg-secondary/60 px-3 text-muted-foreground">
+                      <Mail size={16} />
+                      <NonCopyableEmail email={profile.email} />
+                    </div>
+                  )}
                   <div id="profile-affiliation" className="scroll-mt-28 space-y-2">
                     <label htmlFor="profile-relationship" className="text-xs font-medium text-foreground">
                       {isPt ? "Relação com o laboratório" : "Relationship with the lab"}
@@ -927,10 +1094,16 @@ const ProfilePage = () => {
                 </div>
               ) : (
                 <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail size={16} />
-                    <NonCopyableEmail email={profile.email} />
-                  </div>
+                  {!profile.account_claim_required && !profile.email.endsWith("@profiles.invalid") ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail size={16} />
+                      <NonCopyableEmail email={profile.email} />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {isPt ? "Contato ainda não informado." : "Contact information not provided yet."}
+                    </p>
+                  )}
                   {SOCIAL_LINKS.map(({ key, label, icon: Icon }) => {
                     const value = profile[key];
                     if (!value) return null;

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -168,6 +168,10 @@ class UserOut(BaseModel):
     usp_number: Optional[str] = None
     # LGPD
     lgpd_consent: Optional[bool] = None
+    # Read-only enrichment produced by the Acacia synchronization script.
+    academic_genealogy: Optional[dict[str, Any]] = None
+    import_source: Optional[str] = None
+    account_claim_required: bool = False
 
 
 class BootstrapAdmin(BaseModel):

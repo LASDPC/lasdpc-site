@@ -25,6 +25,7 @@ from routers import (
     room_events,
     rooms,
     profile_terms,
+    genealogy,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ app.include_router(notifications.router, prefix="/api/v1/notifications", tags=["
 app.include_router(room_events.router, prefix="/api/v1/room-events", tags=["room-events"])
 app.include_router(rooms.router, prefix="/api/v1/rooms", tags=["rooms"])
 app.include_router(profile_terms.router, prefix="/api/v1/profile-terms", tags=["profile-terms"])
+app.include_router(genealogy.router, prefix="/api/v1/genealogy", tags=["genealogy"])
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
