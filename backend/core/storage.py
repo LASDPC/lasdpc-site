@@ -43,4 +43,9 @@ def delete_object(key: str) -> None:
 
 
 def public_url(key: str) -> str:
-    return f"{settings.minio_public_url.rstrip('/')}/{key}"
+    """Build a browser URL without changing the object key stored in MongoDB."""
+    bucket = settings.minio_bucket.strip("/")
+    normalized_key = key.lstrip("/")
+    while normalized_key.startswith(f"{bucket}/"):
+        normalized_key = normalized_key[len(bucket) + 1:]
+    return f"{settings.minio_public_url.rstrip('/')}/{normalized_key}"

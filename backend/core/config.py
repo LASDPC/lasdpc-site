@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     admin_password: str = ""
     admin_name: str = "Admin LASDPC"
 
-    minio_endpoint: str = "http://localhost:9000"
-    minio_public_url: str = "http://localhost:9000/lasdpc-media"
+    minio_endpoint: str = "http://127.0.0.1:9000"
+    minio_public_url: str = "/media"
     minio_root_user: str = ""
     minio_root_password: str = ""
     minio_bucket: str = "lasdpc-media"

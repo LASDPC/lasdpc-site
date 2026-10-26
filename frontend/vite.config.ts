@@ -21,6 +21,11 @@ export default defineConfig(({ mode }) => {
           target: backendTarget,
           changeOrigin: true,
         },
+        "^/media/(profile|banner|blog|projects|clusters)/": {
+          target: "http://127.0.0.1:9000",
+          changeOrigin: true,
+          rewrite: (url) => url.replace(/^\/media\//, "/lasdpc-media/"),
+        },
       },
     },
     plugins: [react()],

@@ -1,5 +1,6 @@
 const TOKEN_KEY = "lasdpc-token";
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// Both the Vite dev server and production Nginx proxy /api on the same origin.
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);

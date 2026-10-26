@@ -33,6 +33,18 @@ jobs:
           echo "Atualizando o Frontend..."
           cd /home/lasdpc/lasdpc-site/frontend
           npm install
+          # Vite incorpora esta variável no bundle; bloqueia URLs HTTP internas.
+          node --input-type=module <<'NODE'
+          import { loadEnv } from 'vite';
+          const env = loadEnv('production', process.cwd(), 'VITE_');
+          const url = env.VITE_MINIO_PUBLIC_URL || '/media';
+          if (url !== '/media' && (!url.startsWith('https://') || url.includes('/lasdpc-media'))) {
+            throw new Error('VITE_MINIO_PUBLIC_URL must be /media or an HTTPS public prefix without the bucket');
+          }
+          if (env.VITE_API_URL && !env.VITE_API_URL.startsWith('https://')) {
+            throw new Error('VITE_API_URL must be empty or HTTPS for a production build');
+          }
+          NODE
           npm run build
 
       - name: Atualizar e Reiniciar Backend (FastAPI)
