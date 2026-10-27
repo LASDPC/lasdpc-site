@@ -29,6 +29,7 @@ async def test_list_docentes_excludes_admin_users(mock_db):
             resp = await ac.get("/api/v1/people/docentes")
 
     assert resp.status_code == 200
+    cursor_mock.to_list.assert_awaited_once_with(length=None)
     mock_db.users.find.assert_called_once_with({
         "role": "docente",
         "status": {"$ne": "pending"},
@@ -47,6 +48,7 @@ async def test_list_students_excludes_admin_users(mock_db):
             resp = await ac.get("/api/v1/people/students")
 
     assert resp.status_code == 200
+    cursor_mock.to_list.assert_awaited_once_with(length=None)
     mock_db.users.find.assert_called_once_with({
         "role": {"$in": ["aluno_ativo", "alumni"]},
         "status": {"$ne": "pending"},

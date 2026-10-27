@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Download,
 } from "lucide-react";
 import { useDocentes, useStudents } from "@/hooks/usePeople";
 import type { User } from "@/services/auth";
@@ -27,6 +28,7 @@ import DiscoveryFilters from "@/components/DiscoveryFilters";
 import EditorialHero from "@/components/EditorialHero";
 import { mediaUrl } from "@/lib/media";
 import { localizeResearchArea, normalizeResearchArea } from "@/lib/researchAreas";
+import { downloadPeopleCsv } from "@/lib/peopleCsv";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
@@ -155,8 +157,8 @@ function sortByEntryDate(items: User[]) {
 const PeoplePage = () => {
   const { lang, t } = useLang();
   const isPt = lang === "pt-BR";
-  const { data: docentes = [], isLoading: loadingDocentes } = useDocentes();
-  const { data: students = [], isLoading: loadingStudents } = useStudents();
+  const { data: docentes = [], isLoading: loadingDocentes, isError: errorDocentes } = useDocentes();
+  const { data: students = [], isLoading: loadingStudents, isError: errorStudents } = useStudents();
   const { data: researchAreaTerms = [] } = useQuery({
     queryKey: ["profile-terms", "research_area", "people-filter"],
     queryFn: () => profileTermsService.list("research_area", "", undefined, 50),
@@ -343,6 +345,22 @@ const PeoplePage = () => {
         footer={<div className="flex flex-wrap gap-x-10 gap-y-3 text-sm text-muted-foreground"><span><strong className="mr-2 font-display text-2xl text-foreground">{currentDocentes.length}</strong>{isPt ? "docentes" : "faculty"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{activeStudents.length}</strong>{isPt ? "estudantes" : "students"}</span><span><strong className="mr-2 font-display text-2xl text-foreground">{formerStudents.length}</strong>{isPt ? "ex-alunos" : "former students"}</span></div>}
       />
       <div className="container mx-auto px-4 py-14 md:py-20">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {errorDocentes || errorStudents
+              ? (isPt ? "Não foi possível carregar todas as pessoas para exportação." : "Could not load all people for export.")
+              : (isPt ? "Exporte todas as pessoas, incluindo ex-alunos. A entrada é informada por ano." : "Export all people, including former students. Entry is recorded by year.")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={errorDocentes || errorStudents || docentes.length + students.length === 0}
+            onClick={() => downloadPeopleCsv([...docentes, ...students], isPt)}
+          >
+            <Download size={16} className="mr-2" aria-hidden="true" />
+            {isPt ? "Baixar pessoas em CSV" : "Download people as CSV"}
+          </Button>
+        </div>
 
         {/* Filter bar */}
         <DiscoveryFilters

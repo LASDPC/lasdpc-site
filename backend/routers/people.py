@@ -23,7 +23,7 @@ async def list_docentes():
         "role": "docente",
         "status": {"$ne": "pending"},
         "is_admin": {"$ne": True},
-    }).to_list(1000)
+    }).to_list(length=None)
     return [_user_out(d) for d in items]
 
 
@@ -44,7 +44,7 @@ async def list_students():
         "role": {"$in": ["aluno_ativo", "alumni"]},
         "status": {"$ne": "pending"},
         "is_admin": {"$ne": True},
-    }).to_list(1000)
+    }).to_list(length=None)
     return [_user_out(d) for d in items]
 
 

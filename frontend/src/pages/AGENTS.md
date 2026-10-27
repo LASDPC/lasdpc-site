@@ -103,6 +103,7 @@ which data it loads, and what key user interactions exist.
 
 ## PeoplePage.tsx
 - Public directory of lab members (faculty and students) with filtering and sections.
+- Exports all directory records to CSV (independent of filters/pagination), with full name, entry year, exit date/year, and advisor; missing values remain blank.
 - Loads people data from the backend and renders profile cards/rows with localized fields.
 - Supports navigation to individual profiles for more detailed information.
 - Admins see editing affordances that link into `AdminEditPage`.
